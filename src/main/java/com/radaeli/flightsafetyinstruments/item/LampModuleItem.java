@@ -13,6 +13,10 @@ public final class LampModuleItem extends Item {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
+        return place(context, "lamp", 1, 1);
+    }
+
+    static InteractionResult place(UseOnContext context, String type, int width, int height) {
         var level = context.getLevel();
         var pos = context.getClickedPos();
         var state = level.getBlockState(pos);
@@ -22,9 +26,11 @@ public final class LampModuleItem extends Item {
         var point = PanelCoordinates.toPanel(facing, context.getClickLocation().subtract(Vec3.atLowerCornerOf(pos)));
         int column = PanelCoordinates.cell(point.x);
         int row = PanelCoordinates.cell(point.z);
-        if (!table.grid().canFit(column, row, 1, 1)) return InteractionResult.FAIL;
+        if (!table.grid().canFit(column, row, width, height)) return InteractionResult.FAIL;
         if (!level.isClientSide) {
-            if (!table.placeLamp(column, row)) return InteractionResult.FAIL;
+            boolean placed = type.equals("lamp") ? table.placeLamp(column, row)
+                    : table.placeLamp2x1(column, row, height > width);
+            if (!placed) return InteractionResult.FAIL;
             context.getItemInHand().consume(1, context.getPlayer());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);

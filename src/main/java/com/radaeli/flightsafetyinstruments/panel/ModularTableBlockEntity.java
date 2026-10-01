@@ -11,9 +11,12 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class ModularTableBlockEntity extends BlockEntity {
     private PanelGrid grid = new PanelGrid();
+    private final Map<String, Double> testSignals = new HashMap<>();
     private final TablePeripheral peripheral = new TablePeripheral(this);
 
     public ModularTableBlockEntity(BlockPos pos, BlockState state) {
@@ -22,9 +25,43 @@ public final class ModularTableBlockEntity extends BlockEntity {
 
     public PanelGrid grid() { return grid; }
     public TablePeripheral peripheral() { return peripheral; }
+    public boolean configureModule(int column, int row, String channel, double threshold) {
+        if (channel == null || channel.isBlank() || channel.length() > 64 || !Double.isFinite(threshold)) return false;
+        if (grid.at(column, row).filter(module -> module.type().equals("lamp")).isEmpty()) return false;
+        if (!grid.configureAt(column, row, channel, threshold)) return false;
+        var module = grid.at(column, row).orElseThrow();
+        changed("configured", module);
+        return true;
+    }
+
+    public boolean setTestSignal(String channel, double value) {
+        if (channel == null || channel.isBlank() || channel.length() > 64 || !Double.isFinite(value)) return false;
+        testSignals.put(channel, value);
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            peripheral.testSignalChanged(channel, value);
+        }
+        return true;
+    }
+
+    public double testSignal(String channel) { return testSignals.getOrDefault(channel, 0.0); }
+    public boolean isModuleActive(PanelGrid.Module module) {
+        return module.type().equals("lamp") && testSignal(module.channel()) >= module.threshold();
+    }
 
     public boolean placeLamp(int column, int row) {
-        var module = new PanelGrid.Module("lamp", column, row, 1, 1);
+        return placeModule(new PanelGrid.Module("lamp", column, row, 1, 1));
+    }
+
+    public boolean placeLamp2x1(int column, int row, boolean vertical) {
+        var module = vertical
+                ? new PanelGrid.Module("lamp_2x1", column, row, 1, 2)
+                : new PanelGrid.Module("lamp_2x1", column, row, 2, 1);
+        return placeModule(module);
+    }
+
+    private boolean placeModule(PanelGrid.Module module) {
         if (!grid.place(module)) return false;
         changed("placed", module);
         return true;
@@ -55,9 +92,14 @@ public final class ModularTableBlockEntity extends BlockEntity {
             entry.putInt("Row", module.row());
             entry.putInt("Width", module.width());
             entry.putInt("Height", module.height());
+            entry.putString("Channel", module.channel());
+            entry.putDouble("Threshold", module.threshold());
             list.add(entry);
         }
         tag.put("Modules", list);
+        var signals = new CompoundTag();
+        testSignals.forEach(signals::putDouble);
+        tag.put("TestSignals", signals);
     }
 
     @Override
@@ -68,8 +110,27 @@ public final class ModularTableBlockEntity extends BlockEntity {
         for (int i = 0; i < list.size(); i++) {
             var entry = list.getCompound(i);
             // Only registered module types and their real footprints may be restored.
-            if (entry.getString("Type").equals("lamp") && entry.getInt("Width") == 1 && entry.getInt("Height") == 1) {
-                grid.place(new PanelGrid.Module("lamp", entry.getInt("Column"), entry.getInt("Row"), 1, 1));
+            var type = entry.getString("Type");
+            int width = entry.getInt("Width");
+            int height = entry.getInt("Height");
+            boolean validLamp = type.equals("lamp") && width == 1 && height == 1;
+            boolean validLamp2x1 = type.equals("lamp_2x1")
+                    && (width == 2 && height == 1 || width == 1 && height == 2);
+            if (validLamp || validLamp2x1) {
+                String channel = entry.contains("Channel", Tag.TAG_STRING) ? entry.getString("Channel") : "test";
+                double threshold = entry.contains("Threshold", Tag.TAG_DOUBLE) ? entry.getDouble("Threshold") : 0.5;
+                if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(threshold)) {
+                    grid.place(new PanelGrid.Module(type, entry.getInt("Column"), entry.getInt("Row"),
+                            width, height, channel, threshold));
+                }
+            }
+        }
+        testSignals.clear();
+        if (tag.contains("TestSignals", Tag.TAG_COMPOUND)) {
+            var signals = tag.getCompound("TestSignals");
+            for (String channel : signals.getAllKeys()) {
+                double value = signals.getDouble(channel);
+                if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(value)) testSignals.put(channel, value);
             }
         }
     }

@@ -51,6 +51,34 @@ public final class TablePeripheral implements IPeripheral {
         return table.grid().canFit(column - 1, row - 1, width, height);
     }
 
+    @LuaFunction(mainThread = true)
+    public boolean configureModule(int column, int row, String channel, double threshold) throws LuaException {
+        validateCell(column, row);
+        if (channel == null || channel.isBlank() || channel.length() > 64) throw new LuaException("Channel must contain 1 to 64 characters");
+        if (!Double.isFinite(threshold)) throw new LuaException("Threshold must be finite");
+        if (!table.grid().at(column - 1, row - 1).filter(module -> module.type().equals("lamp")).isPresent()) {
+            throw new LuaException("Only 1x1 test lamp modules can be configured in this phase");
+        }
+        return table.configureModule(column - 1, row - 1, channel, threshold);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean setTestSignal(String channel, double value) throws LuaException {
+        if (channel == null || channel.isBlank() || channel.length() > 64) throw new LuaException("Channel must contain 1 to 64 characters");
+        if (!Double.isFinite(value)) throw new LuaException("Signal must be finite");
+        return table.setTestSignal(channel, value);
+    }
+
+    @LuaFunction(mainThread = true)
+    public List<Map<String, Object>> getOutputs() {
+        return table.grid().modules().stream().map(module -> {
+            var output = new java.util.HashMap<>(describe(module));
+            output.put("active", table.isModuleActive(module));
+            output.put("signal", table.testSignal(module.channel()));
+            return Map.copyOf(output);
+        }).toList();
+    }
+
     private static void validateCell(int column, int row) throws LuaException {
         if (column < 1 || column > PanelGrid.SIZE || row < 1 || row > PanelGrid.SIZE) {
             throw new LuaException("Column and row must be between 1 and 3");
@@ -59,12 +87,19 @@ public final class TablePeripheral implements IPeripheral {
 
     public static Map<String, Object> describe(PanelGrid.Module module) {
         return Map.of("occupied", true, "type", module.type(), "column", module.column() + 1,
-                "row", module.row() + 1, "width", module.width(), "height", module.height());
+                "row", module.row() + 1, "width", module.width(), "height", module.height(),
+                "channel", module.channel(), "threshold", module.threshold());
     }
 
     public void moduleChanged(String action, PanelGrid.Module module) {
         for (var computer : computers) {
             computer.queueEvent("modular_table_changed", computer.getAttachmentName(), action, describe(module));
+        }
+    }
+
+    public void testSignalChanged(String channel, double value) {
+        for (var computer : computers) {
+            computer.queueEvent("modular_table_signal_changed", computer.getAttachmentName(), channel, value);
         }
     }
 }

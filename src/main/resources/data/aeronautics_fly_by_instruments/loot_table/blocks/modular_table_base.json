@@ -3,7 +3,7 @@
   "pools": [
     {
       "rolls": 1,
-      "entries": [{ "type": "minecraft:item", "name": "flightsafetyinstruments:modular_table_base" }],
+      "entries": [{ "type": "minecraft:item", "name": "aeronautics_fly_by_instruments:modular_table_base" }],
       "conditions": [{ "condition": "minecraft:survives_explosion" }]
     }
   ]

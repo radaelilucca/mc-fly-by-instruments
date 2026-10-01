@@ -2,30 +2,35 @@
 
 A base mantém espessura de 3/16 de bloco e textura placeholder de ferro.
 Sua face exposta é dividida em 3 colunas × 3 linhas: cada célula tem
-16/3 pixels de largura e profundidade. A lâmpada é um item montável 1×1,
-representado temporariamente por uma miniatura de lâmpada de redstone apagada.
-Ela ainda não emite luz nem reage a sinais ou alertas.
+16/3 pixels de largura e profundidade. Ela pode ser montada em qualquer face
+sólida, inclusive no teto do cockpit. Os módulos são representados por
+miniaturas de lâmpada de redstone. Na Fase 1, a lâmpada 1×1 serve como atuador
+de teste: acende quando o sinal simulado do canal associado alcança o threshold
+do módulo. O módulo 2×1 permanece estrutural nesta fase.
 
 ## Montagem
 
-1. Pegue a Base da Mesa Modular e o Módulo de Lâmpada na aba Blocos Funcionais.
-2. Coloque a base sobre um bloco, ou em outra face de suporte.
-3. Segure a lâmpada e mire na face exposta: o grid aparece e a célula é destacada.
-4. Clique com o botão direito para instalar. Em sobrevivência, uma unidade do
+1. Pegue a Base da Mesa Modular e os módulos de lâmpada na aba Aeronautics: Fly by Instruments.
+2. Coloque a base sobre uma face sólida, incluindo a parte inferior de um bloco.
+3. Segure um módulo e mire na face exposta: o grid mostra seu footprint.
+   Verde indica que ele cabe; vermelho indica colisão ou borda.
+4. Com o módulo 2×1, role o scroll enquanto mira na mesa para alternar entre
+   orientação horizontal (2 colunas × 1 linha) e vertical (1 coluna × 2 linhas).
+5. Clique com o botão direito para instalar. Em sobrevivência, uma unidade do
    item é consumida; no criativo, o item é mantido.
-5. Para retirar, deixe as duas mãos vazias e use Shift + botão direito sobre
-   a célula ocupada. O item retorna ao inventário ou cai se não houver espaço.
+6. Segure a Wrench do Create e clique com o botão direito em um módulo para
+   removê-lo. O item retorna ao inventário ou cai se não houver espaço.
 
 ```mcfunction
-/give @s flightsafetyinstruments:modular_table_base
-/give @s flightsafetyinstruments:lamp_module
+/give @s aeronautics_fly_by_instruments:modular_table_base
+/give @s aeronautics_fly_by_instruments:lamp_module
+/give @s aeronautics_fly_by_instruments:lamp_module_2x1
 ```
 
-O highlight verde indica disponibilidade durante a instalação, e vermelho
-indica ocupação. Durante a remoção, a célula selecionada aparece em verde.
-É possível instalar até nove lâmpadas por mesa. Não há sobreposição nem
-footprints compartilhados entre mesas vizinhas. Módulos são devolvidos ao
-quebrar a mesa; salvar/reabrir o mundo preserva sua ocupação.
+O highlight mostra todo o footprint. É possível instalar até nove lâmpadas 1×1
+ou combinar módulos que ocupem duas células. Não há sobreposição nem footprints
+compartilhados entre mesas vizinhas. Módulos são devolvidos ao quebrar a mesa;
+salvar/reabrir o mundo preserva sua ocupação.
 
 ## Regras de footprint
 
@@ -35,9 +40,9 @@ do footprint pertencem ao mesmo módulo. A inserção só ocorre se o retângulo
 estiver inteiramente dentro do grid e todas as células estiverem livres.
 Uma operação de remoção sobre qualquer célula coberta retira o módulo inteiro.
 
-As regras já suportam 1×2 e 2×2; os itens desses tamanhos serão adicionados
-em etapas futuras. Só o módulo `lamp` de tamanho 1×1 pode ser montado ou
-restaurado do save nesta versão.
+O módulo `lamp` ocupa 1×1. O `lamp_2x1` ocupa 2×1 por padrão e alterna para 1×2
+com o scroll. Ambos os footprints são persistidos e expostos pelas dimensões
+do módulo na API.
 
 ## CC:Tweaked
 
@@ -55,28 +60,40 @@ consistente com o grid e a orientação da base.
 | `getModules()` | Lista dos módulos instalados |
 | `getSlot(column, row)` | Estado da célula e, se ocupada, descrição do módulo |
 | `canFit(column, row, width, height)` | Se o footprint cabe e está livre |
+| `configureModule(column, row, channel, threshold)` | Associa lâmpada 1×1 a canal e threshold |
+| `setTestSignal(channel, value)` | Define o valor simulado do canal |
+| `getOutputs()` | Lista módulos, sinal recebido e estado ativo |
 
-Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1}`.
+Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1, channel = "test", threshold = 0.5}`.
 Uma célula livre retorna `{occupied = false, column = ..., row = ...}`.
 Coordenadas ou dimensões fora de 1–3 geram erro Lua; um footprint válido que
 ultrapasse a borda retorna `false`. `canFit` só consulta: não instala módulos.
 Instalação e remoção são físicas. Métodos executam na thread principal.
 
-Evento: `modular_table_changed`, seguido de nome do peripheral, ação
-(`placed` ou `removed`) e descrição do módulo. Só é emitido após uma alteração
-física confirmada no servidor; carregamento e sincronização não geram eventos.
+Evento `modular_table_changed`: nome do peripheral, ação (`placed`, `removed`
+ou `configured`) e descrição do módulo. Evento `modular_table_signal_changed`:
+nome do peripheral, canal e valor. Só são emitidos após alterações confirmadas
+no servidor; carregamento e sincronização não geram eventos.
 
 ```lua
 local tablePeripheral = assert(peripheral.find("modular_table"), "Mesa não encontrada")
 print(textutils.serialize(tablePeripheral.getGridSize()))
 print(textutils.serialize(tablePeripheral.getModules()))
 print("Cabe 2x2:", tablePeripheral.canFit(1, 1, 2, 2))
+tablePeripheral.configureModule(1, 1, "terrain", 30)
+tablePeripheral.setTestSignal("terrain", 42)
+print(textutils.serialize(tablePeripheral.getOutputs()))
 
 while true do
     local _, name, action, module = os.pullEvent("modular_table_changed")
     print(name, action, module.type, module.column, module.row)
 end
 ```
+
+O sinal é numérico e local à mesa: a lâmpada fica ativa quando
+`signal >= threshold`. Valores de teste e configuração persistem após salvar e
+reabrir o mundo. Esse canal não representa a futura Avionics Cable Network nem
+alertas GPWS. O módulo 2×1 continua apenas estrutural durante essa fase.
 
 ## Validação
 

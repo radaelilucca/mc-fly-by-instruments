@@ -3,18 +3,23 @@ package com.radaeli.flightsafetyinstruments.block;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import com.radaeli.flightsafetyinstruments.panel.ModularTableBlockEntity;
+import com.radaeli.flightsafetyinstruments.panel.PanelGrid;
 import com.radaeli.flightsafetyinstruments.panel.PanelCoordinates;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -31,6 +36,8 @@ import net.minecraft.world.phys.shapes.Shapes;
 public final class ModularTableBaseBlock extends Block implements EntityBlock {
     public static final MapCodec<ModularTableBaseBlock> CODEC = simpleCodec(ModularTableBaseBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    private static final ResourceLocation CREATE_WRENCH_ID =
+            ResourceLocation.fromNamespaceAndPath("create", "wrench");
 
     // Match the Create Copycat Panel's 3-pixel thickness, without material copying.
     private static final VoxelShape UP = box(0, 0, 0, 16, 3, 16);
@@ -61,24 +68,43 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock {
     }
 
     @Override
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction facing = state.getValue(FACING);
+        BlockPos supportPos = pos.relative(facing.getOpposite());
+        return level.getBlockState(supportPos).isFaceSturdy(level, supportPos, facing);
+    }
+
+    public static boolean isCreateWrench(ItemStack stack) {
+        return BuiltInRegistries.ITEM.getKey(stack.getItem()).equals(CREATE_WRENCH_ID);
+    }
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ModularTableBlockEntity(pos, state);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!player.isShiftKeyDown() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()
-                || hit.getDirection() != state.getValue(FACING)
-                || !(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) return InteractionResult.PASS;
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
+                                               Player player, InteractionHand hand, BlockHitResult hit) {
+        if (!isCreateWrench(stack) || hit.getDirection() != state.getValue(FACING)
+                || !(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
         var point = PanelCoordinates.toPanel(state.getValue(FACING), hit.getLocation().subtract(Vec3.atLowerCornerOf(pos)));
         int column = PanelCoordinates.cell(point.x);
         int row = PanelCoordinates.cell(point.z);
-        if (table.grid().at(column, row).isEmpty()) return InteractionResult.PASS;
+        var module = table.grid().at(column, row);
+        if (module.isEmpty()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if (!level.isClientSide && table.removeModule(column, row)) {
-            var stack = new ItemStack(ModBlocks.LAMP_MODULE.get());
-            if (!player.addItem(stack)) popResource(level, pos, stack);
+            var moduleStack = itemStack(module.get());
+            if (!player.addItem(moduleStack)) popResource(level, pos, moduleStack);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    private static ItemStack itemStack(PanelGrid.Module module) {
+        return new ItemStack(module.type().equals("lamp_2x1")
+                ? ModBlocks.LAMP_MODULE_2X1.get() : ModBlocks.LAMP_MODULE.get());
     }
 
     @Override
@@ -86,7 +112,7 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock {
         if (!state.is(newState.getBlock()) && !level.isClientSide
                 && level.getBlockEntity(pos) instanceof ModularTableBlockEntity table) {
             for (var module : table.grid().modules()) {
-                popResource(level, pos, new ItemStack(ModBlocks.LAMP_MODULE.get()));
+                popResource(level, pos, itemStack(module));
             }
         }
         super.onRemove(state, level, pos, newState, moving);

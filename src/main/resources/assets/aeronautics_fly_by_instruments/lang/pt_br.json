@@ -1,0 +1,8 @@
+{
+  "block.aeronautics_fly_by_instruments.modular_table_base": "Base da Mesa Modular",
+  "itemGroup.aeronautics_fly_by_instruments": "Aeronautics: Fly by Instruments",
+  "item.aeronautics_fly_by_instruments.lamp_module": "Módulo de Lâmpada (1×1)",
+  "item.aeronautics_fly_by_instruments.lamp_module_2x1": "Módulo de Lâmpada (2×1)",
+  "item.aeronautics_fly_by_instruments.lamp_module_2x1.description": "Role o scroll ao mirar na mesa para alternar a orientação.",
+  "item.aeronautics_fly_by_instruments.lamp_module.description": "Saída de teste. Configure canal e threshold pelo CC:Tweaked."
+}

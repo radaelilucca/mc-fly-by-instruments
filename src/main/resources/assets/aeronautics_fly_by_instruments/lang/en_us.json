@@ -1,0 +1,9 @@
+{
+  "modmenu.nameTranslation.aeronautics_fly_by_instruments": "Aeronautics: Fly by Instruments",
+  "block.aeronautics_fly_by_instruments.modular_table_base": "Modular Table Base",
+  "itemGroup.aeronautics_fly_by_instruments": "Aeronautics: Fly by Instruments",
+  "item.aeronautics_fly_by_instruments.lamp_module": "Lamp Module (1×1)",
+  "item.aeronautics_fly_by_instruments.lamp_module_2x1": "Lamp Module (2×1)",
+  "item.aeronautics_fly_by_instruments.lamp_module_2x1.description": "Scroll while aiming at a table to rotate the footprint.",
+  "item.aeronautics_fly_by_instruments.lamp_module.description": "Test output. Configure its channel and threshold through CC:Tweaked."
+}

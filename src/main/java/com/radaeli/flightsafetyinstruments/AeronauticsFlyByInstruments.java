@@ -2,8 +2,6 @@ package com.radaeli.flightsafetyinstruments;
 
 import com.mojang.logging.LogUtils;
 import com.radaeli.flightsafetyinstruments.block.ModBlocks;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -13,28 +11,29 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import com.radaeli.flightsafetyinstruments.client.PanelClient;
+import com.radaeli.flightsafetyinstruments.client.PanelInputHandler;
+import com.radaeli.flightsafetyinstruments.network.PanelNetwork;
+import net.neoforged.neoforge.common.NeoForge;
 
-/** Main entry point for the Flight Safety Instruments addon. */
-@Mod(FlightSafetyInstruments.MOD_ID)
-public final class FlightSafetyInstruments {
-    public static final String MOD_ID = "flightsafetyinstruments";
+/** Main entry point for Aeronautics: Fly by Instruments. */
+@Mod(AeronauticsFlyByInstruments.MOD_ID)
+public final class AeronauticsFlyByInstruments {
+    public static final String MOD_ID = "aeronautics_fly_by_instruments";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public FlightSafetyInstruments(IEventBus modEventBus, ModContainer modContainer) {
+    public AeronauticsFlyByInstruments(IEventBus modEventBus, ModContainer modContainer) {
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlocks.ITEMS.register(modEventBus);
         ModBlocks.BLOCK_ENTITIES.register(modEventBus);
+        ModCreativeTabs.TABS.register(modEventBus);
+        modEventBus.addListener(PanelNetwork::registerPayloads);
         modEventBus.addListener(this::registerCapabilities);
-        if (FMLEnvironment.dist == Dist.CLIENT) PanelClient.register(modEventBus);
-        modEventBus.addListener(this::addCreativeContents);
-        LOGGER.info("Flight Safety Instruments loaded");
-    }
-
-    private void addCreativeContents(BuildCreativeModeTabContentsEvent event) {
-        if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
-            event.accept(ModBlocks.MODULAR_TABLE_BASE_ITEM);
-            event.accept(ModBlocks.LAMP_MODULE);
+        NeoForge.EVENT_BUS.addListener(PanelNetwork::onPlayerLoggedIn);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            PanelClient.register(modEventBus);
+            NeoForge.EVENT_BUS.addListener(PanelInputHandler::onMouseScroll);
         }
+        LOGGER.info("Aeronautics: Fly by Instruments loaded");
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {

@@ -21,12 +21,17 @@ class ModularTableBlockEntityTest {
         var original = table();
         assertTrue(original.placeLamp(0, 0));
         assertTrue(original.placeLamp(2, 2));
+        assertTrue(original.configureModule(0, 0, "terrain", 20));
+        assertTrue(original.setTestSignal("terrain", 25));
         var restored = table();
         restored.loadCustomOnly(original.saveWithoutMetadata(REGISTRIES), REGISTRIES);
         assertEquals(original.grid().modules(), restored.grid().modules());
+        assertEquals(25, restored.testSignal("terrain"));
+        assertTrue(restored.isModuleActive(restored.grid().at(0, 0).orElseThrow()));
         var client = table();
         client.loadCustomOnly(original.getUpdateTag(REGISTRIES), REGISTRIES);
         assertEquals(original.grid().modules(), client.grid().modules());
+        assertEquals(25, client.testSignal("terrain"));
         assertTrue(restored.removeModule(0, 0));
         assertEquals(1, restored.grid().modules().size());
     }

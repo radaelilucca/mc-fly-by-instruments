@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Flight Safety Instruments: Build",
+      "label": "Aeronautics: Fly by Instruments — Build",
       "type": "process",
       "command": "${workspaceFolder}\\gradlew.bat",
       "args": [
@@ -27,7 +27,7 @@
       }
     },
     {
-      "label": "Flight Safety Instruments: Run NeoForge Client",
+      "label": "Aeronautics: Fly by Instruments — Run NeoForge Client",
       "type": "process",
       "command": "${workspaceFolder}\\gradlew.bat",
       "args": [

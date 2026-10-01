@@ -45,4 +45,16 @@ class PanelGridTest {
         assertFalse(grid.canFit(0, 0, Integer.MAX_VALUE, 1));
         assertTrue(grid.modules().isEmpty());
     }
+
+    @Test
+    void configuresModuleWithoutChangingItsFootprint() {
+        var grid = new PanelGrid();
+        assertTrue(grid.place(new PanelGrid.Module("lamp_2x1", 1, 0, 1, 2)));
+        assertTrue(grid.configureAt(1, 1, "terrain", 12.5));
+        var configured = grid.at(1, 1).orElseThrow();
+        assertEquals("terrain", configured.channel());
+        assertEquals(12.5, configured.threshold());
+        assertEquals(1, configured.width());
+        assertEquals(2, configured.height());
+    }
 }

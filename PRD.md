@@ -1,8 +1,8 @@
-# Product Requirements Document — Flight Safety Instruments
+# Product Requirements Document — Aeronautics: Fly by Instruments
 
 ## 1. Visão geral
 
-**Flight Safety Instruments** será um addon de segurança e instrumentação de voo para Create Aeronautics. O mod ajudará jogadores a detectar riscos durante o voo e construir sistemas de alerta físicos dentro das próprias contraptions.
+**Aeronautics: Fly by Instruments** será um addon de segurança e instrumentação de voo para Create Aeronautics. O mod ajudará jogadores a detectar riscos durante o voo e construir sistemas de alerta físicos dentro das próprias contraptions.
 
 O produto não será inicialmente um pacote geral de aviação. Seu foco será:
 
@@ -156,7 +156,7 @@ Durante o design e a construção desse painel, o projeto deverá consultar
 `reference/aeroworks-1.5.0.jar` como referência local para a experiência de
 mesa modular, slots predefinidos, seleção de módulos e highlight visual. Esse
 JAR é apenas material de referência; não é dependência de runtime ou compilação
-do Flight Safety Instruments, e nenhuma implementação ou asset deverá ser
+do Aeronautics: Fly by Instruments, e nenhuma implementação ou asset deverá ser
 copiado sem revisão de licença e necessidade explícita.
 
 Requisitos:
@@ -166,8 +166,8 @@ Requisitos:
   highlight visual do slot em edição antes da integração com os alertas finais.
 - Deve existir pelo menos um item/módulo de teste que possa ser criado pelo
   jogador e usado para validar a ocupação, edição e leitura dos slots.
-- A mesa e o item de teste devem funcionar com um canal/saída simulada, sem
-  depender do GPWS ou dos sensores finais.
+- A mesa e o módulo de lâmpada 1×1 devem funcionar com canal e saída simulados,
+  configuráveis via CC:Tweaked, sem depender do GPWS ou dos sensores finais.
 - slots predefinidos;
 - highlight visual do slot em edição;
 - módulos substituíveis, inicialmente incluindo lâmpadas e buzzers;
@@ -177,7 +177,10 @@ Requisitos:
 - eventos e métodos de API para ocupação, seleção, configuração e estado dos
   módulos aplicáveis.
 
-Os módulos exatos, acknowledge/mute, teste de lâmpadas, sons e integração com goggles/displays serão definidos durante o design detalhado.
+Os módulos finais, acknowledge/mute, sons e integração com goggles/displays
+serão definidos durante o design detalhado. A lâmpada 1×1 da Fase 1 é um
+atuador de teste por canal simulado; não representa ainda o módulo final de
+alerta GPWS.
 
 ## 5. API CC:Tweaked e integração vertical
 
@@ -252,9 +255,9 @@ Exemplos de escopo por funcionalidade:
 - CC:Tweaked `1.120.0+`;
 - Create: baseline de desenvolvimento atualmente configurada como `6.0.10+`, ainda sujeita à confirmação da versão mínima oficial.
 
-Identidade atual do scaffold:
+Identidade atual do projeto:
 
-- mod id: `flightsafetyinstruments`;
+- mod id: `aeronautics_fly_by_instruments`;
 - pacote base: `com.radaeli.flightsafetyinstruments`;
 - versão inicial do scaffold: `0.1.0`.
 
@@ -366,18 +369,20 @@ placeholder de ferro, item no inventário criativo e colocação sobre superfíc
 Esta iteração permite testar a base no mundo.
 
 Segunda iteração: grid virtual de 3×3 células por mesa, cada célula com
-16/3 pixels de largura. O primeiro módulo é uma lâmpada 1×1, com aparência
-placeholder e sem comportamento de iluminação/alerta. O placement é escolhido
-pelo ponto de clique na face exposta, com highlight da célula, rejeição de
-sobreposição e de footprints fora dos limites. Shift + clique de mão vazia
-retira o módulo. A ocupação persiste no mundo e é sincronizada com os clientes.
-As regras aceitam footprints maiores, como 1×2 e 2×2, mas apenas o item de
-lâmpada 1×1 existe nesta iteração. Cada mesa mantém seu próprio grid.
+16/3 pixels de largura. A base pode ser montada em qualquer face sólida,
+inclusive no teto. Os módulos de lâmpada 1×1 e 2×1 têm aparência placeholder e
+não possuem comportamento de iluminação/alerta. O módulo 2×1 alterna entre
+orientação horizontal e vertical pelo scroll enquanto o jogador mira na mesa.
+O placement é escolhido pelo ponto de clique na face exposta, com highlight do
+footprint e rejeição de sobreposição e de footprints fora dos limites. Uma
+Wrench do Create retira o módulo. A ocupação persiste no mundo e é sincronizada
+com os clientes. Cada mesa mantém seu próprio grid.
 
 O peripheral `modular_table` acompanha essa entrega: consulta do grid, dos
-módulos e da ocupação, preview de footprint e eventos de colocação/remoção.
-Contratos e exemplos estão em `docs/modular-table.md`. Configuração de canais,
-thresholds e atuação simulada continuam como entregas futuras da fase 1.
+módulos e da ocupação, preview de footprint, configuração de canal/threshold,
+injeção de sinal simulado, consulta de saída e eventos de colocação/remoção,
+configuração e mudança de sinal. Contratos e exemplos estão em
+`docs/modular-table.md`.
 
 Entregas:
 

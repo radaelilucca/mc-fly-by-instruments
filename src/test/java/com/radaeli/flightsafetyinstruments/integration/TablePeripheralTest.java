@@ -31,6 +31,18 @@ class TablePeripheralTest {
         assertFalse(peripheral.canFit(1, 1, 1, 1));
         assertTrue(peripheral.canFit(2, 2, 2, 2));
         assertFalse(peripheral.canFit(3, 3, 2, 2));
+        assertTrue(table.placeLamp2x1(1, 0, false));
+        assertThrows(LuaException.class, () -> peripheral.configureModule(2, 1, "terrain", 30));
+        assertTrue(peripheral.configureModule(1, 1, "terrain", 30));
+        assertTrue(peripheral.setTestSignal("terrain", 35));
+        var output = peripheral.getOutputs().getFirst();
+        assertEquals(true, output.get("active"));
+        assertEquals("terrain", output.get("channel"));
+        assertEquals(35.0, output.get("signal"));
+        assertTrue(peripheral.setTestSignal("terrain", 10));
+        assertEquals(false, peripheral.getOutputs().getFirst().get("active"));
+        assertThrows(LuaException.class, () -> peripheral.configureModule(1, 1, "", 1));
+        assertThrows(LuaException.class, () -> peripheral.setTestSignal("test", Double.NaN));
         assertThrows(LuaException.class, () -> peripheral.getSlot(0, 1));
         assertThrows(LuaException.class, () -> peripheral.getSlot(1, 4));
         assertThrows(LuaException.class, () -> peripheral.canFit(1, 1, 0, 1));

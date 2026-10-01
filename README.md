@@ -1,20 +1,24 @@
-# Flight Safety Instruments
+# Aeronautics: Fly by Instruments
 
 NeoForge 1.21.1 addon for Create Aeronautics. The first playable prototype is a
 thin Modular Table Base, using the vanilla iron block texture as a placeholder.
 It has the same 3-pixel thickness as a Copycat Panel and mounts against the
-clicked face, including on top of other blocks. Find it in the Functional
-Blocks creative tab or use `/give @s flightsafetyinstruments:modular_table_base`.
+clicked face, including on top of other blocks. Find it in the Aeronautics: Fly
+by Instruments creative tab or use `/give @s aeronautics_fly_by_instruments:modular_table_base`.
 
 Each table now has a 3×3 grid. Hold a Lamp Module and right-click the exposed
 surface to install it in the highlighted cell. Green indicates an available
-cell; red indicates an occupied cell. Sneak-right-click with both hands empty
-to retrieve a module. Installed modules persist when the world is saved and
-are returned when the table is broken. The lamp currently has placeholder
-appearance and no lighting or alert behavior.
+footprint; red indicates a collision or a footprint outside the grid. The 2×1
+Lamp Module rotates between horizontal and vertical with the mouse wheel while
+aiming at the table. Hold the Create Wrench and right-click an installed module
+to retrieve it. Tables can be mounted on any sturdy face, including ceilings.
+Installed modules persist when the world is saved and are returned when the
+table is broken. Lamps still have placeholder appearance and no lighting or
+alert behavior.
 
-Find the Lamp Module in the same creative tab, or use
-`/give @s flightsafetyinstruments:lamp_module`.
+Find both Lamp Modules in the same creative tab, or use
+`/give @s aeronautics_fly_by_instruments:lamp_module`.
+Use `/give @s aeronautics_fly_by_instruments:lamp_module_2x1` for the two-cell module.
 
 Development and CC:Tweaked API documentation: [docs/README.md](docs/README.md).
 Future instruments and alerts are defined in `PRD.md`.
