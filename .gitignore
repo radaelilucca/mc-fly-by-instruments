@@ -1,0 +1,12 @@
+/.gradle/
+/.gradle-flightsafetyinstruments/
+/build/
+/run/
+/logs/
+/crash-reports/
+/.idea/
+/repo/
+*.log
+libs/*.jar
+!libs/.gitkeep
+reference/*.jar

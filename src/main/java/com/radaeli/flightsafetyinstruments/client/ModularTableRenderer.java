@@ -1,0 +1,106 @@
+package com.radaeli.flightsafetyinstruments.client;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import com.radaeli.flightsafetyinstruments.block.ModBlocks;
+import com.radaeli.flightsafetyinstruments.block.ModularTableBaseBlock;
+import com.radaeli.flightsafetyinstruments.panel.ModularTableBlockEntity;
+import com.radaeli.flightsafetyinstruments.panel.PanelCoordinates;
+import com.radaeli.flightsafetyinstruments.panel.PanelGrid;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+
+public final class ModularTableRenderer implements BlockEntityRenderer<ModularTableBlockEntity> {
+    private static final double SURFACE = 3.0 / 16;
+    private static final double CELL = 1.0 / PanelGrid.SIZE;
+    private final BlockRenderDispatcher blocks;
+
+    public ModularTableRenderer(BlockEntityRendererProvider.Context context) {
+        blocks = context.getBlockRenderDispatcher();
+    }
+
+    @Override
+    public void render(ModularTableBlockEntity table, float partialTick, PoseStack poses,
+                       MultiBufferSource buffers, int light, int overlay) {
+        var facing = table.getBlockState().getValue(ModularTableBaseBlock.FACING);
+        poses.pushPose();
+        orient(poses, facing);
+        for (var module : table.grid().modules()) {
+            // Inactive vanilla lamp texture is a temporary representation, not alert behavior.
+            cube(poses, buffers, Blocks.REDSTONE_LAMP.defaultBlockState(),
+                    module.column() * CELL + 0.06, SURFACE, module.row() * CELL + 0.06,
+                    module.width() * CELL - 0.12, 2.0 / 16, module.height() * CELL - 0.12, light, overlay);
+        }
+
+        var minecraft = Minecraft.getInstance();
+        var player = minecraft.player;
+        boolean holdingModule = player != null && (player.getMainHandItem().is(ModBlocks.LAMP_MODULE.get())
+                || player.getOffhandItem().is(ModBlocks.LAMP_MODULE.get()));
+        boolean removing = player != null && player.isShiftKeyDown()
+                && player.getMainHandItem().isEmpty() && player.getOffhandItem().isEmpty();
+        if ((holdingModule || removing) && minecraft.hitResult instanceof BlockHitResult hit
+                && hit.getBlockPos().equals(table.getBlockPos()) && hit.getDirection() == facing) {
+            for (int i = 0; i <= PanelGrid.SIZE; i++) {
+                double line = Math.min(1 - 0.012, Math.max(0, i * CELL - 0.006));
+                cube(poses, buffers, Blocks.GRAY_CONCRETE.defaultBlockState(),
+                        line, SURFACE + 0.001, 0, 0.012, 0.004, 1, light, overlay);
+                cube(poses, buffers, Blocks.GRAY_CONCRETE.defaultBlockState(),
+                        0, SURFACE + 0.001, line, 1, 0.004, 0.012, light, overlay);
+            }
+            var point = PanelCoordinates.toPanel(facing, hit.getLocation().subtract(Vec3.atLowerCornerOf(table.getBlockPos())));
+            int column = PanelCoordinates.cell(point.x);
+            int row = PanelCoordinates.cell(point.z);
+            if (column >= 0 && row >= 0) {
+                boolean occupied = table.grid().at(column, row).isPresent();
+                var color = (occupied && !removing ? Blocks.RED_CONCRETE : Blocks.LIME_CONCRETE).defaultBlockState();
+                double x = column * CELL + 0.012;
+                double z = row * CELL + 0.012;
+                double size = CELL - 0.024;
+                cube(poses, buffers, color, x, SURFACE + 0.005, z, size, 0.006, 0.016, light, overlay);
+                cube(poses, buffers, color, x, SURFACE + 0.005, z + size - 0.016, size, 0.006, 0.016, light, overlay);
+                cube(poses, buffers, color, x, SURFACE + 0.005, z, 0.016, 0.006, size, light, overlay);
+                cube(poses, buffers, color, x + size - 0.016, SURFACE + 0.005, z, 0.016, 0.006, size, light, overlay);
+            }
+        }
+        poses.popPose();
+    }
+
+    private void cube(PoseStack poses, MultiBufferSource buffers, BlockState state,
+                      double x, double y, double z, double width, double height, double depth, int light, int overlay) {
+        poses.pushPose();
+        poses.translate(x, y, z);
+        poses.scale((float) width, (float) height, (float) depth);
+        blocks.renderSingleBlock(state, poses, buffers, light, overlay);
+        poses.popPose();
+    }
+
+    private static void orient(PoseStack poses, Direction facing) {
+        poses.translate(0.5, 0.5, 0.5);
+        switch (facing) {
+            case UP -> { }
+            case DOWN -> poses.mulPose(Axis.XP.rotationDegrees(180));
+            case NORTH -> poses.mulPose(Axis.XP.rotationDegrees(-90));
+            case SOUTH -> {
+                poses.mulPose(Axis.YP.rotationDegrees(180));
+                poses.mulPose(Axis.XP.rotationDegrees(-90));
+            }
+            case WEST -> {
+                poses.mulPose(Axis.YP.rotationDegrees(90));
+                poses.mulPose(Axis.XP.rotationDegrees(-90));
+            }
+            case EAST -> {
+                poses.mulPose(Axis.YP.rotationDegrees(-90));
+                poses.mulPose(Axis.XP.rotationDegrees(-90));
+            }
+        }
+        poses.translate(-0.5, -0.5, -0.5);
+    }
+}
