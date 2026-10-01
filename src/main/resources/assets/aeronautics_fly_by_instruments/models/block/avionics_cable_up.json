@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/block","textures":{"cable":"minecraft:block/black_concrete","particle":"minecraft:block/black_concrete"},"elements":[{"from":[6,8,6],"to":[10,16,10],"faces":{"down":{"texture":"#cable"},"up":{"texture":"#cable"},"north":{"texture":"#cable"},"south":{"texture":"#cable"},"west":{"texture":"#cable"},"east":{"texture":"#cable"}}}]}

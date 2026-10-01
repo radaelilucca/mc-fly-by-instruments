@@ -96,14 +96,22 @@ Thresholds, tempos de confirmação, histerese e prioridade final de cada alerta
 
 ### 4.2 Radar Altimeter
 
-O Radar Altimeter medirá a distância entre a aeronave e a superfície diretamente abaixo dela, em AGL.
+O Radar Altimeter mede clearance/AGL a partir do centro da face inferior do próprio bloco. Sua orientação é fixa no eixo inferior local e acompanha a inclinação/rotação do sublevel; ele também funciona quando colocado fora de uma contraption.
 
 Características esperadas:
 
-- bloco físico orientado para baixo;
+- bloco físico com a face emissora inferior visualmente identificável;
+- nove casts: um central e oito em anel, com abertura de 20° em torno do eixo inferior local;
+- consolidar os retornos válidos pela mediana; pelo menos três dos nove casts precisam atingir blocos com colisão;
+- incluir terreno, construções e outras contraptions; ignorar o sublevel hospedeiro e entidades;
+- medir distância decimal em blocos entre a face inferior e o primeiro hit;
+- alcance máximo inicial de 128 blocos, configurável pelo servidor;
+- amostragem inicial a cada 5 ticks, configurável pelo servidor;
+- não carregar chunks: casts sem hit ou que alcancem uma fronteira descarregada não contam; menos de três retornos válidos produz `UNAVAILABLE`;
+- erros de execução produzem `FAILED`;
 - leitura relativa ao terreno, não à altitude global;
-- integração com o GPWS e CC:Tweaked;
-- tratamento definido para ausência de superfície, chunks não carregados e alvos inválidos.
+- peripheral CC:Tweaked independente `radar_altimeter`, com `getReading()` retornando estado, valor quando válido, unidade e tick da amostra;
+- emitir `radar_altimeter_reading_changed` com o snapshot completo quando estado ou valor mudarem; mudança apenas do tick não emite evento.
 
 ### 4.3 Terrain Scanner
 
@@ -148,7 +156,15 @@ Requisitos:
 
 O cabo acompanhará a contraption dentro do sublevel. A topologia física deverá ser significativa para a construção, sem exigir configuração manual de frequências.
 
-### 4.6 Annunciator Panel
+### 4.6 Network Bridge
+
+A Network Bridge será o gateway CC:Tweaked para consultar a topologia completa alcançável pela rede de Avionics Cable. Cada instrumento e componente continuará expondo sua própria peripheral independente; a bridge não substitui nem representa os métodos/eventos locais desses dispositivos.
+
+- peripheral `avionics_network_bridge` com status, lista de endpoints e evento de mudança da rede;
+- a `modular_table` expõe somente grid, módulos, canais e eventos próprios, sem API agregada da rede;
+- o Radar Altimeter continua acessível diretamente por sua própria peripheral, mesmo conectado à rede.
+
+### 4.7 Annunciator Panel
 
 O Annunciator Panel será uma mesa modular inspirada nas mesas do Aeroworks.
 
@@ -403,6 +419,8 @@ finais.
 
 ### Fase 2 — Modelo comum e Avionics Cable Network
 
+**Implementação entregue:** cabo físico, contratos comuns e descoberta de topologia estão implementados. O acesso agregado CC:Tweaked é responsabilidade da Network Bridge; a mesa expõe apenas seus próprios módulos e eventos.
+
 Objetivo: estabelecer os contratos de dados e a conexão física que sustentarão
 os instrumentos, o GPWS e o painel.
 
@@ -426,16 +444,29 @@ de dados comum e API pública de conectividade.
 
 Objetivo: produzir leituras confiáveis para o GPWS.
 
-Entregas:
+#### 3.0 — Network Bridge
 
-- Radar Altimeter;
+- adicionar bloco/peripheral `avionics_network_bridge` antes dos sensores;
+- mover status, descoberta, enumeração e evento de topologia para a bridge;
+- remover a API agregada da peripheral `modular_table`.
+
+#### 3.1 — Radar Altimeter
+
+- bloco fixo com eixo emissor na face inferior local, transformado com o sublevel;
+- nove casts com cone de 20° de meia-abertura, mediana e quorum mínimo de três retornos;
+- alcance máximo inicial 128 blocos e intervalo de amostragem inicial 5 ticks, ambos configuráveis;
+- hits de colisão em terreno, estruturas e outras contraptions; ignorar host e entidades;
+- `UNAVAILABLE` para ausência de superfície, chunk descarregado ou menos de três hits; `FAILED` para erro de execução;
+- peripheral, snapshot, evento, documentação Lua e testes automatizados CC:Tweaked.
+
+#### 3.2 — Demais instrumentos
+
 - Terrain Scanner simples;
 - Terrain Scanner avançado;
 - integração com Velocity Sensor;
 - integração com Gimbal Sensor;
-- transformação correta de posição/orientação no sublevel;
-- limites de alcance e resolução por configuração.
-- peripherals, eventos e testes CC:Tweaked dos instrumentos e leituras.
+- transformação correta de posições/orientações no sublevel;
+- limites de alcance/resolução configuráveis e peripherals, eventos e testes correspondentes.
 
 Saída da fase: sensores testáveis individualmente por jogo e por CC:Tweaked.
 

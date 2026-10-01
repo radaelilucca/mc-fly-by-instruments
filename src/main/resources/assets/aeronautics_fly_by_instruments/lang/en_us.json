@@ -1,6 +1,9 @@
 {
   "modmenu.nameTranslation.aeronautics_fly_by_instruments": "Aeronautics: Fly by Instruments",
   "block.aeronautics_fly_by_instruments.modular_table_base": "Modular Table Base",
+  "block.aeronautics_fly_by_instruments.avionics_cable": "Avionics Cable",
+  "block.aeronautics_fly_by_instruments.network_bridge": "Avionics Network Bridge",
+  "block.aeronautics_fly_by_instruments.radar_altimeter": "Radar Altimeter",
   "itemGroup.aeronautics_fly_by_instruments": "Aeronautics: Fly by Instruments",
   "item.aeronautics_fly_by_instruments.lamp_module": "Lamp Module (1×1)",
   "item.aeronautics_fly_by_instruments.lamp_module_2x1": "Lamp Module (2×1)",

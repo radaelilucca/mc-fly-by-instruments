@@ -49,6 +49,15 @@ class TablePeripheralTest {
     }
 
     @Test
+    void tablePeripheralDoesNotExposeNetworkTopology() throws Exception {
+        var peripheral = table().peripheral();
+        assertThrows(NoSuchMethodException.class, () -> TablePeripheral.class.getMethod("getNetworkStatus"));
+        assertThrows(NoSuchMethodException.class, () -> TablePeripheral.class.getMethod("getConnectedDevices"));
+        assertNotNull(TablePeripheral.class.getMethod("getGridSize")
+                .getAnnotation(dan200.computercraft.api.lua.LuaFunction.class));
+    }
+
+    @Test
     void publishesAttachmentActionAndModuleAndStopsAfterDetach() {
         var table = table();
         var peripheral = table.peripheral();

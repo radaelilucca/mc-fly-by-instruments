@@ -22,8 +22,12 @@ public final class TablePeripheral implements IPeripheral {
     @Override public boolean equals(IPeripheral other) {
         return other instanceof TablePeripheral peripheral && peripheral.table == table;
     }
-    @Override public void attach(IComputerAccess computer) { computers.add(computer); }
-    @Override public void detach(IComputerAccess computer) { computers.remove(computer); }
+    @Override public void attach(IComputerAccess computer) {
+        computers.add(computer);
+    }
+    @Override public void detach(IComputerAccess computer) {
+        computers.remove(computer);
+    }
 
     @LuaFunction(mainThread = true)
     public Map<String, Object> getGridSize() {

@@ -1,6 +1,7 @@
 package com.radaeli.flightsafetyinstruments.panel;
 
 import com.radaeli.flightsafetyinstruments.block.ModBlocks;
+import com.radaeli.flightsafetyinstruments.avionics.AvionicsEndpoint;
 import com.radaeli.flightsafetyinstruments.integration.TablePeripheral;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -14,7 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class ModularTableBlockEntity extends BlockEntity {
+public final class ModularTableBlockEntity extends BlockEntity implements AvionicsEndpoint {
     private PanelGrid grid = new PanelGrid();
     private final Map<String, Double> testSignals = new HashMap<>();
     private final TablePeripheral peripheral = new TablePeripheral(this);
@@ -25,6 +26,7 @@ public final class ModularTableBlockEntity extends BlockEntity {
 
     public PanelGrid grid() { return grid; }
     public TablePeripheral peripheral() { return peripheral; }
+    @Override public String avionicsType() { return "modular_table"; }
     public boolean configureModule(int column, int row, String channel, double threshold) {
         if (channel == null || channel.isBlank() || channel.length() > 64 || !Double.isFinite(threshold)) return false;
         if (grid.at(column, row).filter(module -> module.type().equals("lamp")).isEmpty()) return false;

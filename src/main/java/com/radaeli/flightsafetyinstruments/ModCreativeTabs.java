@@ -18,6 +18,9 @@ public final class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModBlocks.MODULAR_TABLE_BASE_ITEM.get()))
                     .displayItems((parameters, output) -> {
                         output.accept(ModBlocks.MODULAR_TABLE_BASE_ITEM);
+                        output.accept(ModBlocks.AVIONICS_CABLE_ITEM);
+                        output.accept(ModBlocks.NETWORK_BRIDGE_ITEM);
+                        output.accept(ModBlocks.RADAR_ALTIMETER_ITEM);
                         output.accept(ModBlocks.LAMP_MODULE);
                         output.accept(ModBlocks.LAMP_MODULE_2X1);
                     })

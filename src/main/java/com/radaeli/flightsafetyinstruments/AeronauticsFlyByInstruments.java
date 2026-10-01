@@ -2,8 +2,11 @@ package com.radaeli.flightsafetyinstruments;
 
 import com.mojang.logging.LogUtils;
 import com.radaeli.flightsafetyinstruments.block.ModBlocks;
+import com.radaeli.flightsafetyinstruments.avionics.NetworkBridgeBlockEntity;
+import com.radaeli.flightsafetyinstruments.sensor.RadarAltimeterBlockEntity;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import com.radaeli.flightsafetyinstruments.config.ModConfig;
 import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
 import dan200.computercraft.api.peripheral.PeripheralCapability;
@@ -26,6 +29,7 @@ public final class AeronauticsFlyByInstruments {
         ModBlocks.ITEMS.register(modEventBus);
         ModBlocks.BLOCK_ENTITIES.register(modEventBus);
         ModCreativeTabs.TABS.register(modEventBus);
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ModConfig.SPEC);
         modEventBus.addListener(PanelNetwork::registerPayloads);
         modEventBus.addListener(this::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(PanelNetwork::onPlayerLoggedIn);
@@ -39,5 +43,9 @@ public final class AeronauticsFlyByInstruments {
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.MODULAR_TABLE_ENTITY.get(),
                 (table, side) -> table.peripheral());
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.NETWORK_BRIDGE_ENTITY.get(),
+                (bridge, side) -> bridge.peripheral());
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.RADAR_ALTIMETER_ENTITY.get(),
+                (altimeter, side) -> altimeter.peripheral());
     }
 }

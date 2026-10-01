@@ -1,7 +1,8 @@
 # Aeronautics: Fly by Instruments
 
-NeoForge 1.21.1 addon for Create Aeronautics. The first playable prototype is a
-thin Modular Table Base, using the vanilla iron block texture as a placeholder.
+NeoForge 1.21.1 addon for Create Aeronautics. The current prototype includes a
+thin Modular Table Base, Avionics Cable Network, Network Bridge, and Radar
+Altimeter.
 It has the same 3-pixel thickness as a Copycat Panel and mounts against the
 clicked face, including on top of other blocks. Find it in the Aeronautics: Fly
 by Instruments creative tab or use `/give @s aeronautics_fly_by_instruments:modular_table_base`.
@@ -15,6 +16,13 @@ to retrieve it. Tables can be mounted on any sturdy face, including ceilings.
 Installed modules persist when the world is saved and are returned when the
 table is broken. Lamps still have placeholder appearance and no lighting or
 alert behavior.
+
+Connect Avionics Cables to build a data network and attach a Network Bridge to
+query its topology from CC:Tweaked. The Radar Altimeter is an independent
+peripheral that reports clearance from its lower face using multi-ray sampling.
+Use `/give @s aeronautics_fly_by_instruments:avionics_cable`,
+`/give @s aeronautics_fly_by_instruments:network_bridge`, and
+`/give @s aeronautics_fly_by_instruments:radar_altimeter`.
 
 Find both Lamp Modules in the same creative tab, or use
 `/give @s aeronautics_fly_by_instruments:lamp_module`.

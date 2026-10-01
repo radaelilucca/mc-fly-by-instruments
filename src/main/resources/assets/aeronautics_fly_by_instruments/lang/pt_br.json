@@ -1,5 +1,8 @@
 {
   "block.aeronautics_fly_by_instruments.modular_table_base": "Base da Mesa Modular",
+  "block.aeronautics_fly_by_instruments.avionics_cable": "Cabo de Aviônicos",
+  "block.aeronautics_fly_by_instruments.network_bridge": "Ponte da Rede de Aviônicos",
+  "block.aeronautics_fly_by_instruments.radar_altimeter": "Altímetro Radar",
   "itemGroup.aeronautics_fly_by_instruments": "Aeronautics: Fly by Instruments",
   "item.aeronautics_fly_by_instruments.lamp_module": "Módulo de Lâmpada (1×1)",
   "item.aeronautics_fly_by_instruments.lamp_module_2x1": "Módulo de Lâmpada (2×1)",
