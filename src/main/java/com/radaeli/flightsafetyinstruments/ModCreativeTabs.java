@@ -21,6 +21,8 @@ public final class ModCreativeTabs {
                         output.accept(ModBlocks.AVIONICS_CABLE_ITEM);
                         output.accept(ModBlocks.NETWORK_BRIDGE_ITEM);
                         output.accept(ModBlocks.RADAR_ALTIMETER_ITEM);
+                        output.accept(ModBlocks.TERRAIN_SCANNER_ITEM);
+                        output.accept(ModBlocks.TERRAIN_SCANNER_ADVANCED_ITEM);
                         output.accept(ModBlocks.LAMP_MODULE);
                         output.accept(ModBlocks.LAMP_MODULE_2X1);
                     })

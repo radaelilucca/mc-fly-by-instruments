@@ -117,10 +117,10 @@ Características esperadas:
 
 O Terrain Scanner será um bloco físico, normalmente colocado no nariz da aeronave.
 
-Haverá duas versões funcionais:
+Haverá duas versões funcionais, orientadas para a frente segundo a orientação local do bloco e acompanhando a atitude do sublevel:
 
-- **Scanner simples:** um raycast frontal único;
-- **Scanner avançado:** varredura em hemisfério frontal com abertura e resolução configuráveis.
+- **Scanner simples:** nove raycasts em cone frontal de abertura total fixa de 90°;
+- **Scanner avançado:** distribuição aproximadamente uniforme de 9 a 81 raycasts, com abertura total configurável de 30° a 180° (padrão 90°). A densidade cresce automaticamente com a área angular; o jogador não configura a contagem.
 
 O scanner detectará como possíveis obstáculos:
 
@@ -128,7 +128,9 @@ O scanner detectará como possíveis obstáculos:
 - estruturas construídas;
 - outras contraptions.
 
-O alcance máximo será limitado pelo arquivo de configuração do mod. O scanner deverá ignorar a própria contraption ao interpretar os resultados.
+A abertura avançada será configurável por interface no jogo e por CC:Tweaked, validada e aplicada autoritativamente no servidor e salva por bloco. Ambos os scanners fornecem snapshots com contatos por raio, distância, direção relativa, quantidade de raios concluídos, cobertura e game time. Hits são genéricos, sem classificação do tipo de obstáculo. Uma varredura sem hits mas com cobertura retorna `VALID` e lista vazia; cobertura parcial mantém os contatos conhecidos; cobertura zero retorna `UNAVAILABLE`; erros retornam `FAILED`.
+
+Os scans usam o intervalo global configurável (padrão 5 ticks), têm alcance máximo global configurável (padrão 128 blocos), não carregam chunks e tratam fronteiras descarregadas como cobertura incompleta. Ambas as variantes são endpoints da Avionics Cable Network e têm peripherals próprios `terrain_scanner` e `terrain_scanner_advanced`; a integração com o GPWS será implementada em fase posterior.
 
 ### 4.4 Integração com sensores existentes
 
@@ -461,12 +463,20 @@ Objetivo: produzir leituras confiáveis para o GPWS.
 
 #### 3.2 — Demais instrumentos
 
-- Terrain Scanner simples;
-- Terrain Scanner avançado;
 - integração com Velocity Sensor;
 - integração com Gimbal Sensor;
 - transformação correta de posições/orientações no sublevel;
 - limites de alcance/resolução configuráveis e peripherals, eventos e testes correspondentes.
+
+#### 3.3 — Terrain Scanner
+
+- scanner simples fixo com nove raycasts em cone de 90°;
+- scanner avançado com abertura total ajustável de 30° a 180° (padrão 90°) e contagem automática de 9 a 81 raycasts;
+- interface de configuração no jogo e API CC:Tweaked autoritativas no servidor, com persistência por bloco;
+- alcance máximo padrão 128 blocos, intervalo global de 5 ticks, ambos configuráveis; sem carregamento forçado de chunks;
+- contatos de colisão genéricos para terreno, estruturas e outras contraptions, ignorando o sublevel hospedeiro e entidades;
+- snapshot com status, contatos, cobertura, raios concluídos/total e game time; peripheral/eventos CC:Tweaked e inclusão na rede física;
+- testes automatizados de geometria, estados/cobertura, configuração, persistência e API.
 
 Saída da fase: sensores testáveis individualmente por jogo e por CC:Tweaked.
 

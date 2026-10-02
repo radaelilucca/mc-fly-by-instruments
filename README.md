@@ -31,6 +31,13 @@ Use `/give @s aeronautics_fly_by_instruments:lamp_module_2x1` for the two-cell m
 Development and CC:Tweaked API documentation: [docs/README.md](docs/README.md).
 Future instruments and alerts are defined in `PRD.md`.
 
+Place a Terrain Scanner facing the direction you want to sample: the standard
+version sweeps a fixed forward cone, while the Advanced version lets you adjust
+its total opening from 30° to 180° in-game. Both report obstacle contacts to
+CC:Tweaked and can connect to the Avionics Cable Network. Use
+`/give @s aeronautics_fly_by_instruments:terrain_scanner` or
+`/give @s aeronautics_fly_by_instruments:terrain_scanner_advanced`.
+
 ## Development baseline
 
 - Java 21

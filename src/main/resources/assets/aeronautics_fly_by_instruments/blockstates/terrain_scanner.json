@@ -1,0 +1,1 @@
+{"variants":{"facing=north":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner"},"facing=east":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner","y":90},"facing=south":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner","y":180},"facing=west":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner","y":270}}}

@@ -10,6 +10,9 @@ import com.radaeli.flightsafetyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.flightsafetyinstruments.avionics.NetworkBridgeBlockEntity;
 import com.radaeli.flightsafetyinstruments.sensor.RadarAltimeterBlockEntity;
 import com.radaeli.flightsafetyinstruments.sensor.RadarAltimeterBlock;
+import com.radaeli.flightsafetyinstruments.sensor.TerrainScannerBlock;
+import com.radaeli.flightsafetyinstruments.sensor.AdvancedTerrainScannerBlock;
+import com.radaeli.flightsafetyinstruments.sensor.TerrainScannerBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -46,6 +49,15 @@ public final class ModBlocks {
                     BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(2.0f)));
     public static final DeferredItem<BlockItem> RADAR_ALTIMETER_ITEM =
             ITEMS.registerSimpleBlockItem(RADAR_ALTIMETER);
+    public static final DeferredBlock<TerrainScannerBlock> TERRAIN_SCANNER =
+            BLOCKS.register("terrain_scanner", () -> new TerrainScannerBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OBSERVER).strength(2.0f)));
+    public static final DeferredItem<BlockItem> TERRAIN_SCANNER_ITEM = ITEMS.registerSimpleBlockItem(TERRAIN_SCANNER);
+    public static final DeferredBlock<AdvancedTerrainScannerBlock> TERRAIN_SCANNER_ADVANCED =
+            BLOCKS.register("terrain_scanner_advanced", () -> new AdvancedTerrainScannerBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OBSERVER).strength(2.0f)));
+    public static final DeferredItem<BlockItem> TERRAIN_SCANNER_ADVANCED_ITEM =
+            ITEMS.registerSimpleBlockItem(TERRAIN_SCANNER_ADVANCED);
     public static final DeferredItem<LampModuleItem> LAMP_MODULE =
             ITEMS.register("lamp_module", () -> new LampModuleItem(new Item.Properties()));
     public static final DeferredItem<LampModule2x1Item> LAMP_MODULE_2X1 =
@@ -59,6 +71,9 @@ public final class ModBlocks {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RadarAltimeterBlockEntity>> RADAR_ALTIMETER_ENTITY =
             BLOCK_ENTITIES.register("radar_altimeter", () -> BlockEntityType.Builder.of(
                     RadarAltimeterBlockEntity::new, RADAR_ALTIMETER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TerrainScannerBlockEntity>> TERRAIN_SCANNER_ENTITY =
+            BLOCK_ENTITIES.register("terrain_scanner", () -> BlockEntityType.Builder.of(
+                    TerrainScannerBlockEntity::new, TERRAIN_SCANNER.get(), TERRAIN_SCANNER_ADVANCED.get()).build(null));
 
     private ModBlocks() {}
 }

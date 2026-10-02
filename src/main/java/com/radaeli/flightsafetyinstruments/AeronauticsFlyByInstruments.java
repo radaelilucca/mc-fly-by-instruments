@@ -15,7 +15,9 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import com.radaeli.flightsafetyinstruments.client.PanelClient;
 import com.radaeli.flightsafetyinstruments.client.PanelInputHandler;
+import com.radaeli.flightsafetyinstruments.client.TerrainScannerDebug;
 import com.radaeli.flightsafetyinstruments.network.PanelNetwork;
+import com.radaeli.flightsafetyinstruments.network.TerrainScannerNetwork;
 import net.neoforged.neoforge.common.NeoForge;
 
 /** Main entry point for Aeronautics: Fly by Instruments. */
@@ -31,11 +33,17 @@ public final class AeronauticsFlyByInstruments {
         ModCreativeTabs.TABS.register(modEventBus);
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ModConfig.SPEC);
         modEventBus.addListener(PanelNetwork::registerPayloads);
+        modEventBus.addListener(TerrainScannerNetwork::registerPayloads);
         modEventBus.addListener(this::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(PanelNetwork::onPlayerLoggedIn);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             PanelClient.register(modEventBus);
             NeoForge.EVENT_BUS.addListener(PanelInputHandler::onMouseScroll);
+            if (!FMLEnvironment.production) {
+                modEventBus.addListener(TerrainScannerDebug::registerKeyMapping);
+                NeoForge.EVENT_BUS.addListener(TerrainScannerDebug::onClientTick);
+                NeoForge.EVENT_BUS.addListener(TerrainScannerDebug::onRenderLevel);
+            }
         }
         LOGGER.info("Aeronautics: Fly by Instruments loaded");
     }
@@ -47,5 +55,7 @@ public final class AeronauticsFlyByInstruments {
                 (bridge, side) -> bridge.peripheral());
         event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.RADAR_ALTIMETER_ENTITY.get(),
                 (altimeter, side) -> altimeter.peripheral());
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.TERRAIN_SCANNER_ENTITY.get(),
+                (scanner, side) -> scanner.peripheral());
     }
 }

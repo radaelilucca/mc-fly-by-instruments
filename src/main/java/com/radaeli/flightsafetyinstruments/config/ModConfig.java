@@ -13,6 +13,9 @@ public final class ModConfig {
     public static final ModConfigSpec.IntValue RADAR_ALTIMETER_MAX_RANGE = BUILDER
             .comment("Maximum Radar Altimeter range in blocks.")
             .defineInRange("radarAltimeterMaxRange", 128, 1, 4096);
+    public static final ModConfigSpec.IntValue TERRAIN_SCANNER_MAX_RANGE = BUILDER
+            .comment("Maximum Terrain Scanner range in blocks.")
+            .defineInRange("terrainScannerMaxRange", 128, 1, 4096);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private ModConfig() {}
