@@ -30,9 +30,11 @@ def createJar = configuredFile('create_jar')
 def aeronauticsJar = configuredFile('aeronautics_jar')
 def sableJar = configuredFile('sable_jar')
 def computercraftJar = configuredFile('computercraft_jar')
+def rUiLibJar = configuredFile('r_ui_lib_jar')
 
 def existingDependencyFiles = {
-    [createJar, aeronauticsJar, sableJar, computercraftJar].findAll { it != null && it.isFile() }
+    [createJar, aeronauticsJar, sableJar, computercraftJar, rUiLibJar]
+            .findAll { it != null && it.isFile() }
 }
 
 def aeronauticsCompileJarsDirectory = layout.buildDirectory.dir('local-mod-dependencies/aeronautics')
@@ -69,13 +71,14 @@ configurations {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
+    testCompileOnly files(existingDependencyFiles)
     testImplementation files(computercraftJar)
     compileOnly files(existingDependencyFiles)
     compileOnly files { fileTree(aeronauticsCompileJarsDirectory.get().asFile) { include '*.jar' } }
     compileOnly files { fileTree(sableCompileJarsDirectory.get().asFile) { include '*.jar' } }
 
     // These are development-only runtime inputs. The addon JAR never bundles
-    // Create, Aeronautics, Sable, or CC:Tweaked.
+    // Create, Aeronautics, Sable, CC:Tweaked, or R-Ui Lib.
     localRuntime files(existingDependencyFiles)
 }
 
@@ -136,7 +139,8 @@ def generateModMetadata = tasks.register('generateModMetadata', ProcessResources
         create_version_range       : create_version_range,
         aeronautics_version_range  : aeronautics_version_range,
         sable_version_range        : sable_version_range,
-        computercraft_version_range: computercraft_version_range
+        computercraft_version_range: computercraft_version_range,
+        r_ui_lib_version_range     : r_ui_lib_version_range
     ]
     inputs.properties replaceProperties
     expand replaceProperties

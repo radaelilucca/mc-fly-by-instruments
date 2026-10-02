@@ -8,7 +8,7 @@
   "block.aeronautics_fly_by_instruments.terrain_scanner": "Terrain Scanner",
   "block.aeronautics_fly_by_instruments.terrain_scanner_advanced": "Advanced Terrain Scanner",
   "gui.aeronautics_fly_by_instruments.terrain_scanner.title": "Advanced Terrain Scanner",
-  "gui.aeronautics_fly_by_instruments.terrain_scanner.opening_angle": "Opening angle: %s°",
+  "gui.aeronautics_fly_by_instruments.terrain_scanner.opening_angle": "Opening angle (degrees)",
   "gui.aeronautics_fly_by_instruments.terrain_scanner.reset": "Reset",
   "gui.aeronautics_fly_by_instruments.terrain_scanner.close": "Done",
   "gui.aeronautics_fly_by_instruments.terrain_scanner.range": "Range: 30°–180°",
