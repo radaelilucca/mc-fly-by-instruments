@@ -33,7 +33,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.Shapes;
 
 /** Thin mounting surface with a persistent virtual grid. */
-public final class ModularTableBaseBlock extends Block implements EntityBlock {
+public final class ModularTableBaseBlock extends Block implements EntityBlock, AvionicsWrenchable {
     public static final MapCodec<ModularTableBaseBlock> CODEC = simpleCodec(ModularTableBaseBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     private static final ResourceLocation CREATE_WRENCH_ID =

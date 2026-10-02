@@ -25,7 +25,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 /** Physical computer that evaluates the avionics network's GPWS channels. */
-public final class GpwsComputerBlock extends BaseEntityBlock {
+public final class GpwsComputerBlock extends BaseEntityBlock implements AvionicsWrenchable {
     public static final MapCodec<GpwsComputerBlock> CODEC = simpleCodec(GpwsComputerBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 

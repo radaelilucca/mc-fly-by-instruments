@@ -18,7 +18,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /** Physical data cable. Adjacent cable segments and avionics endpoints connect automatically. */
-public final class AvionicsCableBlock extends Block {
+public final class AvionicsCableBlock extends Block implements AvionicsWrenchable {
     public static final Map<Direction, BooleanProperty> CONNECTIONS = new EnumMap<>(Direction.class);
     private static final VoxelShape CORE = box(6, 6, 6, 10, 10, 10);
     private static final Map<Direction, VoxelShape> ARMS = new EnumMap<>(Direction.class);

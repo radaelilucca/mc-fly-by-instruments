@@ -1,6 +1,7 @@
 package com.radaeli.aeronauticsflybyinstruments.sensor;
 
 import com.mojang.serialization.MapCodec;
+import com.radaeli.aeronauticsflybyinstruments.block.AvionicsWrenchable;
 import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import org.jetbrains.annotations.Nullable;
 
 /** Common placement, orientation, and server ticker behavior for both scanner blocks. */
-public abstract class AbstractTerrainScannerBlock extends BaseEntityBlock {
+public abstract class AbstractTerrainScannerBlock extends BaseEntityBlock implements AvionicsWrenchable {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     protected AbstractTerrainScannerBlock(Properties properties) {

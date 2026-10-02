@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Physical CC:Tweaked gateway for querying an Avionics Cable network. */
-public final class NetworkBridgeBlock extends BaseEntityBlock {
+public final class NetworkBridgeBlock extends BaseEntityBlock implements AvionicsWrenchable {
     public static final MapCodec<NetworkBridgeBlock> CODEC = simpleCodec(NetworkBridgeBlock::new);
 
     public NetworkBridgeBlock(Properties properties) {

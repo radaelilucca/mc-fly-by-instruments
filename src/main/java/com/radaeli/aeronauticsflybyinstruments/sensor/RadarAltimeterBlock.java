@@ -1,6 +1,7 @@
 package com.radaeli.aeronauticsflybyinstruments.sensor;
 
 import com.mojang.serialization.MapCodec;
+import com.radaeli.aeronauticsflybyinstruments.block.AvionicsWrenchable;
 import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -13,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /** Fixed-orientation range sensor whose marked lower face emits the measurement beam. */
-public final class RadarAltimeterBlock extends BaseEntityBlock {
+public final class RadarAltimeterBlock extends BaseEntityBlock implements AvionicsWrenchable {
     public static final MapCodec<RadarAltimeterBlock> CODEC = simpleCodec(RadarAltimeterBlock::new);
 
     public RadarAltimeterBlock(Properties properties) {
