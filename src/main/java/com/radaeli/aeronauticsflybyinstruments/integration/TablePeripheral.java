@@ -60,8 +60,8 @@ public final class TablePeripheral implements IPeripheral {
         validateCell(column, row);
         if (channel == null || channel.isBlank() || channel.length() > 64) throw new LuaException("Channel must contain 1 to 64 characters");
         if (!Double.isFinite(threshold)) throw new LuaException("Threshold must be finite");
-        if (!table.grid().at(column - 1, row - 1).filter(module -> module.type().equals("lamp")).isPresent()) {
-            throw new LuaException("Only 1x1 test lamp modules can be configured in this phase");
+        if (table.grid().at(column - 1, row - 1).filter(ModularTableBlockEntity::isLampModule).isEmpty()) {
+            throw new LuaException("Only installed lamp modules can be configured");
         }
         return table.configureModule(column - 1, row - 1, channel, threshold);
     }
@@ -71,6 +71,25 @@ public final class TablePeripheral implements IPeripheral {
         if (channel == null || channel.isBlank() || channel.length() > 64) throw new LuaException("Channel must contain 1 to 64 characters");
         if (!Double.isFinite(value)) throw new LuaException("Signal must be finite");
         return table.setTestSignal(channel, value);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean setLampTestIntensity(int column, int row, int intensity) throws LuaException {
+        validateCell(column, row);
+        if (intensity < 0 || intensity > 15) throw new LuaException("Lamp intensity must be between 0 and 15");
+        if (table.grid().at(column - 1, row - 1).filter(ModularTableBlockEntity::isLampModule).isEmpty()) {
+            throw new LuaException("Test intensity is available only for installed lamps");
+        }
+        return table.setLampTestIntensity(column - 1, row - 1, intensity);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean clearLampTestIntensity(int column, int row) throws LuaException {
+        validateCell(column, row);
+        if (table.grid().at(column - 1, row - 1).filter(ModularTableBlockEntity::isLampModule).isEmpty()) {
+            throw new LuaException("Test intensity is available only for installed lamps");
+        }
+        return table.clearLampTestIntensity(column - 1, row - 1);
     }
 
     @LuaFunction(mainThread = true)

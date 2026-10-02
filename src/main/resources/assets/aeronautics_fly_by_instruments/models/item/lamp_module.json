@@ -1,4 +1,11 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": { "layer0": "minecraft:block/redstone_lamp" }
+  "parent": "aeronautics_fly_by_instruments:block/lamp_module_1x1_off",
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "aeronautics_fly_by_instruments:block/lamp_module_1x1_on"
+    }
+  ]
 }

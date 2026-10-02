@@ -23,6 +23,8 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
     private static final double SURFACE = 3.0 / 16;
     private static final double CELL = 1.0 / PanelGrid.SIZE;
     private final BlockRenderDispatcher blocks;
+    private final LampModuleRenderer lamps1x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE.get());
+    private final LampModuleRenderer lamps2x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE_2X1.get());
 
     public ModularTableRenderer(BlockEntityRendererProvider.Context context) {
         blocks = context.getBlockRenderDispatcher();
@@ -35,12 +37,16 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
         poses.pushPose();
         orient(poses, facing);
         for (var module : table.grid().modules()) {
-            // Lamp modules show the configured simulated output for phase-one testing.
-            var lampState = Blocks.REDSTONE_LAMP.defaultBlockState()
-                    .setValue(net.minecraft.world.level.block.RedstoneLampBlock.LIT, table.isModuleActive(module));
-            cube(poses, buffers, lampState,
-                    module.column() * CELL + 0.06, SURFACE, module.row() * CELL + 0.06,
-                    module.width() * CELL - 0.12, 2.0 / 16, module.height() * CELL - 0.12, light, overlay);
+            if (ModularTableBlockEntity.isLampModule(module)) {
+                renderLamp(table, module, poses, buffers, light, overlay);
+            } else {
+                // Keep a fallback for future module types without authored renderers.
+                var lampState = Blocks.REDSTONE_LAMP.defaultBlockState()
+                        .setValue(net.minecraft.world.level.block.RedstoneLampBlock.LIT, table.isModuleActive(module));
+                cube(poses, buffers, lampState,
+                        module.column() * CELL + 0.06, SURFACE, module.row() * CELL + 0.06,
+                        module.width() * CELL - 0.12, 2.0 / 16, module.height() * CELL - 0.12, light, overlay);
+            }
         }
 
         var minecraft = Minecraft.getInstance();
@@ -88,6 +94,22 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 }
             }
         }
+        poses.popPose();
+    }
+
+    private void renderLamp(ModularTableBlockEntity table, PanelGrid.Module module, PoseStack poses,
+                            MultiBufferSource buffers, int light, int overlay) {
+        poses.pushPose();
+        // Center the model on its full footprint, then turn the long axis for a vertical 1x2 placement.
+        poses.translate(module.column() * CELL + module.width() * CELL / 2 - 0.5, SURFACE,
+                module.row() * CELL + module.height() * CELL / 2 - 0.5);
+        if (module.height() > module.width()) {
+            poses.translate(0.5, 0, 0.5);
+            poses.mulPose(Axis.YP.rotationDegrees(90));
+            poses.translate(-0.5, 0, -0.5);
+        }
+        var renderer = module.type().equals("lamp_2x1") ? lamps2x1 : lamps1x1;
+        renderer.render(table.lampRenderIntensity(module), table.getLevel(), poses, buffers, light, overlay);
         poses.popPose();
     }
 

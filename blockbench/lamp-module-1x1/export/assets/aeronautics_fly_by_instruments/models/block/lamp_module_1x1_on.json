@@ -1,0 +1,216 @@
+{
+  "credit": "Created in Blockbench for Aeronautics: Fly by Instruments",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "particle": "aeronautics_fly_by_instruments:block/lamp_housing",
+    "housing": "aeronautics_fly_by_instruments:block/lamp_housing",
+    "lens": "aeronautics_fly_by_instruments:block/lamp_lens_red",
+    "emitter": "aeronautics_fly_by_instruments:block/lamp_emitter_on"
+  },
+  "elements": [
+    {
+      "from": [
+        6.3,
+        0,
+        6.3
+      ],
+      "to": [
+        9.7,
+        0.5,
+        9.7
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            0.25,
+            0.75,
+            0.75
+          ],
+          "texture": "#housing"
+        },
+        "east": {
+          "uv": [
+            1.25,
+            0.25,
+            1.75,
+            0.75
+          ],
+          "texture": "#housing"
+        },
+        "south": {
+          "uv": [
+            2.25,
+            0.25,
+            2.75,
+            0.75
+          ],
+          "texture": "#housing"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            0.25,
+            3.75,
+            0.75
+          ],
+          "texture": "#housing"
+        },
+        "up": {
+          "uv": [
+            4.25,
+            0.25,
+            4.75,
+            0.75
+          ],
+          "texture": "#housing"
+        },
+        "down": {
+          "uv": [
+            5.25,
+            0.25,
+            5.75,
+            0.75
+          ],
+          "texture": "#housing"
+        }
+      }
+    },
+    {
+      "from": [
+        6.3,
+        0.5,
+        6.3
+      ],
+      "to": [
+        9.7,
+        2,
+        9.7
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3,
+            0,
+            6,
+            2
+          ],
+          "texture": "#lens"
+        },
+        "east": {
+          "uv": [
+            3,
+            2,
+            6,
+            4
+          ],
+          "texture": "#lens"
+        },
+        "south": {
+          "uv": [
+            3,
+            4,
+            6,
+            6
+          ],
+          "texture": "#lens"
+        },
+        "west": {
+          "uv": [
+            0,
+            6,
+            3,
+            8
+          ],
+          "texture": "#lens"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            3,
+            3
+          ],
+          "texture": "#lens"
+        },
+        "down": {
+          "uv": [
+            0,
+            3,
+            3,
+            6
+          ],
+          "texture": "#lens"
+        }
+      }
+    },
+    {
+      "from": [
+        6.8,
+        0.7,
+        6.8
+      ],
+      "to": [
+        9.2,
+        1.2,
+        9.2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            0.25,
+            0.75,
+            0.75
+          ],
+          "texture": "#emitter"
+        },
+        "east": {
+          "uv": [
+            1.25,
+            0.25,
+            1.75,
+            0.75
+          ],
+          "texture": "#emitter"
+        },
+        "south": {
+          "uv": [
+            2.25,
+            0.25,
+            2.75,
+            0.75
+          ],
+          "texture": "#emitter"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            0.25,
+            3.75,
+            0.75
+          ],
+          "texture": "#emitter"
+        },
+        "up": {
+          "uv": [
+            4.25,
+            0.25,
+            4.75,
+            0.75
+          ],
+          "texture": "#emitter"
+        },
+        "down": {
+          "uv": [
+            5.25,
+            0.25,
+            5.75,
+            0.75
+          ],
+          "texture": "#emitter"
+        }
+      }
+    }
+  ]
+}

@@ -18,6 +18,7 @@ import java.util.Map;
 public final class ModularTableBlockEntity extends BlockEntity implements AvionicsEndpoint {
     private PanelGrid grid = new PanelGrid();
     private final Map<String, Double> testSignals = new HashMap<>();
+    private final Map<Integer, Integer> lampTestIntensities = new HashMap<>();
     private final TablePeripheral peripheral = new TablePeripheral(this);
 
     public ModularTableBlockEntity(BlockPos pos, BlockState state) {
@@ -29,7 +30,7 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     @Override public String avionicsType() { return "modular_table"; }
     public boolean configureModule(int column, int row, String channel, double threshold) {
         if (channel == null || channel.isBlank() || channel.length() > 64 || !Double.isFinite(threshold)) return false;
-        if (grid.at(column, row).filter(module -> module.type().equals("lamp")).isEmpty()) return false;
+        if (grid.at(column, row).filter(ModularTableBlockEntity::isLampModule).isEmpty()) return false;
         if (!grid.configureAt(column, row, channel, threshold)) return false;
         var module = grid.at(column, row).orElseThrow();
         changed("configured", module);
@@ -49,7 +50,44 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
 
     public double testSignal(String channel) { return testSignals.getOrDefault(channel, 0.0); }
     public boolean isModuleActive(PanelGrid.Module module) {
-        return module.type().equals("lamp") && testSignal(module.channel()) >= module.threshold();
+        return isLampModule(module) && testSignal(module.channel()) >= module.threshold();
+    }
+
+    public static boolean isLampModule(PanelGrid.Module module) {
+        return module.type().equals("lamp") || module.type().equals("lamp_2x1");
+    }
+
+    public int lampRenderIntensity(PanelGrid.Module module) {
+        int key = cellKey(module.column(), module.row());
+        return lampTestIntensities.getOrDefault(key, isModuleActive(module) ? 15 : 0);
+    }
+
+    public boolean setLampTestIntensity(int column, int row, int intensity) {
+        var module = grid.at(column, row).filter(ModularTableBlockEntity::isLampModule);
+        if (intensity < 0 || intensity > 15 || module.isEmpty()) return false;
+        var lamp = module.orElseThrow();
+        lampTestIntensities.put(cellKey(lamp.column(), lamp.row()), intensity);
+        syncLampTestIntensities();
+        return true;
+    }
+
+    public boolean clearLampTestIntensity(int column, int row) {
+        var module = grid.at(column, row).filter(ModularTableBlockEntity::isLampModule);
+        if (module.isEmpty()) return false;
+        var lamp = module.orElseThrow();
+        if (lampTestIntensities.remove(cellKey(lamp.column(), lamp.row())) == null) return false;
+        syncLampTestIntensities();
+        return true;
+    }
+
+    private static int cellKey(int column, int row) {
+        return row * PanelGrid.SIZE + column;
+    }
+
+    private void syncLampTestIntensities() {
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     public boolean placeLamp(int column, int row) {
@@ -65,13 +103,21 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
 
     private boolean placeModule(PanelGrid.Module module) {
         if (!grid.place(module)) return false;
+        lampTestIntensities.remove(cellKey(module.column(), module.row()));
         changed("placed", module);
         return true;
     }
 
     public boolean removeModule(int column, int row) {
         var removed = grid.removeAt(column, row);
-        removed.ifPresent(module -> changed("removed", module));
+        removed.ifPresent(module -> {
+            for (int rowOffset = 0; rowOffset < module.height(); rowOffset++) {
+                for (int columnOffset = 0; columnOffset < module.width(); columnOffset++) {
+                    lampTestIntensities.remove(cellKey(module.column() + columnOffset, module.row() + rowOffset));
+                }
+            }
+            changed("removed", module);
+        });
         return removed.isPresent();
     }
 
@@ -135,11 +181,36 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
                 if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(value)) testSignals.put(channel, value);
             }
         }
+        lampTestIntensities.clear();
+        if (tag.contains("LampTestIntensities", Tag.TAG_LIST)) {
+            var overrides = tag.getList("LampTestIntensities", Tag.TAG_COMPOUND);
+            for (int i = 0; i < overrides.size(); i++) {
+                var entry = overrides.getCompound(i);
+                int column = entry.getInt("Column");
+                int row = entry.getInt("Row");
+                int intensity = entry.getInt("Level");
+                if (column >= 0 && column < PanelGrid.SIZE && row >= 0 && row < PanelGrid.SIZE
+                        && intensity >= 0 && intensity <= 15
+                        && grid.at(column, row).filter(ModularTableBlockEntity::isLampModule).isPresent()) {
+                    lampTestIntensities.put(cellKey(column, row), intensity);
+                }
+            }
+        }
     }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return saveWithoutMetadata(registries);
+        var tag = saveWithoutMetadata(registries);
+        var overrides = new ListTag();
+        lampTestIntensities.forEach((key, intensity) -> {
+            var entry = new CompoundTag();
+            entry.putInt("Column", key % PanelGrid.SIZE);
+            entry.putInt("Row", key / PanelGrid.SIZE);
+            entry.putInt("Level", intensity);
+            overrides.add(entry);
+        });
+        tag.put("LampTestIntensities", overrides);
+        return tag;
     }
 
     @Override

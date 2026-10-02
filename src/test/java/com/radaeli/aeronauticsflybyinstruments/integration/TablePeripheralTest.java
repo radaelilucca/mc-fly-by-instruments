@@ -32,7 +32,11 @@ class TablePeripheralTest {
         assertTrue(peripheral.canFit(2, 2, 2, 2));
         assertFalse(peripheral.canFit(3, 3, 2, 2));
         assertTrue(table.placeLamp2x1(1, 0, false));
-        assertThrows(LuaException.class, () -> peripheral.configureModule(2, 1, "terrain", 30));
+        assertTrue(peripheral.configureModule(2, 1, "long_lamp", 0.5));
+        assertTrue(peripheral.setTestSignal("long_lamp", 1));
+        var longOutput = peripheral.getOutputs().stream().filter(output -> output.get("type").equals("lamp_2x1"))
+                .findFirst().orElseThrow();
+        assertEquals(true, longOutput.get("active"));
         assertTrue(peripheral.configureModule(1, 1, "terrain", 30));
         assertTrue(peripheral.setTestSignal("terrain", 35));
         var output = peripheral.getOutputs().getFirst();
@@ -55,6 +59,40 @@ class TablePeripheralTest {
         assertThrows(NoSuchMethodException.class, () -> TablePeripheral.class.getMethod("getConnectedDevices"));
         assertNotNull(TablePeripheral.class.getMethod("getGridSize")
                 .getAnnotation(dan200.computercraft.api.lua.LuaFunction.class));
+    }
+
+    @Test
+    void lampIntensityTestApiValidatesAndClearsTransientOverrides() throws Exception {
+        var table = table();
+        var peripheral = table.peripheral();
+        table.placeLamp(0, 0);
+        assertTrue(peripheral.setLampTestIntensity(1, 1, 8));
+        assertEquals(8, table.lampRenderIntensity(table.grid().at(0, 0).orElseThrow()));
+        assertThrows(LuaException.class, () -> peripheral.setLampTestIntensity(1, 1, 16));
+        assertThrows(LuaException.class, () -> peripheral.setLampTestIntensity(2, 1, 4));
+        assertThrows(LuaException.class, () -> peripheral.clearLampTestIntensity(4, 1));
+        assertTrue(peripheral.clearLampTestIntensity(1, 1));
+        assertEquals(0, table.lampRenderIntensity(table.grid().at(0, 0).orElseThrow()));
+
+        assertNotNull(TablePeripheral.class.getMethod("setLampTestIntensity", int.class, int.class, int.class)
+                .getAnnotation(dan200.computercraft.api.lua.LuaFunction.class));
+        assertNotNull(TablePeripheral.class.getMethod("clearLampTestIntensity", int.class, int.class)
+                .getAnnotation(dan200.computercraft.api.lua.LuaFunction.class));
+    }
+
+    @Test
+    void longLampHasIndependentSignalAndVisualTestControlsAcrossItsFootprint() throws LuaException {
+        var table = table();
+        var peripheral = table.peripheral();
+        assertTrue(table.placeLamp2x1(0, 0, false));
+        assertTrue(peripheral.configureModule(1, 1, "warning", 2));
+        assertTrue(peripheral.setTestSignal("warning", 2));
+        var longLamp = table.grid().modules().getFirst();
+        assertTrue(table.isModuleActive(longLamp));
+        assertTrue(peripheral.setLampTestIntensity(2, 1, 11));
+        assertEquals(11, table.lampRenderIntensity(longLamp));
+        assertTrue(peripheral.clearLampTestIntensity(2, 1));
+        assertEquals(15, table.lampRenderIntensity(longLamp));
     }
 
     @Test

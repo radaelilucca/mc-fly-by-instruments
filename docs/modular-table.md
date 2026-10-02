@@ -3,10 +3,11 @@
 A base mantém espessura de 3/16 de bloco e textura placeholder de ferro.
 Sua face exposta é dividida em 3 colunas × 3 linhas: cada célula tem
 16/3 pixels de largura e profundidade. Ela pode ser montada em qualquer face
-sólida, inclusive no teto do cockpit. Os módulos são representados por
-miniaturas de lâmpada de redstone. Na Fase 1, a lâmpada 1×1 serve como atuador
-de teste: acende quando o sinal simulado do canal associado alcança o threshold
-do módulo. O módulo 2×1 permanece estrutural nesta fase.
+sólida, inclusive no teto do cockpit. As lâmpadas 1×1 e 2×1 têm modelos próprios
+com carcaça opaca, vidro vermelho translúcido e emissão visual por módulo. Veja
+[emissão e teste dos módulos](lamp-emission.md). Na Fase 1, ambas servem como
+atuadores de teste: acendem quando o sinal simulado do canal associado alcança
+o threshold do módulo.
 
 ## Montagem
 
@@ -41,8 +42,8 @@ estiver inteiramente dentro do grid e todas as células estiverem livres.
 Uma operação de remoção sobre qualquer célula coberta retira o módulo inteiro.
 
 O módulo `lamp` ocupa 1×1. O `lamp_2x1` ocupa 2×1 por padrão e alterna para 1×2
-com o scroll. Ambos os footprints são persistidos e expostos pelas dimensões
-do módulo na API.
+com o scroll; a variante alonga a mesma geometria e gira junto com o footprint.
+Ambos os footprints são persistidos e expostos pelas dimensões do módulo na API.
 
 ## CC:Tweaked
 
@@ -60,15 +61,22 @@ consistente com o grid e a orientação da base.
 | `getModules()` | Lista dos módulos instalados |
 | `getSlot(column, row)` | Estado da célula e, se ocupada, descrição do módulo |
 | `canFit(column, row, width, height)` | Se o footprint cabe e está livre |
-| `configureModule(column, row, channel, threshold)` | Associa lâmpada 1×1 a canal e threshold |
+| `configureModule(column, row, channel, threshold)` | Associa qualquer módulo de lâmpada a canal e threshold |
 | `setTestSignal(channel, value)` | Define o valor simulado do canal |
 | `getOutputs()` | Lista módulos, sinal recebido e estado ativo |
+| `setLampTestIntensity(column, row, level)` | Sobreposição visual temporária 0–15 para uma lâmpada 1×1 ou 2×1 |
+| `clearLampTestIntensity(column, row)` | Remove a sobreposição e restaura o estado do sinal/threshold |
 
 Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1, channel = "test", threshold = 0.5}`.
 Uma célula livre retorna `{occupied = false, column = ..., row = ...}`.
 Coordenadas ou dimensões fora de 1–3 geram erro Lua; um footprint válido que
 ultrapasse a borda retorna `false`. `canFit` só consulta: não instala módulos.
 Instalação e remoção são físicas. Métodos executam na thread principal.
+
+Os métodos de intensidade funcionam com lâmpadas 1×1 e 2×1 e são apenas para teste visual: não alteram sinais,
+thresholds ou dados persistidos da mesa e não emitem luz dinâmica no mundo.
+O programa [lamp-emission-test.lua](examples/lamp-emission-test.lua) percorre
+cada lâmpada instalada nos níveis 0 a 15, com meio segundo por nível.
 
 Evento `modular_table_changed`: nome do peripheral, ação (`placed`, `removed`
 ou `configured`) e descrição do módulo. Evento `modular_table_signal_changed`:

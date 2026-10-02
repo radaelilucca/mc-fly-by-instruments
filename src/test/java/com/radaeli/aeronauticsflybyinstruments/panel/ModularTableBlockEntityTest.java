@@ -37,6 +37,52 @@ class ModularTableBlockEntityTest {
     }
 
     @Test
+    void independentLampStatesReachTheClientAndCanBeSwapped() {
+        var original = table();
+        assertTrue(original.placeLamp(0, 0));
+        assertTrue(original.placeLamp(1, 0));
+        assertTrue(original.configureModule(0, 0, "lamp_a", 0.5));
+        assertTrue(original.configureModule(1, 0, "lamp_b", 0.5));
+        assertTrue(original.setTestSignal("lamp_a", 1));
+        assertTrue(original.setTestSignal("lamp_b", 0));
+
+        var client = table();
+        client.loadCustomOnly(original.getUpdateTag(REGISTRIES), REGISTRIES);
+        assertTrue(client.isModuleActive(client.grid().at(0, 0).orElseThrow()));
+        assertFalse(client.isModuleActive(client.grid().at(1, 0).orElseThrow()));
+
+        assertTrue(original.setTestSignal("lamp_a", 0));
+        assertTrue(original.setTestSignal("lamp_b", 1));
+        client.loadCustomOnly(original.getUpdateTag(REGISTRIES), REGISTRIES);
+        assertFalse(client.isModuleActive(client.grid().at(0, 0).orElseThrow()));
+        assertTrue(client.isModuleActive(client.grid().at(1, 0).orElseThrow()));
+    }
+
+    @Test
+    void lampTestIntensityIsTransientAndSyncedOnlyToClientUpdates() {
+        var original = table();
+        assertTrue(original.placeLamp(0, 0));
+        var lamp = original.grid().at(0, 0).orElseThrow();
+        assertTrue(original.setLampTestIntensity(0, 0, 7));
+        assertEquals(7, original.lampRenderIntensity(lamp));
+
+        var client = table();
+        client.loadCustomOnly(original.getUpdateTag(REGISTRIES), REGISTRIES);
+        assertEquals(7, client.lampRenderIntensity(client.grid().at(0, 0).orElseThrow()));
+
+        var saved = original.saveWithoutMetadata(REGISTRIES);
+        assertFalse(saved.contains("LampTestIntensities"));
+        var restored = table();
+        restored.loadCustomOnly(saved, REGISTRIES);
+        assertEquals(0, restored.lampRenderIntensity(restored.grid().at(0, 0).orElseThrow()));
+
+        assertTrue(original.configureModule(0, 0, "active", 0.5));
+        assertTrue(original.setTestSignal("active", 1));
+        assertTrue(original.clearLampTestIntensity(0, 0));
+        assertEquals(15, original.lampRenderIntensity(original.grid().at(0, 0).orElseThrow()));
+    }
+
+    @Test
     void corruptedDuplicateOutOfBoundsAndUnknownModulesAreIgnored() {
         var data = new CompoundTag();
         var modules = new ListTag();
