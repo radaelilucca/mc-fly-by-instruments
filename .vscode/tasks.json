@@ -14,7 +14,7 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
-          "GRADLE_USER_HOME": "${workspaceFolder}\\.gradle-flightsafetyinstruments",
+          "GRADLE_USER_HOME": "${workspaceFolder}\\.gradle-aeronauticsflybyinstruments",
           "JAVA_HOME": "C:\\Users\\lucca\\.jdks\\graalvm-jdk-21.0.12+7.1"
         }
       },
@@ -39,7 +39,7 @@
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
-          "GRADLE_USER_HOME": "${workspaceFolder}\\.gradle-flightsafetyinstruments",
+          "GRADLE_USER_HOME": "${workspaceFolder}\\.gradle-aeronauticsflybyinstruments",
           "JAVA_HOME": "C:\\Users\\lucca\\.jdks\\graalvm-jdk-21.0.12+7.1"
         }
       },

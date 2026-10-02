@@ -2,11 +2,26 @@
 
 ## Status
 
-Discovery e definição conceitual inicial. Este documento registra as decisões atuais para um futuro addon de segurança e instrumentação de voo para Create Aeronautics.
+Discovery e definição conceitual inicial. Este documento também preserva o
+histórico de ideias; decisões posteriores consolidadas no [PRD](PRD.md) e nos
+planos técnicos têm precedência quando houver divergência.
+
+### Decisões posteriores que substituem ideias deste histórico
+
+- A experiência deve ser arcade-first: defaults automáticos para o uso casual;
+  simulação detalhada é uma camada opcional.
+- O Terrain Scanner simples usa 9 raycasts fixos em cone de 90°. O avançado
+  usa 9–81 raycasts e abertura ajustável de 30° a 180°; a antiga ideia de um
+  único raio simples foi substituída.
+- O GPWS inicial não depende de blocos externos Velocity/Gimbal: deriva
+  velocidade vertical do histórico do Radar Altimeter e bank da pose do
+  sublevel Sable.
+- O plano técnico atual do GPWS está em
+  [docs/gpws-phase-4-plan.md](docs/gpws-phase-4-plan.md).
 
 ## Direção do projeto
 
-O mod será inicialmente focado em **flight safety instruments**: instrumentos e sistemas que ajudam o piloto a perceber e evitar condições perigosas durante o voo.
+O mod será inicialmente focado em instrumentos aviônicos que ajudam o piloto a perceber e evitar condições perigosas durante o voo.
 
 O primeiro núcleo não terá como objetivo adicionar motores, autopilot completo ou um HUD genérico. A identidade inicial será segurança, consciência de terreno e integração física entre instrumentos.
 

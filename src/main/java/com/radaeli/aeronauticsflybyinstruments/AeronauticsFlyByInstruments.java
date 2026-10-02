@@ -1,0 +1,66 @@
+package com.radaeli.aeronauticsflybyinstruments;
+
+import com.mojang.logging.LogUtils;
+import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
+import com.radaeli.aeronauticsflybyinstruments.avionics.NetworkBridgeBlockEntity;
+import com.radaeli.aeronauticsflybyinstruments.avionics.GpwsComputerBlockEntity;
+import com.radaeli.aeronauticsflybyinstruments.sensor.RadarAltimeterBlockEntity;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import com.radaeli.aeronauticsflybyinstruments.config.ModConfig;
+import net.neoforged.fml.common.Mod;
+import org.slf4j.Logger;
+import dan200.computercraft.api.peripheral.PeripheralCapability;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.fml.loading.FMLEnvironment;
+import com.radaeli.aeronauticsflybyinstruments.client.PanelClient;
+import com.radaeli.aeronauticsflybyinstruments.client.PanelInputHandler;
+import com.radaeli.aeronauticsflybyinstruments.client.TerrainScannerDebug;
+import com.radaeli.aeronauticsflybyinstruments.network.PanelNetwork;
+import com.radaeli.aeronauticsflybyinstruments.network.TerrainScannerNetwork;
+import com.radaeli.aeronauticsflybyinstruments.network.GpwsNetwork;
+import net.neoforged.neoforge.common.NeoForge;
+
+/** Main entry point for Aeronautics: Fly by Instruments. */
+@Mod(AeronauticsFlyByInstruments.MOD_ID)
+public final class AeronauticsFlyByInstruments {
+    public static final String MOD_ID = "aeronautics_fly_by_instruments";
+    public static final Logger LOGGER = LogUtils.getLogger();
+
+    public AeronauticsFlyByInstruments(IEventBus modEventBus, ModContainer modContainer) {
+        ModBlocks.BLOCKS.register(modEventBus);
+        ModBlocks.ITEMS.register(modEventBus);
+        ModBlocks.BLOCK_ENTITIES.register(modEventBus);
+        ModCreativeTabs.TABS.register(modEventBus);
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ModConfig.SPEC);
+        modEventBus.addListener(PanelNetwork::registerPayloads);
+        modEventBus.addListener(TerrainScannerNetwork::registerPayloads);
+        modEventBus.addListener(GpwsNetwork::registerPayloads);
+        modEventBus.addListener(this::registerCapabilities);
+        NeoForge.EVENT_BUS.addListener(PanelNetwork::onPlayerLoggedIn);
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            PanelClient.register(modEventBus);
+            NeoForge.EVENT_BUS.addListener(PanelInputHandler::onMouseScroll);
+            if (!FMLEnvironment.production) {
+                modEventBus.addListener(TerrainScannerDebug::registerKeyMapping);
+                NeoForge.EVENT_BUS.addListener(TerrainScannerDebug::onClientTick);
+                NeoForge.EVENT_BUS.addListener(TerrainScannerDebug::onRenderLevel);
+            }
+        }
+        LOGGER.info("Aeronautics: Fly by Instruments loaded");
+    }
+
+    private void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.MODULAR_TABLE_ENTITY.get(),
+                (table, side) -> table.peripheral());
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.NETWORK_BRIDGE_ENTITY.get(),
+                (bridge, side) -> bridge.peripheral());
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.GPWS_COMPUTER_ENTITY.get(),
+                (computer, side) -> computer.peripheral());
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.RADAR_ALTIMETER_ENTITY.get(),
+                (altimeter, side) -> altimeter.peripheral());
+        event.registerBlockEntity(PeripheralCapability.get(), ModBlocks.TERRAIN_SCANNER_ENTITY.get(),
+                (scanner, side) -> scanner.peripheral());
+    }
+}

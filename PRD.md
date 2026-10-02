@@ -12,7 +12,10 @@ O produto não será inicialmente um pacote geral de aviação. Seu foco será:
 - painéis de alerta modulares;
 - integração programática completa com CC:Tweaked.
 
-Este PRD consolida as decisões de discovery e define um roadmap macro. O documento de discovery continua sendo a referência para decisões conceituais detalhadas ainda em aberto.
+Este PRD consolida as decisões de discovery e define um roadmap macro. O
+documento de discovery continua como histórico e referência para ideias ainda
+em aberto; em caso de divergência, prevalecem este PRD e os planos técnicos
+mais recentes.
 
 ## 2. Objetivos do produto
 
@@ -49,19 +52,32 @@ O mod deve atender dois perfis:
 
 ### Jogador casual
 
-Deve ser possível instalar um GPWS com configuração mínima:
+O mod deve oferecer um caminho de segurança útil sem exigir conhecimento de
+aviação ou configuração técnica. A meta mínima é:
 
-1. colocar o GPWS;
-2. posicionar os sensores;
-3. conectar os sensores com Avionics Cable;
-4. montar um Annunciator Panel;
-5. usar thresholds automáticos.
+1. colocar um GPWS e um Radar Altimeter;
+2. conectá-los com Avionics Cable;
+3. usar thresholds e fases automáticos;
+4. receber alertas úteis de clearance/descida com uma configuração padrão ou
+   rápida do painel.
 
-O jogador não deverá precisar conhecer a lógica real de um GPWS para obter alertas úteis.
+Terrain Scanners ampliam os avisos de obstáculos, mas não são obrigatórios para
+o caminho básico. Sensores opcionais ausentes não devem transformar um sistema
+parcialmente montado em uma cascata de falhas. CC:Tweaked e os ajustes
+detalhados também não serão pré-requisitos.
 
 ### Jogador avançado
 
 Deve ser possível configurar thresholds, histerese, regras de arming/inhibit, sensores preferenciais, redundância, fases de voo e roteamento de canais.
+
+### Princípio arcade-first
+
+O mod pode usar componentes e linguagem visual de avionics, mas a camada padrão
+deve priorizar diversão, leitura imediata e configuração mínima. A simulação
+detalhada amplia a experiência para entusiastas; não pode ser pedágio para
+receber proteção básica. Defaults tolerantes, presets, descoberta automática e
+um caminho de painel pronto/rápido devem tornar o sistema útil em gameplay
+arcade, inclusive para manter um airship em hover sem queda inesperada.
 
 ## 4. Escopo funcional inicial
 
@@ -132,15 +148,18 @@ A abertura avançada será configurável por interface no jogo e por CC:Tweaked,
 
 Os scans usam o intervalo global configurável (padrão 5 ticks), têm alcance máximo global configurável (padrão 128 blocos), não carregam chunks e tratam fronteiras descarregadas como cobertura incompleta. Ambas as variantes são endpoints da Avionics Cable Network e têm peripherals próprios `terrain_scanner` e `terrain_scanner_advanced`; a integração com o GPWS será implementada em fase posterior.
 
-### 4.4 Integração com sensores existentes
+### 4.4 Fontes de atitude e velocidade
 
-O mod usará os sensores existentes do Aeronautics como fontes de dados:
+O GPWS inicial não dependerá de blocos `Velocity Sensor` ou `Gimbal Sensor`
+externos. Para manter o baseline e simplificar a montagem:
 
-- `Velocity Sensor`;
-- `Gimbal Sensor`;
-- `Altitude Sensor`, quando necessário para altitude global e velocidade vertical.
+- a velocidade vertical será estimada pelo histórico de leituras do Radar
+  Altimeter;
+- o ângulo de bank será derivado da pose do sublevel Sable, usando a
+  orientação do GPWS como eixo longitudinal.
 
-O mod não recriará esses sensores no escopo inicial.
+Sensores externos poderão ser avaliados no futuro, mas não são requisito do
+GPWS básico nem devem ser tratados como dependências do baseline atual.
 
 ### 4.5 Avionics Cable
 
@@ -276,7 +295,7 @@ Exemplos de escopo por funcionalidade:
 Identidade atual do projeto:
 
 - mod id: `aeronautics_fly_by_instruments`;
-- pacote base: `com.radaeli.flightsafetyinstruments`;
+- pacote base: `com.radaeli.aeronauticsflybyinstruments`;
 - versão inicial do scaffold: `0.1.0`.
 
 ## 8. Requisito de testes automatizados
@@ -461,12 +480,11 @@ Objetivo: produzir leituras confiáveis para o GPWS.
 - `UNAVAILABLE` para ausência de superfície, chunk descarregado ou menos de três hits; `FAILED` para erro de execução;
 - peripheral, snapshot, evento, documentação Lua e testes automatizados CC:Tweaked.
 
-#### 3.2 — Demais instrumentos
+#### 3.2 — Fontes derivadas de voo
 
-- integração com Velocity Sensor;
-- integração com Gimbal Sensor;
-- transformação correta de posições/orientações no sublevel;
-- limites de alcance/resolução configuráveis e peripherals, eventos e testes correspondentes.
+- estimativa da velocidade vertical a partir do histórico do Radar Altimeter;
+- derivação do ângulo de bank pela pose do sublevel Sable e orientação do GPWS;
+- testes automatizados de sinais derivados em mundo estático e em sublevels.
 
 #### 3.3 — Terrain Scanner
 
@@ -484,6 +502,15 @@ Saída da fase: sensores testáveis individualmente por jogo e por CC:Tweaked.
 
 Objetivo: transformar leituras em alertas.
 
+O plano técnico detalhado está em
+[Fase 4 — GPWS Computer e motor de alertas](docs/gpws-phase-4-plan.md). Em
+resumo, o GPWS consome snapshots existentes, calcula os sete canais aprovados,
+detecta fases automaticamente e entrega perfis básico e avançado com
+peripheral, eventos e testes CC:Tweaked. O básico deve produzir alertas de
+clearance/descida usando apenas GPWS + Radar Altimeter; o scanner é opcional
+para esse benefício. O plano também define fusão de sensores, expiração de
+leituras, defaults de thresholds, histerese e critérios de falha.
+
 Entregas:
 
 - estados `STANDBY`, `ARMED` e `TEST`;
@@ -492,7 +519,7 @@ Entregas:
 - thresholds padrão;
 - histerese e tempos de confirmação;
 - falhas e dados ausentes;
-- perfil básico e perfil avançado.
+- perfil básico e perfil avançado;
 - peripheral do GPWS;
 - eventos de mudança de alerta e fase;
 - métodos CC:Tweaked para leitura e configuração permitida;
@@ -511,6 +538,9 @@ Entregas:
 - módulos de buzzer;
 - ligação de módulos a canais;
 - thresholds por módulo;
+- preset ou configuração rápida para o caminho básico (por exemplo, associar
+  automaticamente lâmpada/buzzer aos alertas mais úteis sem configurar cada
+  slot ou threshold manualmente);
 - estados de teste, acknowledge/mute se aprovados;
 - testes de painel e estados de falha;
 - eventos, métodos e testes CC:Tweaked dos módulos e canais reais.
@@ -550,7 +580,10 @@ O produto poderá ser considerado pronto para a primeira release quando:
 8. os testes automatizados cobrirem regras, rede, painel, integração e API;
 9. scanners não provocarem carregamento inesperado de chunks;
 10. o comportamento funcionar em contraptions dentro de sublevels;
-11. a validação manual confirmar leitura compreensível e operação útil em voo.
+11. a validação manual confirmar leitura compreensível e operação útil em voo;
+12. o jogador conseguir receber alerta útil de clearance/descida com GPWS,
+    Radar Altimeter e o setup básico do painel, sem Terrain Scanner, CC:Tweaked
+    ou ajuste individual de thresholds.
 
 ## 11. Riscos e decisões abertas
 
@@ -562,6 +595,7 @@ O produto poderá ser considerado pronto para a primeira release quando:
 - definir os nomes, receitas e comportamento final dos blocos/itens de teste da
   mesa modular;
 - definir os módulos finais do Annunciator Panel;
+- confirmar a forma de setup rápido/preset do painel básico;
 - confirmar a versão mínima exata de Create;
 - validar os contratos atuais de Sable e Aeronautics no runtime;
 - estabelecer metas mensuráveis de TPS após o primeiro protótipo.
@@ -569,3 +603,15 @@ O produto poderá ser considerado pronto para a primeira release quando:
 ## 12. Princípio de produto
 
 O mod deve fazer uma aeronave parecer mais segura e mais instrumentada sem exigir que todos os jogadores construam um simulador de aviação completo. A profundidade deve existir como camada opcional; o caminho básico deve continuar sendo: posicionar, conectar, configurar minimamente e voar.
+
+### Arcade primeiro, simulação opcional
+
+Realismo nos componentes não deve tornar realista/complexa a operação mínima.
+O jogador deve conseguir montar uma proteção útil com poucos blocos, cabos e
+defaults automáticos; os scanners e ajustes avançados aumentam a consciência e
+o controle para quem quiser aprofundar. Quando um sensor opcional não estiver
+instalado, o GPWS básico continua avaliando os canais suportados pelos dados
+disponíveis e não declara falha apenas pela ausência desse opcional. A Fase 5
+deve validar uma apresentação acessível — por exemplo, um setup padrão ou
+assistente de configuração para lâmpada/buzzer — sem remover a montagem
+modular para entusiastas.
