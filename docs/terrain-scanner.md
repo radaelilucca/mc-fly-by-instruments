@@ -7,9 +7,10 @@ frontal rebaixada em cerâmica/latão. Setas amarelas nas laterais e na tampa
 apontam para a face de varredura. O conector traseiro e o emblema azul são
 decorativos; o padrão frontal não representa LEDs nem botões.
 
-A fonte canônica aponta para NORTH. O blockstate e a colisão acompanham as
-quatro direções horizontais existentes, sem mudar os casts, o peripheral ou o
-agendamento. O modelo não emite luz.
+A fonte canônica aponta para NORTH. O bloco pode ser colocado de ponta-cabeça na
+face inferior de um bloco: a carcaça e a colisão são invertidas, mas a face do
+scanner e seus casts continuam apontando horizontalmente conforme `FACING`. O
+modelo não emite luz.
 
 Fonte e instruções de exportação: [Blockbench Basic](../blockbench/terrain-scanner-basic/README.md).
 
@@ -22,8 +23,8 @@ tampa e base; duas marcas correspondentes aparecem na traseira junto ao socket.
 Setas amarelas continuam indicando a frente. As marcas são estáticas e opacas,
 não LEDs ou estados de conexão.
 
-Seleção, colisão e encaixe adaptativo do cabo seguem a mesma geometria nas
-quatro orientações. A densidade visual de 25 elementos não altera a quantidade
+Seleção, colisão e encaixe adaptativo do cabo seguem a mesma geometria em todas
+as orientações. A densidade visual de 25 elementos não altera a quantidade
 de raios, a abertura, a GUI ou a API do Advanced.
 
 Fonte duplicada e refinada via Paint no editor:
@@ -31,7 +32,7 @@ Fonte duplicada e refinada via Paint no editor:
 
 ## Funcionamento
 
-O mod oferece duas variantes físicas de scanner. Ambas apontam para a frente de acordo com a orientação horizontal do bloco, acompanham a transformação do sublevel e detectam formas de colisão de blocos/contraptions. Entidades são ignoradas e o sublevel que contém o scanner é excluído. Scans não carregam chunks; fronteiras descarregadas reduzem a cobertura.
+O mod oferece duas variantes físicas de scanner. Ambas apontam horizontalmente conforme a orientação do bloco, inclusive quando montadas de ponta-cabeça no teto; acompanham a transformação do sublevel e detectam formas de colisão de blocos/contraptions. Entidades são ignoradas e o sublevel que contém o scanner é excluído. Scans não carregam chunks; fronteiras descarregadas reduzem a cobertura.
 
 ## Variantes
 

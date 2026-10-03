@@ -52,7 +52,8 @@ public final class TerrainScannerBlock extends AbstractTerrainScannerBlock imple
 
     // Both variants use exactly the same saved housing geometry and sockets.
     static VoxelShape housingShape(BlockState state) {
-        return SHAPES.get(state.getValue(FACING));
+        VoxelShape shape = SHAPES.get(state.getValue(FACING));
+        return state.getValue(UPSIDE_DOWN) ? invertAroundFacing(shape, state.getValue(FACING)) : shape;
     }
 
     @Override
@@ -62,15 +63,8 @@ public final class TerrainScannerBlock extends AbstractTerrainScannerBlock imple
 
     static Vec3 housingSocket(BlockState state, Direction face) {
         Direction facing = state.getValue(FACING);
-        Direction localFace = face;
-        if (face.getAxis().isHorizontal()) {
-            localFace = switch (facing) {
-                case EAST -> face.getCounterClockWise();
-                case SOUTH -> face.getOpposite();
-                case WEST -> face.getClockWise();
-                default -> face;
-            };
-        }
+        Direction socketFace = state.getValue(UPSIDE_DOWN) ? invertFaceAroundFacing(face, facing) : face;
+        Direction localFace = toLocalFace(socketFace, facing);
         Vec3 p = switch (localFace) {
             case NORTH -> new Vec3(8, 8, .25);
             case SOUTH -> new Vec3(8, 8, 16); // Existing rear data socket is flush.
@@ -79,12 +73,54 @@ public final class TerrainScannerBlock extends AbstractTerrainScannerBlock imple
             case DOWN -> new Vec3(8, 2, 8);
             case UP -> new Vec3(8, 15, 4); // Lid, clear of the raised emblem.
         };
-        return (switch (facing) {
+        p = transformPoint(p, facing);
+        if (state.getValue(UPSIDE_DOWN)) p = invertAroundFacing(p, facing);
+        return p.scale(1.0 / 16);
+    }
+
+    private static Direction invertFaceAroundFacing(Direction face, Direction facing) {
+        if (face.getAxis().isVertical()) return face.getOpposite();
+        if (facing.getAxis() == Direction.Axis.Z && face.getAxis() == Direction.Axis.X
+                || facing.getAxis() == Direction.Axis.X && face.getAxis() == Direction.Axis.Z) {
+            return face.getOpposite();
+        }
+        return face;
+    }
+
+    private static Direction toLocalFace(Direction worldFace, Direction facing) {
+        return switch (facing) {
+            case EAST -> worldFace.getAxis().isHorizontal() ? worldFace.getCounterClockWise() : worldFace;
+            case SOUTH -> worldFace.getAxis().isHorizontal() ? worldFace.getOpposite() : worldFace;
+            case WEST -> worldFace.getAxis().isHorizontal() ? worldFace.getClockWise() : worldFace;
+            default -> worldFace;
+        };
+    }
+
+    private static Vec3 transformPoint(Vec3 p, Direction facing) {
+        return switch (facing) {
             case EAST -> new Vec3(16 - p.z, p.y, p.x);
             case SOUTH -> new Vec3(16 - p.x, p.y, 16 - p.z);
             case WEST -> new Vec3(p.z, p.y, 16 - p.x);
             default -> p;
-        }).scale(1.0 / 16);
+        };
+    }
+
+    private static Vec3 invertAroundFacing(Vec3 point, Direction facing) {
+        return switch (facing) {
+            case NORTH, SOUTH -> new Vec3(16 - point.x, 16 - point.y, point.z);
+            case EAST, WEST -> new Vec3(point.x, 16 - point.y, 16 - point.z);
+            default -> point;
+        };
+    }
+
+    private static VoxelShape invertAroundFacing(VoxelShape shape, Direction facing) {
+        return shape.toAabbs().stream().map(box -> switch (facing) {
+            case NORTH, SOUTH -> Shapes.box(1 - box.maxX, 1 - box.maxY, box.minZ,
+                    1 - box.minX, 1 - box.minY, box.maxZ);
+            case EAST, WEST -> Shapes.box(box.minX, 1 - box.maxY, 1 - box.maxZ,
+                    box.maxX, 1 - box.minY, 1 - box.minZ);
+            default -> throw new IllegalArgumentException("Expected a horizontal scanner facing");
+        }).reduce(Shapes.empty(), Shapes::or).optimize();
     }
 
     private static VoxelShape rotateShape(Direction facing) {

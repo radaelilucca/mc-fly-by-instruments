@@ -17,16 +17,18 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import org.jetbrains.annotations.Nullable;
 
 /** Common placement, orientation, and server ticker behavior for both scanner blocks. */
 public abstract class AbstractTerrainScannerBlock extends BaseEntityBlock implements AvionicsWrenchable {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty UPSIDE_DOWN = BooleanProperty.create("upside_down");
 
     protected AbstractTerrainScannerBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(UPSIDE_DOWN, false));
     }
 
     @Override
@@ -34,12 +36,14 @@ public abstract class AbstractTerrainScannerBlock extends BaseEntityBlock implem
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, UPSIDE_DOWN);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return defaultBlockState()
+                .setValue(FACING, context.getHorizontalDirection().getOpposite())
+                .setValue(UPSIDE_DOWN, context.getClickedFace() == Direction.DOWN);
     }
 
     @Override

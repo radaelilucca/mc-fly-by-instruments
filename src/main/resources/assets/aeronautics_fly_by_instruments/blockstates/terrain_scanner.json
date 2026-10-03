@@ -1,1 +1,12 @@
-{"variants":{"facing=north":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner"},"facing=east":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner","y":90},"facing=south":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner","y":180},"facing=west":{"model":"aeronautics_fly_by_instruments:block/terrain_scanner","y":270}}}
+{
+  "variants": {
+    "facing=north,upside_down=false": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner"},
+    "facing=east,upside_down=false": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner", "y": 90},
+    "facing=south,upside_down=false": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner", "y": 180},
+    "facing=west,upside_down=false": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner", "y": 270},
+    "facing=north,upside_down=true": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner", "x": 180, "y": 180},
+    "facing=east,upside_down=true": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner", "x": 180, "y": 270},
+    "facing=south,upside_down=true": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner", "x": 180},
+    "facing=west,upside_down=true": {"model": "aeronautics_fly_by_instruments:block/terrain_scanner", "x": 180, "y": 90}
+  }
+}
