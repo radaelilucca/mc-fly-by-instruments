@@ -1,1 +1,3 @@
-{"parent":"aeronautics_fly_by_instruments:block/avionics_cable_core"}
+{
+  "parent": "aeronautics_fly_by_instruments:block/avionics_cable_item"
+}

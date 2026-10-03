@@ -4,6 +4,21 @@ The Radar Altimeter measures clearance from the lower face of its block. Its
 beam follows that local axis as an Aeronautics sublevel moves or tilts. The
 block also samples normally when placed in a stationary world.
 
+## Visual and placement
+
+The metal enclosure has rivets, vents and decorative side connectors. Yellow
+arrows point toward the **lower sensing face**: an off-white antenna with a
+brass target and a small blue centre. The top has a blue radar emblem, not a
+sensing surface. The side connectors do not define the cast direction or
+restrict cable connections.
+
+The model stays within its block cell. Its outline and collision follow the
+enclosure and connectors rather than a full cube. The lower antenna is centred
+at model `(8, 0, 8)`, matching the unchanged local cast origin. In a sublevel,
+this local bottom follows the vessel's attitude as before.
+
+Editable source and export instructions: [Blockbench project](../blockbench/radar-altimeter/README.md).
+
 ## Sampling behavior
 
 - Nine casts: one central and eight evenly spaced around it, in a 20-degree

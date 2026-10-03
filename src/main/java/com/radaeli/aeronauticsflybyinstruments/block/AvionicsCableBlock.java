@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -75,7 +76,19 @@ public final class AvionicsCableBlock extends Block implements AvionicsWrenchabl
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape shape = CORE;
         for (Direction direction : Direction.values()) {
-            if (state.getValue(CONNECTIONS.get(direction))) shape = Shapes.or(shape, ARMS.get(direction));
+            if (!state.getValue(CONNECTIONS.get(direction))) continue;
+            BlockPos neighborPos = pos.relative(direction);
+            if (level instanceof LevelReader reader && !reader.hasChunkAt(neighborPos)) {
+                shape = Shapes.or(shape, ARMS.get(direction));
+                continue;
+            }
+            BlockState neighbor = level.getBlockState(neighborPos);
+            if (neighbor.getBlock() instanceof CableSocketProvider sockets) {
+                shape = Shapes.or(shape, new CableConnection(direction,
+                        sockets.cableSocket(neighbor, direction.getOpposite())).outline());
+            } else {
+                shape = Shapes.or(shape, ARMS.get(direction));
+            }
         }
         return shape;
     }

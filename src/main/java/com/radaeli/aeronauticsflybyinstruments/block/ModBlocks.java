@@ -3,6 +3,7 @@ package com.radaeli.aeronauticsflybyinstruments.block;
 import com.radaeli.aeronauticsflybyinstruments.AeronauticsFlyByInstruments;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import com.radaeli.aeronauticsflybyinstruments.item.LampModuleItem;
 import com.radaeli.aeronauticsflybyinstruments.item.LampModule2x1Item;
@@ -39,7 +40,8 @@ public final class ModBlocks {
             ITEMS.registerSimpleBlockItem(MODULAR_TABLE_BASE);
     public static final DeferredBlock<AvionicsCableBlock> AVIONICS_CABLE =
             BLOCKS.register("avionics_cable", () -> new AvionicsCableBlock(
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.CHAIN).noOcclusion().dynamicShape()));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.CHAIN).sound(SoundType.NETHERITE_BLOCK)
+                            .noOcclusion().dynamicShape()));
     public static final DeferredItem<BlockItem> AVIONICS_CABLE_ITEM =
             ITEMS.registerSimpleBlockItem(AVIONICS_CABLE);
     public static final DeferredBlock<NetworkBridgeBlock> NETWORK_BRIDGE =
@@ -53,16 +55,16 @@ public final class ModBlocks {
     public static final DeferredItem<BlockItem> GPWS_COMPUTER_ITEM = ITEMS.registerSimpleBlockItem(GPWS_COMPUTER);
     public static final DeferredBlock<RadarAltimeterBlock> RADAR_ALTIMETER =
             BLOCKS.register("radar_altimeter", () -> new RadarAltimeterBlock(
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(2.0f)));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(2.0f).noOcclusion()));
     public static final DeferredItem<BlockItem> RADAR_ALTIMETER_ITEM =
             ITEMS.registerSimpleBlockItem(RADAR_ALTIMETER);
     public static final DeferredBlock<TerrainScannerBlock> TERRAIN_SCANNER =
             BLOCKS.register("terrain_scanner", () -> new TerrainScannerBlock(
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.OBSERVER).strength(2.0f)));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OBSERVER).strength(2.0f).noOcclusion()));
     public static final DeferredItem<BlockItem> TERRAIN_SCANNER_ITEM = ITEMS.registerSimpleBlockItem(TERRAIN_SCANNER);
     public static final DeferredBlock<AdvancedTerrainScannerBlock> TERRAIN_SCANNER_ADVANCED =
             BLOCKS.register("terrain_scanner_advanced", () -> new AdvancedTerrainScannerBlock(
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.OBSERVER).strength(2.0f)));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OBSERVER).strength(2.0f).noOcclusion()));
     public static final DeferredItem<BlockItem> TERRAIN_SCANNER_ADVANCED_ITEM =
             ITEMS.registerSimpleBlockItem(TERRAIN_SCANNER_ADVANCED);
     public static final DeferredItem<LampModuleItem> LAMP_MODULE =

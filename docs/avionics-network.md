@@ -7,8 +7,10 @@ or wireless links. The Modular Table Base and Network Bridge are endpoints;
 flight sensors and the GPWS join the network as they are implemented.
 
 The cable uses a compact center hub and arms toward adjacent cable or endpoint
-blocks. Its simple dark appearance is a placeholder model using a vanilla
-texture. The CC:Tweaked Networking Cable is a UX reference only; this project
+blocks. It has its own graphite/brass Blockbench model and textures, with
+adaptive visual leads on the redesigned Radar Altimeter and Basic Terrain
+Scanner. See [visual connections](avionics-cable-visuals.md). The CC:Tweaked
+Networking Cable is a UX reference only; this project
 does not reuse its code or assets. The `Network Bridge` is the dedicated
 CC:Tweaked gateway; endpoint peripherals remain independent.
 
