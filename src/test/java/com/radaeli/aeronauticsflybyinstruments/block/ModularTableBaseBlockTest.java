@@ -7,6 +7,8 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
+import net.minecraft.world.item.ItemStack;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -16,6 +18,18 @@ class ModularTableBaseBlockTest {
     @BeforeAll
     static void initializeMinecraft() {
         block = ModBlocks.MODULAR_TABLE_BASE.get();
+    }
+
+    @Test
+    void removingEachModuleReturnsItsOwnItem() {
+        assertEquals(ModBlocks.BUZZER_MODULE.get(),
+                ModularTableBaseBlock.itemStack(new PanelGrid.Module("buzzer", 0, 0, 1, 1)).getItem());
+        assertEquals(ModBlocks.LAMP_MODULE.get(),
+                ModularTableBaseBlock.itemStack(new PanelGrid.Module("lamp", 0, 0, 1, 1)).getItem());
+        assertEquals(ModBlocks.LAMP_MODULE_2X1.get(),
+                ModularTableBaseBlock.itemStack(new PanelGrid.Module("lamp_2x1", 0, 0, 2, 1)).getItem());
+        assertEquals(ItemStack.EMPTY,
+                ModularTableBaseBlock.itemStack(new PanelGrid.Module("unknown", 0, 0, 1, 1)));
     }
 
     @Test

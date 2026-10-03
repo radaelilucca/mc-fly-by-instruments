@@ -9,9 +9,15 @@ com carcaça opaca, vidro vermelho translúcido e emissão visual por módulo. V
 atuadores de teste: acendem quando o sinal simulado do canal associado alcança
 o threshold do módulo.
 
+O módulo de buzzer `buzzer` ocupa uma célula 1×1 e tem modelo cilíndrico preto,
+ligeiramente menor que a lâmpada: lateral com acabamento preto piano e topo
+poroso com pequeno furo central. Nesta entrega ele pode ser instalado, removido
+e salvo com a mesa; ainda não tem som nem configuração de sinais. Sua fonte
+editável está em [Blockbench: buzzer 1×1](../blockbench/buzzer-module-1x1/README.md).
+
 ## Montagem
 
-1. Pegue a Base da Mesa Modular e os módulos de lâmpada na aba Aeronautics: Fly by Instruments.
+1. Pegue a Base da Mesa Modular e os módulos de lâmpada ou buzzer na aba Aeronautics: Fly by Instruments.
 2. Coloque a base sobre uma face sólida, incluindo a parte inferior de um bloco.
 3. Segure um módulo e mire na face exposta: o grid mostra seu footprint.
    Verde indica que ele cabe; vermelho indica colisão ou borda.
@@ -26,6 +32,7 @@ o threshold do módulo.
 /give @s aeronautics_fly_by_instruments:modular_table_base
 /give @s aeronautics_fly_by_instruments:lamp_module
 /give @s aeronautics_fly_by_instruments:lamp_module_2x1
+/give @s aeronautics_fly_by_instruments:buzzer_module
 ```
 
 O highlight mostra todo o footprint. É possível instalar até nove lâmpadas 1×1
@@ -44,6 +51,7 @@ Uma operação de remoção sobre qualquer célula coberta retira o módulo inte
 O módulo `lamp` ocupa 1×1. O `lamp_2x1` ocupa 2×1 por padrão e alterna para 1×2
 com o scroll; a variante alonga a mesma geometria e gira junto com o footprint.
 Ambos os footprints são persistidos e expostos pelas dimensões do módulo na API.
+O `buzzer` ocupa sempre 1×1 e segue as mesmas regras de ocupação e remoção.
 
 ## CC:Tweaked
 
@@ -77,6 +85,11 @@ Os métodos de intensidade funcionam com lâmpadas 1×1 e 2×1 e são apenas par
 thresholds ou dados persistidos da mesa e não emitem luz dinâmica no mundo.
 O programa [lamp-emission-test.lua](examples/lamp-emission-test.lua) percorre
 cada lâmpada instalada nos níveis 0 a 15, com meio segundo por nível.
+
+O buzzer também aparece em `getModules()`, `getSlot()` e no evento
+`modular_table_changed`, com `type = "buzzer"`, largura e altura 1. Em
+`getOutputs()`, permanece inativo. Métodos de configuração e intensidade
+de lâmpadas rejeitam esse módulo enquanto seu comportamento não for implementado.
 
 Evento `modular_table_changed`: nome do peripheral, ação (`placed`, `removed`
 ou `configured`) e descrição do módulo. Evento `modular_table_signal_changed`:

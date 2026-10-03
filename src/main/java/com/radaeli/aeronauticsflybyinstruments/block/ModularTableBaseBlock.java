@@ -102,9 +102,13 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    private static ItemStack itemStack(PanelGrid.Module module) {
-        return new ItemStack(module.type().equals("lamp_2x1")
-                ? ModBlocks.LAMP_MODULE_2X1.get() : ModBlocks.LAMP_MODULE.get());
+    static ItemStack itemStack(PanelGrid.Module module) {
+        return switch (module.type()) {
+            case "lamp" -> new ItemStack(ModBlocks.LAMP_MODULE.get());
+            case "lamp_2x1" -> new ItemStack(ModBlocks.LAMP_MODULE_2X1.get());
+            case "buzzer" -> new ItemStack(ModBlocks.BUZZER_MODULE.get());
+            default -> ItemStack.EMPTY;
+        };
     }
 
     @Override

@@ -7,6 +7,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PanelCoordinatesTest {
     @Test
+    void authoredModelMountsAtExactCellCenterForEverySlotAndFacing() {
+        for (var facing : Direction.values()) {
+            for (int row = 0; row < PanelGrid.SIZE; row++) {
+                for (int column = 0; column < PanelGrid.SIZE; column++) {
+                    var module = new PanelGrid.Module("buzzer", column, row, 1, 1);
+                    var base = new Vec3(0.5, 0, 0.5).add(PanelCoordinates.modelOffset(module));
+                    var expected = new Vec3((column + 0.5) / 3, 3.0 / 16, (row + 0.5) / 3);
+                    assertEquals(0, PanelCoordinates.fromPanel(facing, expected)
+                            .distanceTo(PanelCoordinates.fromPanel(facing, base)), 1e-6);
+                    var top = base.add(0, 1.9 / 16, 0);
+                    assertEquals(1.9 / 16,
+                            PanelCoordinates.fromPanel(facing, top).distanceTo(PanelCoordinates.fromPanel(facing, base)), 1e-6);
+                }
+            }
+        }
+    }
+
+    @Test
     void clicksOnEveryCellMapCorrectlyForEveryMountingDirection() {
         for (var facing : Direction.values()) {
             for (int row = 0; row < 3; row++) {

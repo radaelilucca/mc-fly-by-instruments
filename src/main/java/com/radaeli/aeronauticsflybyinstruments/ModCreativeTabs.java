@@ -26,6 +26,7 @@ public final class ModCreativeTabs {
                         output.accept(ModBlocks.TERRAIN_SCANNER_ADVANCED_ITEM);
                         output.accept(ModBlocks.LAMP_MODULE);
                         output.accept(ModBlocks.LAMP_MODULE_2X1);
+                        output.accept(ModBlocks.BUZZER_MODULE);
                     })
                     .build());
 

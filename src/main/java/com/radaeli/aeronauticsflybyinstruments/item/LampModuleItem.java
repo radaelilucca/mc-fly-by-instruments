@@ -28,8 +28,12 @@ public final class LampModuleItem extends Item {
         int row = PanelCoordinates.cell(point.z);
         if (!table.grid().canFit(column, row, width, height)) return InteractionResult.FAIL;
         if (!level.isClientSide) {
-            boolean placed = type.equals("lamp") ? table.placeLamp(column, row)
-                    : table.placeLamp2x1(column, row, height > width);
+            boolean placed = switch (type) {
+                case "lamp" -> table.placeLamp(column, row);
+                case "lamp_2x1" -> table.placeLamp2x1(column, row, height > width);
+                case "buzzer" -> table.placeBuzzer(column, row);
+                default -> false;
+            };
             if (!placed) return InteractionResult.FAIL;
             context.getItemInHand().consume(1, context.getPlayer());
         }

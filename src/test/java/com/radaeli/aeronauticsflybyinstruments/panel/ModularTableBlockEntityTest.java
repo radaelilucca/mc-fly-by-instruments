@@ -17,6 +17,42 @@ class ModularTableBlockEntityTest {
     }
 
     @Test
+    void buzzerSharesTheGridPersistsAndHasNoLampControls() {
+        var original = table();
+        assertTrue(original.placeBuzzer(0, 0));
+        assertFalse(original.placeLamp(0, 0));
+        assertFalse(original.placeBuzzer(0, 0));
+        assertTrue(original.placeLamp2x1(1, 0, false));
+        assertFalse(original.placeBuzzer(2, 0));
+        assertFalse(original.placeBuzzer(3, 0));
+        var buzzer = original.grid().at(0, 0).orElseThrow();
+        assertEquals("buzzer", buzzer.type());
+        assertFalse(original.configureModule(0, 0, "terrain", 1));
+        assertFalse(original.setLampTestIntensity(0, 0, 15));
+        assertTrue(original.setTestSignal("test", 1));
+        assertFalse(original.isModuleActive(buzzer));
+
+        for (var data : new CompoundTag[]{original.saveWithoutMetadata(REGISTRIES), original.getUpdateTag(REGISTRIES)}) {
+            var restored = table();
+            restored.loadCustomOnly(data, REGISTRIES);
+            assertEquals(original.grid().modules(), restored.grid().modules());
+            assertTrue(restored.removeModule(0, 0));
+            assertTrue(restored.placeLamp(0, 0));
+        }
+    }
+
+    @Test
+    void persistedBuzzerWithInvalidFootprintIsIgnored() {
+        var original = table();
+        original.placeBuzzer(1, 1);
+        var data = original.saveWithoutMetadata(REGISTRIES);
+        data.getList("Modules", net.minecraft.nbt.Tag.TAG_COMPOUND).getCompound(0).putInt("Width", 2);
+        var restored = table();
+        restored.loadCustomOnly(data, REGISTRIES);
+        assertTrue(restored.grid().modules().isEmpty());
+    }
+
+    @Test
     void savedModulesSurviveReloadAndClientUpdateTags() {
         var original = table();
         assertTrue(original.placeLamp(0, 0));

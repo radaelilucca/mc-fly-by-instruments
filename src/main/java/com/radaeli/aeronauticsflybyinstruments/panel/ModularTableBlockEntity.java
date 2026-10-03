@@ -94,6 +94,10 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
         return placeModule(new PanelGrid.Module("lamp", column, row, 1, 1));
     }
 
+    public boolean placeBuzzer(int column, int row) {
+        return placeModule(new PanelGrid.Module("buzzer", column, row, 1, 1));
+    }
+
     public boolean placeLamp2x1(int column, int row, boolean vertical) {
         var module = vertical
                 ? new PanelGrid.Module("lamp_2x1", column, row, 1, 2)
@@ -164,7 +168,8 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             boolean validLamp = type.equals("lamp") && width == 1 && height == 1;
             boolean validLamp2x1 = type.equals("lamp_2x1")
                     && (width == 2 && height == 1 || width == 1 && height == 2);
-            if (validLamp || validLamp2x1) {
+            boolean validBuzzer = type.equals("buzzer") && width == 1 && height == 1;
+            if (validLamp || validLamp2x1 || validBuzzer) {
                 String channel = entry.contains("Channel", Tag.TAG_STRING) ? entry.getString("Channel") : "test";
                 double threshold = entry.contains("Threshold", Tag.TAG_DOUBLE) ? entry.getDouble("Threshold") : 0.5;
                 if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(threshold)) {

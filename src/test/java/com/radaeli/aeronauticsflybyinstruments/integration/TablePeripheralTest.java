@@ -17,6 +17,22 @@ class TablePeripheralTest {
     }
 
     @Test
+    void buzzerIsVisibleThroughTheTableApiButCannotActivateLampOrSignalControls() throws LuaException {
+        var table = table();
+        assertTrue(table.placeBuzzer(2, 1));
+        var peripheral = table.peripheral();
+        var slot = peripheral.getSlot(3, 2);
+        assertEquals("buzzer", slot.get("type"));
+        assertEquals(1, slot.get("width"));
+        assertEquals(1, slot.get("height"));
+        assertEquals(slot, peripheral.getModules().getFirst());
+        assertEquals(false, peripheral.getOutputs().getFirst().get("active"));
+        assertThrows(LuaException.class, () -> peripheral.configureModule(3, 2, "terrain", 1));
+        assertThrows(LuaException.class, () -> peripheral.setLampTestIntensity(3, 2, 15));
+        assertThrows(LuaException.class, () -> peripheral.clearLampTestIntensity(3, 2));
+    }
+
+    @Test
     void exposesOneBasedSlotsAndFootprintQueries() throws LuaException {
         var table = table();
         var peripheral = table.peripheral();

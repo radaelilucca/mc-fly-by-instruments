@@ -1,5 +1,7 @@
 {
   "block.aeronautics_fly_by_instruments.modular_table_base": "Base da Mesa Modular",
+  "item.aeronautics_fly_by_instruments.buzzer_module": "Módulo de Buzzer (1x1)",
+  "item.aeronautics_fly_by_instruments.buzzer_module.description": "Instale na mesa modular. Protótipo visual; ainda sem som.",
   "block.aeronautics_fly_by_instruments.avionics_cable": "Cabo de Aviônicos",
   "block.aeronautics_fly_by_instruments.network_bridge": "Ponte da Rede de Aviônicos",
   "block.aeronautics_fly_by_instruments.gpws_computer": "Computador GPWS",

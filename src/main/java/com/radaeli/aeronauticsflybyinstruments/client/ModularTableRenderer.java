@@ -10,6 +10,7 @@ import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
 import com.radaeli.aeronauticsflybyinstruments.network.PanelNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -18,6 +19,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.item.ItemStack;
 
 public final class ModularTableRenderer implements BlockEntityRenderer<ModularTableBlockEntity> {
     private static final double SURFACE = 3.0 / 16;
@@ -25,6 +27,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
     private final BlockRenderDispatcher blocks;
     private final LampModuleRenderer lamps1x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE.get());
     private final LampModuleRenderer lamps2x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE_2X1.get());
+    private final ItemStack buzzerStack = new ItemStack(ModBlocks.BUZZER_MODULE.get());
 
     public ModularTableRenderer(BlockEntityRendererProvider.Context context) {
         blocks = context.getBlockRenderDispatcher();
@@ -39,6 +42,8 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
         for (var module : table.grid().modules()) {
             if (ModularTableBlockEntity.isLampModule(module)) {
                 renderLamp(table, module, poses, buffers, light, overlay);
+            } else if (module.type().equals("buzzer")) {
+                renderBuzzer(table, module, poses, buffers, light, overlay);
             } else {
                 // Keep a fallback for future module types without authored renderers.
                 var lampState = Blocks.REDSTONE_LAMP.defaultBlockState()
@@ -55,9 +60,11 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 || player.getOffhandItem().is(ModBlocks.LAMP_MODULE.get()));
         boolean holdingLongLamp = player != null && (player.getMainHandItem().is(ModBlocks.LAMP_MODULE_2X1.get())
                 || player.getOffhandItem().is(ModBlocks.LAMP_MODULE_2X1.get()));
+        boolean holdingBuzzer = player != null && (player.getMainHandItem().is(ModBlocks.BUZZER_MODULE.get())
+                || player.getOffhandItem().is(ModBlocks.BUZZER_MODULE.get()));
         boolean removing = player != null && (ModularTableBaseBlock.isCreateWrench(player.getMainHandItem())
                 || ModularTableBaseBlock.isCreateWrench(player.getOffhandItem()));
-        if ((holdingSmallLamp || holdingLongLamp || removing) && minecraft.hitResult instanceof BlockHitResult hit
+        if ((holdingSmallLamp || holdingLongLamp || holdingBuzzer || removing) && minecraft.hitResult instanceof BlockHitResult hit
                 && hit.getBlockPos().equals(table.getBlockPos()) && hit.getDirection() == facing) {
             for (int i = 0; i <= PanelGrid.SIZE; i++) {
                 double line = Math.min(1 - 0.012, Math.max(0, i * CELL - 0.006));
@@ -88,7 +95,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 } else {
                     valid = table.grid().canFit(column, row, width, height);
                 }
-                if (holdingSmallLamp || holdingLongLamp || valid) {
+                if (holdingSmallLamp || holdingLongLamp || holdingBuzzer || valid) {
                     var color = (valid ? Blocks.LIME_CONCRETE : Blocks.RED_CONCRETE).defaultBlockState();
                     outline(poses, buffers, color, outlineColumn, outlineRow, width, height, light, overlay);
                 }
@@ -101,8 +108,8 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                             MultiBufferSource buffers, int light, int overlay) {
         poses.pushPose();
         // Center the model on its full footprint, then turn the long axis for a vertical 1x2 placement.
-        poses.translate(module.column() * CELL + module.width() * CELL / 2 - 0.5, SURFACE,
-                module.row() * CELL + module.height() * CELL / 2 - 0.5);
+        var offset = PanelCoordinates.modelOffset(module);
+        poses.translate(offset.x, offset.y, offset.z);
         if (module.height() > module.width()) {
             poses.translate(0.5, 0, 0.5);
             poses.mulPose(Axis.YP.rotationDegrees(90));
@@ -110,6 +117,19 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
         }
         var renderer = module.type().equals("lamp_2x1") ? lamps2x1 : lamps1x1;
         renderer.render(table.lampRenderIntensity(module), table.getLevel(), poses, buffers, light, overlay);
+        poses.popPose();
+    }
+
+    private void renderBuzzer(ModularTableBlockEntity table, PanelGrid.Module module, PoseStack poses,
+                              MultiBufferSource buffers, int light, int overlay) {
+        poses.pushPose();
+        // Render raw model quads: item display transforms must not shift mounted modules.
+        var offset = PanelCoordinates.modelOffset(module);
+        poses.translate(offset.x, offset.y, offset.z);
+        var items = Minecraft.getInstance().getItemRenderer();
+        var model = items.getModel(buzzerStack, table.getLevel(), null, 0);
+        items.renderModelLists(model, buzzerStack, light, overlay, poses,
+                buffers.getBuffer(Sheets.cutoutBlockSheet()));
         poses.popPose();
     }
 
