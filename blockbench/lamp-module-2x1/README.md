@@ -1,5 +1,7 @@
 # Módulo de lâmpada 2×1
 
+Identidade compartilhada: [guia de estilo e paleta](../../docs/visual-design-guide.md).
+
 Esta variante alonga o modelo 1×1 em duas vezes no eixo local X, em torno do centro. Mantém a altura, profundidade, UVs e texturas originais; por isso, o acabamento, o estado aceso/apagado e o material visual são compartilhados com a lâmpada 1×1. A integração gira o modelo 90° quando o footprint ocupa 1 coluna × 2 linhas.
 
 - `lamp_module_2x1_off.bbmodel` e `lamp_module_2x1_on.bbmodel`: fontes Java Block editáveis no Blockbench, com texturas incorporadas.

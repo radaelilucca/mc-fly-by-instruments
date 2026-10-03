@@ -79,6 +79,18 @@ receber proteção básica. Defaults tolerantes, presets, descoberta automática
 um caminho de painel pronto/rápido devem tornar o sistema útil em gameplay
 arcade, inclusive para manter um airship em hover sem queda inesperada.
 
+### Identidade visual dos componentes
+
+Adotar uma linguagem de aviónica industrial em voxel: carcaças metálicas claras,
+bases em grafite/preto e acentos de latão, azul técnico e cores funcionais.
+Silhueta e marcações devem tornar a função e a face de medição intuitivas,
+sem exigir conhecimentos de aviação. Módulos da mesa compartilham escala baixa,
+apoio em Y=0 e centro horizontal em X/Z=8 na fonte; estados aceso/apagado devem
+ser legíveis por módulo e sem shaders. O [guia de identidade visual](docs/visual-design-guide.md)
+consolida paleta, materiais, proporções e checklist para os próximos modelos.
+Cores futuras propostas no guia não criam funcionalidades ou vínculos obrigatórios
+entre cores e canais do GPWS.
+
 ## 4. Escopo funcional inicial
 
 ### 4.1 GPWS Computer

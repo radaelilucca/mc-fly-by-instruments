@@ -1,5 +1,7 @@
 # Módulo de luz 1×1 — estudo visual
 
+Identidade compartilhada: [guia de estilo e paleta](../../docs/visual-design-guide.md).
+
 Modelo e pintura criados pela interface do Blockbench, no formato **Java Block/Item**, compatível com o alvo Minecraft 1.21.1. Sem texto ou comportamento novo.
 
 - `lamp_module_1x1.bbmodel`: referência apagada, com texturas incorporadas.
