@@ -1,5 +1,6 @@
 # Documentação técnica
 
+- [TODOs de longo prazo](TODO.md)
 - [Identidade visual: estilo, paleta, materiais e convenções de modelagem](visual-design-guide.md)
 - [Mesa modular: montagem, grid e API CC:Tweaked](modular-table.md)
 - [Módulos de lâmpada 1×1 e 2×1: emissão visual e teste](lamp-emission.md)
