@@ -158,7 +158,7 @@ O scanner detectará como possíveis obstáculos:
 
 A abertura avançada será configurável por interface no jogo e por CC:Tweaked, validada e aplicada autoritativamente no servidor e salva por bloco. Ambos os scanners fornecem snapshots com contatos por raio, distância, direção relativa, quantidade de raios concluídos, cobertura e game time. Hits são genéricos, sem classificação do tipo de obstáculo. Uma varredura sem hits mas com cobertura retorna `VALID` e lista vazia; cobertura parcial mantém os contatos conhecidos; cobertura zero retorna `UNAVAILABLE`; erros retornam `FAILED`.
 
-Os scans usam o intervalo global configurável (padrão 5 ticks), têm alcance máximo global configurável (padrão 128 blocos), não carregam chunks e tratam fronteiras descarregadas como cobertura incompleta. Ambas as variantes são endpoints da Avionics Cable Network e têm peripherals próprios `terrain_scanner` e `terrain_scanner_advanced`; a integração com o GPWS será implementada em fase posterior.
+Os scans usam o intervalo global configurável (padrão 5 ticks), têm alcance máximo global configurável (padrão 128 blocos), não carregam chunks e tratam fronteiras descarregadas como cobertura incompleta. Ambas as variantes são endpoints da Avionics Cable Network e têm peripherals próprios `terrain_scanner` e `terrain_scanner_advanced`. **A integração das leituras ao GPWS foi implementada na Fase 4:** contatos conhecidos podem acionar `TERRAIN` e `PULL_UP`; cobertura parcial sem contato não é tratada como caminho livre. A validação final desses casos em voo permanece na estabilização.
 
 ### 4.4 Fontes de atitude e velocidade
 
@@ -500,6 +500,8 @@ Objetivo: produzir leituras confiáveis para o GPWS.
 
 #### 3.3 — Terrain Scanner
 
+**Estado atual: implementado, incluindo consumo dos snapshots pelo motor GPWS na Fase 4.**
+
 - scanner simples fixo com nove raycasts em cone de 90°;
 - scanner avançado com abertura total ajustável de 30° a 180° (padrão 90°) e contagem automática de 9 a 81 raycasts;
 - interface de configuração no jogo e API CC:Tweaked autoritativas no servidor, com persistência por bloco;
@@ -522,6 +524,11 @@ peripheral, eventos e testes CC:Tweaked. O básico deve produzir alertas de
 clearance/descida usando apenas GPWS + Radar Altimeter; o scanner é opcional
 para esse benefício. O plano também define fusão de sensores, expiração de
 leituras, defaults de thresholds, histerese e critérios de falha.
+
+**Estado atual: motor GPWS implementado, inclusive integração lógica com os
+Terrain Scanners.** A verificação de comportamento em cenários reais de voo e
+o acionamento dos módulos físicos do painel pertencem às fases de estabilização
+e integração do Annunciator Panel, respectivamente.
 
 Entregas:
 

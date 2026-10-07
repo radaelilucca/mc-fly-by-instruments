@@ -14,6 +14,12 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.BlockHitResult;
+import com.radaeli.aeronauticsflybyinstruments.network.SensorOutputNetwork;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -29,6 +35,24 @@ public abstract class AbstractTerrainScannerBlock extends BaseEntityBlock implem
     protected AbstractTerrainScannerBlock(Properties properties) {
         super(properties);
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(UPSIDE_DOWN, false));
+    }
+
+    @Override public boolean isSignalSource(BlockState state) { return true; }
+    @Override public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return level.getBlockEntity(pos) instanceof TerrainScannerBlockEntity scanner
+                ? scanner.outputPower(direction) : 0;
+    }
+    @Override public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) { return 0; }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+                                               BlockHitResult hit) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+                && level.getBlockEntity(pos) instanceof TerrainScannerBlockEntity scanner) {
+            SensorOutputNetwork.open(serverPlayer, pos, scanner.advanced() ? "advanced" : "terrain",
+                    scanner.openingAngle(), scanner.outputConfig());
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override

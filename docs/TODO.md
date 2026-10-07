@@ -37,10 +37,13 @@ continuar funcionando no estado atual enquanto não forem tratados.
   Permitir escolher o canal e configurar o threshold dos módulos compatíveis;
   incluir uma configuração rápida com defaults úteis para quem prefere montar e
   voar sem ajustar cada slot. Preservar a configuração manual para entusiastas.
-- [ ] **GPWS-01 — Integrar as leituras do Terrain Scanner aos alertas do GPWS.**
-  O scanner publica contatos e cobertura, mas ainda não participa da lógica de
-  alertas. Definir como cobertura parcial e dados indisponíveis afetam os canais
-  dependentes do terreno.
+- [ ] **GPWS-01 — Validar em voo os alertas GPWS dependentes do Terrain Scanner.**
+  A integração lógica já existe: contatos conhecidos podem sustentar `TERRAIN`
+  e `PULL_UP`, enquanto cobertura parcial sem contato não significa caminho
+  livre. Exercitar em voo cobertura completa/parcial, scanner ausente ou
+  indisponível e orientação relativa; ajustar comportamento somente se os
+  testes revelarem problemas. A lógica implementada está descrita em
+  [GPWS Computer](gpws.md) e [Terrain Scanner](terrain-scanner.md).
 - [ ] **LÂMPADA-02 — Avaliar variantes de cor das lâmpadas.**
   Usar as mesmas proporções e materiais da variante vermelha; validar cada
   combinação acesa/apagada no jogo antes de fixar uma paleta adicional.

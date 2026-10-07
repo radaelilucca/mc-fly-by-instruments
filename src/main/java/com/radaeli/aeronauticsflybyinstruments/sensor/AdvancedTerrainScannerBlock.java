@@ -2,7 +2,6 @@ package com.radaeli.aeronauticsflybyinstruments.sensor;
 
 import com.mojang.serialization.MapCodec;
 import com.radaeli.aeronauticsflybyinstruments.block.CableSocketProvider;
-import com.radaeli.aeronauticsflybyinstruments.network.TerrainScannerNetwork;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -41,7 +40,8 @@ public final class AdvancedTerrainScannerBlock extends AbstractTerrainScannerBlo
                                                Player player, BlockHitResult hit) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof TerrainScannerBlockEntity scanner) {
-            TerrainScannerNetwork.openConfiguration(serverPlayer, pos, scanner.openingAngle());
+            com.radaeli.aeronauticsflybyinstruments.network.SensorOutputNetwork.open(serverPlayer, pos, "advanced",
+                    scanner.openingAngle(), scanner.outputConfig());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

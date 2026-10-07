@@ -11,6 +11,12 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.BlockHitResult;
+import com.radaeli.aeronauticsflybyinstruments.network.SensorOutputNetwork;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -43,6 +49,22 @@ public final class RadarAltimeterBlock extends BaseEntityBlock implements Avioni
 
     public RadarAltimeterBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override public boolean isSignalSource(BlockState state) { return true; }
+    @Override public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return level.getBlockEntity(pos) instanceof RadarAltimeterBlockEntity sensor ? sensor.outputPower(direction) : 0;
+    }
+    @Override public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) { return 0; }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
+                                               BlockHitResult hit) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+                && level.getBlockEntity(pos) instanceof RadarAltimeterBlockEntity sensor) {
+            SensorOutputNetwork.open(serverPlayer, pos, "altimeter", 90, sensor.outputConfig());
+        }
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override

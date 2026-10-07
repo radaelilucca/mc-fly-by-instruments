@@ -3,6 +3,7 @@ package com.radaeli.aeronauticsflybyinstruments.sensor;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,9 +38,41 @@ public class TerrainScannerPeripheral implements IPeripheral {
         return toLua(scanner.reading());
     }
 
+    @LuaFunction(mainThread = true)
+    public Map<String, Object> getOutputConfiguration() { return SensorOutputLua.configuration(scanner.outputConfig()); }
+
+    @LuaFunction(mainThread = true)
+    public Map<String, Object> getOutputs() { return SensorOutputLua.outputs(scanner.outputLevels()); }
+
+    @LuaFunction(mainThread = true)
+    public boolean setOutputRange(String channel, int min, int max) {
+        SensorOutputConfig.Channel parsed = SensorOutputLua.channel(channel);
+        if (parsed == null || !scanner.outputConfig().ranges().containsKey(parsed)) return false;
+        return scanner.setOutputRange(parsed, min, max);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean setOutputMode(String mode) { return scanner.setOutputMode(mode); }
+
+    @LuaFunction(mainThread = true)
+    public boolean setLinkFrequencies(String channel, Map<?, ?> first, Map<?, ?> second) {
+        SensorOutputConfig.Channel parsed = SensorOutputLua.channel(channel);
+        if (parsed == null || !scanner.outputConfig().ranges().containsKey(parsed)) return false;
+        ItemStack a = SensorOutputLua.frequency(first), b = SensorOutputLua.frequency(second);
+        return a != null && b != null && scanner.setLinkFrequencies(parsed, a, b);
+    }
+
     public void publishScan(TerrainScanSnapshot snapshot) {
         Map<String, Object> value = toLua(snapshot);
         publishEvent(SCAN_EVENT, value);
+    }
+
+    void publishOutputConfiguration() {
+        publishEvent(RadarAltimeterPeripheral.OUTPUT_CONFIG_EVENT,
+                SensorOutputLua.configuration(scanner.outputConfig()));
+    }
+    void publishOutputs() {
+        publishEvent(RadarAltimeterPeripheral.OUTPUT_EVENT, SensorOutputLua.outputs(scanner.outputLevels()));
     }
 
     protected final void publishEvent(String event, Map<String, Object> value) {

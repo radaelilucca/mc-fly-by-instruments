@@ -101,7 +101,11 @@ end
 
 `setOpeningAngle` retorna `true` somente quando uma nova abertura válida foi aplicada. Chamar com o valor atual ou fora da faixa retorna `false`. Os eventos incluem o nome do peripheral como primeiro argumento após o nome do evento e o snapshot/configuração atualizados como argumento seguinte.
 
-Os blocos e a interface ainda usam modelos visuais de placeholder. O scanner não está conectado à lógica de alertas do GPWS nesta fase.
+Os modelos Basic e Advanced têm assets próprios. As leituras também são
+consumidas pelo motor do GPWS: contatos conhecidos podem acionar os canais
+`TERRAIN` e `PULL_UP`; ausência de contatos com cobertura incompleta permanece
+indisponível, não sendo interpretada como caminho livre. A validação integrada
+em cenários de voo continua pendente para a estabilização.
 
 ## Visualização de raycasts (ambiente de desenvolvimento)
 

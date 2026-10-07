@@ -73,6 +73,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
     testCompileOnly files(existingDependencyFiles)
     testImplementation files(computercraftJar)
+    testImplementation files(rUiLibJar)
     compileOnly files(existingDependencyFiles)
     compileOnly files { fileTree(aeronauticsCompileJarsDirectory.get().asFile) { include '*.jar' } }
     compileOnly files { fileTree(sableCompileJarsDirectory.get().asFile) { include '*.jar' } }
@@ -94,6 +95,8 @@ neoForge {
         client {
             client()
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            programArgument '--quickPlaySingleplayer'
+            programArgument 'New World'
         }
 
         server {
