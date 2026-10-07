@@ -22,6 +22,8 @@ import com.radaeli.aeronauticsflybyinstruments.network.PanelNetwork;
 import com.radaeli.aeronauticsflybyinstruments.network.TerrainScannerNetwork;
 import com.radaeli.aeronauticsflybyinstruments.network.GpwsNetwork;
 import com.radaeli.aeronauticsflybyinstruments.network.SensorOutputNetwork;
+import com.radaeli.aeronauticsflybyinstruments.network.FmsNetwork;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsRegistries;
 import net.neoforged.neoforge.common.NeoForge;
 
 /** Main entry point for Aeronautics: Fly by Instruments. */
@@ -31,6 +33,7 @@ public final class AeronauticsFlyByInstruments {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public AeronauticsFlyByInstruments(IEventBus modEventBus, ModContainer modContainer) {
+        FmsRegistries.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlocks.ITEMS.register(modEventBus);
         ModBlocks.BLOCK_ENTITIES.register(modEventBus);
@@ -40,6 +43,7 @@ public final class AeronauticsFlyByInstruments {
         modEventBus.addListener(TerrainScannerNetwork::registerPayloads);
         modEventBus.addListener(GpwsNetwork::registerPayloads);
         modEventBus.addListener(SensorOutputNetwork::registerPayloads);
+        modEventBus.addListener(FmsNetwork::registerPayloads);
         modEventBus.addListener(this::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(PanelNetwork::onPlayerLoggedIn);
         if (FMLEnvironment.dist == Dist.CLIENT) {

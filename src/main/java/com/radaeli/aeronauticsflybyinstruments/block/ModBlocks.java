@@ -8,6 +8,10 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import com.radaeli.aeronauticsflybyinstruments.item.LampModuleItem;
 import com.radaeli.aeronauticsflybyinstruments.item.LampModule2x1Item;
 import com.radaeli.aeronauticsflybyinstruments.item.BuzzerModuleItem;
+import com.radaeli.aeronauticsflybyinstruments.item.FmsModuleItem;
+import com.radaeli.aeronauticsflybyinstruments.item.FmsNavigatorItem;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsRegistries;
+import dev.simulated_team.simulated.index.SimDataComponents;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.avionics.NetworkBridgeBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.sensor.RadarAltimeterBlockEntity;
@@ -73,6 +77,11 @@ public final class ModBlocks {
             ITEMS.register("lamp_module_2x1", () -> new LampModule2x1Item(new Item.Properties()));
     public static final DeferredItem<BuzzerModuleItem> BUZZER_MODULE =
             ITEMS.register("buzzer_module", () -> new BuzzerModuleItem(new Item.Properties()));
+    public static final DeferredItem<FmsModuleItem> FMS_MODULE =
+            ITEMS.register("fms_module", () -> new FmsModuleItem(new Item.Properties()));
+    public static final DeferredItem<FmsNavigatorItem> FMS_NAVIGATOR = ITEMS.register("fms_navigator",
+            () -> new FmsNavigatorItem(new Item.Properties()
+                    .component(SimDataComponents.TARGET, FmsRegistries.NAVIGATOR_TARGET)));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ModularTableBlockEntity>> MODULAR_TABLE_ENTITY =
             BLOCK_ENTITIES.register("modular_table", () -> BlockEntityType.Builder.of(
                     ModularTableBlockEntity::new, MODULAR_TABLE_BASE.get()).build(null));

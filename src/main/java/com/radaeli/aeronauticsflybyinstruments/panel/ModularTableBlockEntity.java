@@ -3,6 +3,18 @@ package com.radaeli.aeronauticsflybyinstruments.panel;
 import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
 import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsEndpoint;
 import com.radaeli.aeronauticsflybyinstruments.integration.TablePeripheral;
+import com.radaeli.aeronauticsflybyinstruments.config.ModConfig;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsLocation;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsModuleData;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsModuleIndex;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsSignalLogic;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsSignalSnapshot;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsWaypoint;
+import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsDataChannel;
+import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsSignalProvider;
+import com.radaeli.aeronauticsflybyinstruments.item.FmsModuleItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -15,10 +27,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class ModularTableBlockEntity extends BlockEntity implements AvionicsEndpoint {
+public final class ModularTableBlockEntity extends BlockEntity implements AvionicsEndpoint, AvionicsSignalProvider {
     private PanelGrid grid = new PanelGrid();
     private final Map<String, Double> testSignals = new HashMap<>();
     private final Map<Integer, Integer> lampTestIntensities = new HashMap<>();
+    private final Map<Integer, FmsModuleData> fmsModules = new HashMap<>();
+    private final Map<java.util.UUID, FmsSignalSnapshot> fmsSignals = new HashMap<>();
+    private long lastFmsSignalUpdate = Long.MIN_VALUE;
     private final TablePeripheral peripheral = new TablePeripheral(this);
 
     public ModularTableBlockEntity(BlockPos pos, BlockState state) {
@@ -98,6 +113,19 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
         return placeModule(new PanelGrid.Module("buzzer", column, row, 1, 1));
     }
 
+    public boolean placeFmsModule(int column, int row, FmsModuleData data) {
+        if (data == null || !grid.canFit(column, row, 2, 2)) return false;
+        FmsModuleData installed = data.copy();
+        if (level != null && FmsModuleIndex.hasIdentity(level, installed.id())) {
+            installed.replaceIdentity(java.util.UUID.randomUUID());
+        }
+        if (!grid.place(new PanelGrid.Module("fms", column, row, 2, 2))) return false;
+        fmsModules.put(cellKey(column, row), installed);
+        sampleFmsSignals(true);
+        changed("placed", grid.at(column, row).orElseThrow());
+        return true;
+    }
+
     public boolean placeLamp2x1(int column, int row, boolean vertical) {
         var module = vertical
                 ? new PanelGrid.Module("lamp_2x1", column, row, 1, 2)
@@ -112,13 +140,195 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
         return true;
     }
 
+    public record FmsModuleAt(int column, int row, FmsModuleData data) {}
+
+    public java.util.List<FmsModuleAt> fmsModules() {
+        return grid.modules().stream().filter(module -> module.type().equals("fms"))
+                .map(module -> new FmsModuleAt(module.column(), module.row(),
+                        fmsModules.computeIfAbsent(cellKey(module.column(), module.row()), ignored -> new FmsModuleData()).copy()))
+                .toList();
+    }
+
+    public java.util.Optional<FmsModuleAt> findFmsById(java.util.UUID id) {
+        return fmsModules().stream().filter(module -> module.data().id().equals(id)).findFirst();
+    }
+
+    public java.util.Optional<FmsModuleAt> fmsAt(int column, int row) {
+        var module = grid.at(column, row).filter(found -> found.type().equals("fms"));
+        if (module.isEmpty()) return java.util.Optional.empty();
+        var found = module.orElseThrow();
+        FmsModuleData data = fmsModules.computeIfAbsent(cellKey(found.column(), found.row()), ignored -> new FmsModuleData());
+        return java.util.Optional.of(new FmsModuleAt(found.column(), found.row(), data.copy()));
+    }
+
+    public boolean replaceFmsIdentity(int column, int row, java.util.UUID id) {
+        FmsModuleData data = fmsModules.get(cellKey(column, row));
+        if (data == null || id == null) return false;
+        data.replaceIdentity(id);
+        setChanged();
+        syncClient();
+        return true;
+    }
+
+    public boolean addFmsWaypoint(int column, int row, String name, double x, double y, double z) {
+        FmsModuleData data = mutableFmsAt(column, row);
+        if (data == null) return false;
+        try {
+            var waypoint = new FmsWaypoint(java.util.UUID.randomUUID(), name,
+                    level.dimension().location().toString(), x, y, z);
+            if (!data.add(waypoint)) return false;
+            fmsChanged(column, row, "created", waypoint);
+            return true;
+        } catch (IllegalArgumentException invalid) {
+            return false;
+        }
+    }
+
+    public boolean updateFmsWaypoint(int column, int row, java.util.UUID id, String name,
+                                     double x, double y, double z) {
+        FmsModuleData data = mutableFmsAt(column, row);
+        if (data == null || id == null) return false;
+        var previous = data.find(id).orElse(null);
+        if (previous == null) return false;
+        try {
+            var updated = new FmsWaypoint(id, name, previous.dimension(), x, y, z);
+            if (!data.update(updated)) return false;
+            fmsChanged(column, row, "updated", updated);
+            return true;
+        } catch (IllegalArgumentException invalid) {
+            return false;
+        }
+    }
+
+    public boolean deleteFmsWaypoint(int column, int row, java.util.UUID id) {
+        FmsModuleData data = mutableFmsAt(column, row);
+        if (data == null || id == null) return false;
+        var deleted = data.find(id).orElse(null);
+        if (!data.delete(id)) return false;
+        fmsChanged(column, row, "deleted", deleted);
+        return true;
+    }
+
+    public boolean selectFmsWaypoint(int column, int row, java.util.UUID id) {
+        FmsModuleData data = mutableFmsAt(column, row);
+        if (data == null || !data.select(id)) return false;
+        fmsChanged(column, row, id == null ? "cleared" : "selected", data.selectedWaypoint().orElse(null));
+        return true;
+    }
+
+    private FmsModuleData mutableFmsAt(int column, int row) {
+        var module = grid.at(column, row).filter(found -> found.type().equals("fms"));
+        if (module.isEmpty() || level == null) return null;
+        var found = module.orElseThrow();
+        return fmsModules.computeIfAbsent(cellKey(found.column(), found.row()), ignored -> new FmsModuleData());
+    }
+
+    private void fmsChanged(int column, int row, String action, FmsWaypoint waypoint) {
+        var module = grid.at(column, row).orElseThrow();
+        setChanged();
+        sampleFmsSignals(true);
+        syncClient();
+        boolean selected = waypoint != null && fmsAt(column, row)
+                .flatMap(found -> found.data().selectedWaypointId())
+                .filter(waypoint.id()::equals).isPresent();
+        peripheral.fmsWaypointChanged(action, module, waypoint, selected);
+    }
+
+    public FmsSignalSnapshot fmsSignals(int column, int row) {
+        var data = fmsAt(column, row).map(FmsModuleAt::data).orElse(null);
+        return data == null ? null : FmsSignalLogic.sample(data, dimensionId(), FmsLocation.forBlockEntity(this),
+                level == null ? 0 : level.getGameTime());
+    }
+
+    @Override
+    public java.util.List<AvionicsDataChannel<?>> avionicsSignals() {
+        java.util.List<AvionicsDataChannel<?>> channels = new java.util.ArrayList<>();
+        for (var module : fmsModules()) {
+            var snapshot = fmsSignals.get(module.data().id());
+            if (snapshot == null) snapshot = FmsSignalLogic.sample(module.data(), dimensionId(),
+                    FmsLocation.forBlockEntity(this), level == null ? 0 : level.getGameTime());
+            var metadata = Map.<String, Object>of("module_column", module.column() + 1,
+                    "module_row", module.row() + 1);
+            channels.add(new AvionicsDataChannel<>(FmsSignalSnapshot.WAYPOINT_SELECTED,
+                    snapshot.waypointSelected(), metadata));
+            channels.add(new AvionicsDataChannel<>(FmsSignalSnapshot.DISTANCE_TO_WAYPOINT,
+                    snapshot.distanceToWaypoint(), metadata));
+        }
+        return java.util.List.copyOf(channels);
+    }
+
+    public static void serverTick(ServerLevel level, BlockPos pos, BlockState state, ModularTableBlockEntity table) {
+        if (!table.grid.modules().stream().anyMatch(module -> module.type().equals("fms"))) return;
+        int interval = ModConfig.SENSOR_SCAN_INTERVAL_TICKS.get();
+        long now = level.getGameTime();
+        if (table.lastFmsSignalUpdate != Long.MIN_VALUE && now - table.lastFmsSignalUpdate < interval) return;
+        table.lastFmsSignalUpdate = now;
+        table.sampleFmsSignals(true);
+    }
+
+    private void sampleFmsSignals(boolean publish) {
+        if (level == null || level.isClientSide) return;
+        String dimension = dimensionId();
+        var position = FmsLocation.forBlockEntity(this);
+        long now = level.getGameTime();
+        for (var module : fmsModules()) {
+            FmsSignalSnapshot updated = FmsSignalLogic.sample(module.data(), dimension, position, now);
+            FmsSignalSnapshot previous = fmsSignals.put(module.data().id(), updated);
+            if (publish && !FmsSignalLogic.sameValues(previous, updated)) {
+                peripheral.fmsSignalChanged(module, previous, updated);
+            }
+        }
+        if (publish) {
+            var liveIds = fmsModules().stream().map(module -> module.data().id()).collect(java.util.stream.Collectors.toSet());
+            fmsSignals.keySet().removeIf(id -> !liveIds.contains(id));
+        }
+    }
+
+    private String dimensionId() {
+        return level == null ? "" : level.dimension().location().toString();
+    }
+
+    private void syncClient() {
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    public ItemStack moduleStack(PanelGrid.Module module) {
+        if (!module.type().equals("fms")) return com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock.itemStack(module);
+        ItemStack stack = new ItemStack(ModBlocks.FMS_MODULE.get());
+        var data = fmsModules.get(cellKey(module.column(), module.row()));
+        if (data != null) FmsModuleItem.store(stack, data);
+        return stack;
+    }
+
+    public java.util.List<ItemStack> moduleStacks() {
+        return grid.modules().stream().map(this::moduleStack).toList();
+    }
+
+    public ItemStack removeModuleStack(int column, int row) {
+        var module = grid.at(column, row);
+        if (module.isEmpty()) return ItemStack.EMPTY;
+        ItemStack stack = moduleStack(module.get());
+        if (!removeModuleInternal(column, row)) return ItemStack.EMPTY;
+        return stack;
+    }
+
     public boolean removeModule(int column, int row) {
+        return removeModuleInternal(column, row);
+    }
+
+    private boolean removeModuleInternal(int column, int row) {
         var removed = grid.removeAt(column, row);
         removed.ifPresent(module -> {
             for (int rowOffset = 0; rowOffset < module.height(); rowOffset++) {
                 for (int columnOffset = 0; columnOffset < module.width(); columnOffset++) {
                     lampTestIntensities.remove(cellKey(module.column() + columnOffset, module.row() + rowOffset));
                 }
+            }
+            if (module.type().equals("fms")) {
+                var data = fmsModules.remove(cellKey(module.column(), module.row()));
+                if (data != null) fmsSignals.remove(data.id());
             }
             changed("removed", module);
         });
@@ -146,6 +356,10 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             entry.putInt("Height", module.height());
             entry.putString("Channel", module.channel());
             entry.putDouble("Threshold", module.threshold());
+            if (module.type().equals("fms")) {
+                var data = fmsModules.get(cellKey(module.column(), module.row()));
+                if (data != null) entry.put("FmsData", data.save());
+            }
             list.add(entry);
         }
         tag.put("Modules", list);
@@ -158,6 +372,8 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         grid = new PanelGrid();
+        fmsModules.clear();
+        fmsSignals.clear();
         var list = tag.getList("Modules", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             var entry = list.getCompound(i);
@@ -169,12 +385,18 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             boolean validLamp2x1 = type.equals("lamp_2x1")
                     && (width == 2 && height == 1 || width == 1 && height == 2);
             boolean validBuzzer = type.equals("buzzer") && width == 1 && height == 1;
-            if (validLamp || validLamp2x1 || validBuzzer) {
+            boolean validFms = type.equals("fms") && width == 2 && height == 2;
+            if (validLamp || validLamp2x1 || validBuzzer || validFms) {
                 String channel = entry.contains("Channel", Tag.TAG_STRING) ? entry.getString("Channel") : "test";
                 double threshold = entry.contains("Threshold", Tag.TAG_DOUBLE) ? entry.getDouble("Threshold") : 0.5;
                 if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(threshold)) {
-                    grid.place(new PanelGrid.Module(type, entry.getInt("Column"), entry.getInt("Row"),
-                            width, height, channel, threshold));
+                    int column = entry.getInt("Column");
+                    int row = entry.getInt("Row");
+                    if (grid.place(new PanelGrid.Module(type, column, row, width, height, channel, threshold))
+                            && validFms) {
+                        fmsModules.put(cellKey(column, row), entry.contains("FmsData", Tag.TAG_COMPOUND)
+                                ? FmsModuleData.load(entry.getCompound("FmsData")) : new FmsModuleData());
+                    }
                 }
             }
         }
@@ -221,5 +443,18 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        FmsModuleIndex.register(this);
+        sampleFmsSignals(false);
+    }
+
+    @Override
+    public void setRemoved() {
+        FmsModuleIndex.unregister(this);
+        super.setRemoved();
     }
 }

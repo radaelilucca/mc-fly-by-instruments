@@ -48,25 +48,6 @@ continuar funcionando no estado atual enquanto não forem tratados.
   Usar as mesmas proporções e materiais da variante vermelha; validar cada
   combinação acesa/apagada no jogo antes de fixar uma paleta adicional.
 
-## Ideias futuras — FMS e navegação
-
-Registro inicial para evoluir depois; ainda sem desenho técnico ou compromisso
-com uma fase do roadmap.
-
-- [ ] **FMS-01 — Adicionar um módulo de FMS como memória de waypoints.**
-  Prover uma interface para o jogador criar e gerenciar waypoints, incluindo
-  listagem e seleção. Persistir os waypoints para que sejam preservados após
-  salvar e recarregar o mundo.
-- [ ] **FMS-02 — Adicionar o item FMS Navigator / FMS Compass (nome provisório).**
-  O item poderá ser colocado em uma Navigation Table. Se ela estiver em um
-  sublevel que tenha o módulo de FMS, permitir que o jogador selecione no FMS
-  um waypoint como destino ativo.
-- [ ] **FMS-03 — Usar o waypoint ativo como target do compass da Navigation Table.**
-  Enquanto o FMS estiver ativo e houver um waypoint selecionado, a Navigation
-  Table com o item deverá orientar seu compass para esse destino. Detalhar
-  futuramente a associação entre mesa e FMS, o comportamento sem destino ou
-  com FMS desativado e as regras para múltiplos módulos no mesmo sublevel.
-
 ## Validação antes da release
 
 - [ ] **QA-01 — Registrar validação visual in-game dos modelos e conexões.**

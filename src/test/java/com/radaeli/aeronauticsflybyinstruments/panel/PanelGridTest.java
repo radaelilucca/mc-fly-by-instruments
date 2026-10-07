@@ -57,4 +57,16 @@ class PanelGridTest {
         assertEquals(1, configured.width());
         assertEquals(2, configured.height());
     }
+
+    @Test
+    void fmsOccupiesFourCellsAsOneRemovableModule() {
+        var grid = new PanelGrid();
+        var fms = new PanelGrid.Module("fms", 1, 1, 2, 2);
+        assertTrue(grid.place(fms));
+        assertEquals(fms, grid.at(1, 1).orElseThrow());
+        assertEquals(fms, grid.at(2, 2).orElseThrow());
+        assertFalse(grid.canFit(0, 0, 2, 2));
+        assertEquals(fms, grid.removeAt(2, 1).orElseThrow());
+        assertTrue(grid.canFit(1, 1, 2, 2));
+    }
 }

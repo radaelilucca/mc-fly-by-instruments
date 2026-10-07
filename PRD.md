@@ -194,7 +194,7 @@ O cabo acompanhará a contraption dentro do sublevel. A topologia física dever�
 A Network Bridge será o gateway CC:Tweaked para consultar a topologia completa alcançável pela rede de Avionics Cable. Cada instrumento e componente continuará expondo sua própria peripheral independente; a bridge não substitui nem representa os métodos/eventos locais desses dispositivos.
 
 - peripheral `avionics_network_bridge` com status, lista de endpoints e evento de mudança da rede;
-- a `modular_table` expõe somente grid, módulos, canais e eventos próprios, sem API agregada da rede;
+- a `modular_table` expõe grid, módulos e eventos próprios; módulos também podem publicar canais consultáveis pela rede física;
 - o Radar Altimeter continua acessível diretamente por sua própria peripheral, mesmo conectado à rede.
 
 ### 4.7 Annunciator Panel
@@ -230,6 +230,33 @@ Os módulos finais, acknowledge/mute, sons e integração com goggles/displays
 serão definidos durante o design detalhado. A lâmpada 1×1 da Fase 1 é um
 atuador de teste por canal simulado; não representa ainda o módulo final de
 alerta GPWS.
+
+### 4.8 Flight Management System (FMS)
+
+O FMS é um módulo virtual 2×2 da mesa modular que armazena waypoints dimensionais.
+Sua interface permite criar, listar, editar, excluir e selecionar um destino.
+Waypoints podem ser definidos na posição atual ou por coordenadas manuais.
+As coordenadas são persistidas em blocos inteiros; valores fracionários são
+convertidos para o bloco que contém a posição, inclusive em coordenadas negativas.
+UUID, waypoints e seleção acompanham o item do módulo ao removê-lo ou quebrar a
+mesa. Não há limite de contagem de waypoints definido pelo mod; nomes têm de 1 a
+32 caracteres e nomes repetidos são permitidos.
+
+O item `FMS Navigator` vincula-se ao UUID exato de um módulo FMS sem ser
+consumido. Um vínculo anterior a outro módulo exige confirmação antes de ser
+substituído. Na Navigation Table do Aeronautics, o alvo ativo é usado somente
+quando Navigator, mesa e módulo estão no mesmo mundo e sublevel. Waypoints de
+outra dimensão, módulo não carregado, vínculo inexistente ou destino não
+selecionado não produzem alvo. Consultas não carregam chunks. O compasso usa
+distância horizontal; Y permanece armazenado mas não direciona o compasso.
+
+O FMS publica `waypoint_selected` (booleano válido, `true` somente quando há
+alvo escolhido) e `distance_to_waypoint` (distância horizontal em blocos;
+`UNAVAILABLE` sem alvo ou fora da dimensão). Os canais são expostos pelo
+peripheral `modular_table`, consultáveis na rede Avionics Cable e notificados
+por eventos. Não são alertas GPWS e não estão conectados à lógica GPWS nesta
+fase. Placeholder: bloco de ferro para o módulo, ícone vanilla de bússola para o
+Navigator; modelos/texturas próprios ficam fora do escopo inicial.
 
 ## 5. API CC:Tweaked e integração vertical
 
@@ -566,7 +593,29 @@ Entregas:
 
 Saída da fase: cabine funcional para jogadores básicos e avançados.
 
-### Fase 6 — Estabilização e release inicial
+### Fase 6 — Flight Management System
+
+**Estado:** implementação e testes direcionados concluídos; validação in-game
+do CRUD e do compass da Navigation Table ainda pendente.
+
+Objetivo: adicionar navegação por waypoints reutilizando a mesa modular, a rede
+física de dados e o target nativo da Navigation Table.
+
+Entregas:
+
+- módulo FMS virtual 2×2 com CRUD de waypoints na UI R-UI;
+- criação por posição atual e por coordenadas, com persistência por identidade;
+- seleção e limpeza de target;
+- item FMS Navigator vinculado ao módulo exato, com confirmação de rebind;
+- integração com o target nativo da Navigation Table no mesmo mundo/sublevel;
+- canais `waypoint_selected` e `distance_to_waypoint` tipados e eventos CC;
+- consultas locais e de canais da rede física sem carregamento de chunks;
+- testes automatizados dos dados, estados, canais, APIs e persistência.
+
+Saída da fase: waypoints gerenciáveis, target utilizável pelo compass da
+Navigation Table e sinais FMS disponíveis sem acoplamento aos alertas GPWS.
+
+### Fase 7 — Estabilização e release inicial
 
 Objetivo: preparar uma versão jogável e sustentável.
 
@@ -594,13 +643,14 @@ O produto poderá ser considerado pronto para a primeira release quando:
 5. o jogador conseguir criar a mesa modular, testar os slots e usar o item de
    teste antes da integração com o GPWS;
 6. o Annunciator Panel exibir alertas através de módulos configuráveis;
-7. cada funcionalidade for entregue com seus periféricos, eventos, APIs e
+7. o FMS preservar waypoints e direcionar a Navigation Table associada, expondo seus dois canais;
+8. cada funcionalidade for entregue com seus periféricos, eventos, APIs e
    testes CC:Tweaked, sem uma etapa posterior de integração pendente;
-8. os testes automatizados cobrirem regras, rede, painel, integração e API;
-9. scanners não provocarem carregamento inesperado de chunks;
-10. o comportamento funcionar em contraptions dentro de sublevels;
-11. a validação manual confirmar leitura compreensível e operação útil em voo;
-12. o jogador conseguir receber alerta útil de clearance/descida com GPWS,
+9. os testes automatizados cobrirem regras, rede, painel, integração e API;
+10. scanners e consultas de navegação não provocarem carregamento inesperado de chunks;
+11. o comportamento funcionar em contraptions dentro de sublevels;
+12. a validação manual confirmar leitura compreensível e operação útil em voo;
+13. o jogador conseguir receber alerta útil de clearance/descida com GPWS,
     Radar Altimeter e o setup básico do painel, sem Terrain Scanner, CC:Tweaked
     ou ajuste individual de thresholds.
 

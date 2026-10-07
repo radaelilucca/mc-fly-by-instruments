@@ -11,8 +11,11 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.item.ItemStack;
@@ -21,6 +24,8 @@ import net.minecraft.world.phys.Vec3;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelCoordinates;
+import com.radaeli.aeronauticsflybyinstruments.network.FmsNetwork;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
@@ -83,6 +88,39 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
         return new ModularTableBlockEntity(pos, state);
     }
 
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                  BlockEntityType<T> type) {
+        if (level.isClientSide || type != ModBlocks.MODULAR_TABLE_ENTITY.get()) return null;
+        @SuppressWarnings("unchecked")
+        BlockEntityTicker<T> ticker = (currentLevel, pos, blockState, blockEntity) ->
+                ModularTableBlockEntity.serverTick((net.minecraft.server.level.ServerLevel) currentLevel, pos, blockState,
+                        (ModularTableBlockEntity) blockEntity);
+        return ticker;
+    }
+
+    @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                                                    Player player, BlockHitResult hit) {
+        if (hit.getDirection() != state.getValue(FACING)
+                || !(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) {
+            return net.minecraft.world.InteractionResult.PASS;
+        }
+        var point = PanelCoordinates.toPanel(state.getValue(FACING),
+                hit.getLocation().subtract(Vec3.atLowerCornerOf(pos)));
+        int column = PanelCoordinates.cell(point.x);
+        int row = PanelCoordinates.cell(point.z);
+        var module = table.grid().at(column, row);
+        if (module.isPresent() && module.get().type().equals("fms")
+                && !level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+            FmsNetwork.open(serverPlayer, pos, module.get().column(), module.get().row(), table);
+        }
+        return module.filter(value -> value.type().equals("fms")).isPresent()
+                ? net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide)
+                : net.minecraft.world.InteractionResult.PASS;
+    }
+
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                                Player player, InteractionHand hand, BlockHitResult hit) {
@@ -95,18 +133,20 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
         int row = PanelCoordinates.cell(point.z);
         var module = table.grid().at(column, row);
         if (module.isEmpty()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if (!level.isClientSide && table.removeModule(column, row)) {
-            var moduleStack = itemStack(module.get());
+        if (!level.isClientSide) {
+            var moduleStack = table.removeModuleStack(column, row);
+            if (moduleStack.isEmpty()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             if (!player.addItem(moduleStack)) popResource(level, pos, moduleStack);
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    static ItemStack itemStack(PanelGrid.Module module) {
+    public static ItemStack itemStack(PanelGrid.Module module) {
         return switch (module.type()) {
             case "lamp" -> new ItemStack(ModBlocks.LAMP_MODULE.get());
             case "lamp_2x1" -> new ItemStack(ModBlocks.LAMP_MODULE_2X1.get());
             case "buzzer" -> new ItemStack(ModBlocks.BUZZER_MODULE.get());
+            case "fms" -> new ItemStack(ModBlocks.FMS_MODULE.get());
             default -> ItemStack.EMPTY;
         };
     }
@@ -115,8 +155,8 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
                 && level.getBlockEntity(pos) instanceof ModularTableBlockEntity table) {
-            for (var module : table.grid().modules()) {
-                popResource(level, pos, itemStack(module));
+            for (var stack : table.moduleStacks()) {
+                popResource(level, pos, stack);
             }
         }
         super.onRemove(state, level, pos, newState, moving);

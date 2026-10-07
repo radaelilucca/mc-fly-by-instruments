@@ -2,6 +2,11 @@ package com.radaeli.aeronauticsflybyinstruments.integration;
 
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
+import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsDataChannel;
+import com.radaeli.aeronauticsflybyinstruments.avionics.SensorReading;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsModuleData;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsSignalSnapshot;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsWaypoint;
 import net.minecraft.core.BlockPos;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.peripheral.IComputerAccess;
@@ -109,6 +114,77 @@ class TablePeripheralTest {
         assertEquals(11, table.lampRenderIntensity(longLamp));
         assertTrue(peripheral.clearLampTestIntensity(2, 1));
         assertEquals(15, table.lampRenderIntensity(longLamp));
+    }
+
+    @Test
+    void fmsPeripheralExposesWaypointCrudSelectionAndTypedSignalContracts() throws Exception {
+        var waypoint = new FmsWaypoint(java.util.UUID.randomUUID(), "Home", "minecraft:overworld", 30, 70, -12);
+        var data = new FmsModuleData(java.util.UUID.randomUUID(), java.util.List.of(waypoint), waypoint.id());
+        var table = table();
+        assertTrue(table.placeFmsModule(0, 0, data));
+        var peripheral = table.peripheral();
+
+        var waypoints = peripheral.getFmsWaypoints(1, 1);
+        assertEquals(1, waypoints.size());
+        assertEquals("Home", waypoints.getFirst().get("name"));
+        assertEquals(true, waypoints.getFirst().get("selected"));
+        var signals = peripheral.getFmsSignals(1, 1);
+        assertEquals(true, ((Map<?, ?>) signals.get("waypoint_selected")).get("value"));
+        assertEquals("unavailable", ((Map<?, ?>) signals.get("distance_to_waypoint")).get("status"));
+        assertTrue(peripheral.getNetworkSignals().isEmpty());
+
+        var channels = table.avionicsSignals();
+        assertEquals(2, channels.size());
+        assertEquals(java.util.Set.of("waypoint_selected", "distance_to_waypoint"), channels.stream()
+                .map(AvionicsDataChannel::name).collect(java.util.stream.Collectors.toSet()));
+        assertTrue(channels.stream().allMatch(channel -> channel.metadata().equals(
+                Map.of("module_column", 1, "module_row", 1))));
+
+        for (String method : java.util.List.of("getFmsWaypoints", "getFmsSignals", "getNetworkSignals",
+                "createWaypoint", "updateWaypoint", "deleteWaypoint", "selectWaypoint", "clearWaypointSelection")) {
+            assertTrue(java.util.Arrays.stream(TablePeripheral.class.getMethods())
+                    .filter(candidate -> candidate.getName().equals(method))
+                    .anyMatch(candidate -> candidate.isAnnotationPresent(dan200.computercraft.api.lua.LuaFunction.class)),
+                    method + " must be exposed to CC:Tweaked");
+        }
+        assertThrows(LuaException.class, () -> peripheral.getFmsWaypoints(3, 3));
+        assertThrows(LuaException.class, () -> peripheral.selectWaypoint(1, 1, "not-a-uuid"));
+        assertThrows(LuaException.class, () -> peripheral.selectWaypoint(1, 1, ""));
+    }
+
+    @Test
+    void fmsSignalEventsOnlyPublishChannelsWhoseValuesChanged() {
+        var waypoint = new FmsWaypoint(java.util.UUID.randomUUID(), "Home", "minecraft:overworld", 1, 64, 1);
+        var data = new FmsModuleData(java.util.UUID.randomUUID(), java.util.List.of(waypoint), waypoint.id());
+        var table = table();
+        table.placeFmsModule(0, 0, data);
+        var module = new ModularTableBlockEntity.FmsModuleAt(0, 0, data);
+        var previous = new FmsSignalSnapshot(SensorReading.valid(false, "boolean", 1),
+                SensorReading.unavailable("blocks", 1));
+        var current = new FmsSignalSnapshot(SensorReading.valid(true, "boolean", 2),
+                SensorReading.unavailable("blocks", 2));
+        var events = new ArrayList<Object[]>();
+        var computer = (IComputerAccess) Proxy.newProxyInstance(IComputerAccess.class.getClassLoader(),
+                new Class<?>[]{IComputerAccess.class}, (proxy, method, arguments) -> switch (method.getName()) {
+                    case "getAttachmentName" -> "right";
+                    case "queueEvent" -> { events.add(arguments); yield null; }
+                    case "hashCode" -> System.identityHashCode(proxy);
+                    case "equals" -> proxy == arguments[0];
+                    default -> null;
+                });
+        var peripheral = table.peripheral();
+        peripheral.attach(computer);
+        peripheral.fmsWaypointChanged("selected", table.grid().modules().getFirst(), waypoint, true);
+        assertEquals("modular_table_fms_waypoint_changed", events.getFirst()[0]);
+        Object[] waypointArgs = (Object[]) events.getFirst()[1];
+        assertEquals(true, ((Map<?, ?>) waypointArgs[4]).get("selected"));
+        peripheral.fmsSignalChanged(module, previous, current);
+
+        assertEquals(2, events.size());
+        assertEquals("modular_table_fms_signal_changed", events.get(1)[0]);
+        Object[] args = (Object[]) events.get(1)[1];
+        assertEquals("waypoint_selected", args[3]);
+        peripheral.detach(computer);
     }
 
     @Test

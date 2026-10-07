@@ -1,0 +1,100 @@
+# Flight Management System (FMS)
+
+**Estado:** implementação concluída; validação funcional in-game pendente.
+
+## Objetivo
+
+Adicionar à Modular Table uma memória simples de waypoints e permitir que um
+Navigator use o destino ativo como alvo da Navigation Table do Aeronautics.
+O FMS fornece canais de dados; não cria alertas nem altera o GPWS.
+
+## Módulo e persistência
+
+- `fms_module` ocupa um footprint virtual de 2×2 na mesa.
+- A UI em R-UI oferece dois fluxos: gestão de waypoints e vínculo do Navigator.
+- Waypoints podem usar a posição atual ou coordenadas inseridas manualmente.
+- Cada waypoint tem UUID, nome de 1–32 caracteres, dimensão e coordenadas XYZ.
+  As coordenadas são salvas como posições inteiras de bloco; valores fracionários
+  são convertidos para o bloco que contém a posição (floor, inclusive em negativos).
+  Nomes duplicados são aceitos; não há limite artificial de quantidade.
+- O UUID do módulo, os waypoints e o UUID selecionado ficam persistidos no módulo.
+- Remover o FMS ou quebrar a mesa grava o estado no item `fms_module`; reinstalar
+  restaura o mesmo módulo e mantém o vínculo do Navigator.
+- Se uma cópia com UUID duplicado for instalada enquanto a instância original
+  estiver carregada, a cópia recebe UUID novo, mantendo seus waypoints.
+
+## Navigator e Navigation Table
+
+- `fms_navigator` usa o modelo/ícone vanilla de bússola e é stack size 1.
+- Selecionar o item no inventário dentro da aba Navigator o associa ao UUID exato
+  do módulo aberto; o item permanece no inventário.
+- Reassociar um Navigator já ligado a outro FMS requer ativar explicitamente a
+  confirmação no painel antes de selecioná-lo.
+- O item é registrado como `NavigationTarget` do Aeronautics e pode ser inserido
+  na Navigation Table nativa.
+- A resolução procura somente FMS carregados no mesmo `Level` e no mesmo
+  sublevel Sable da Navigation Table. Não força carga de chunks.
+- Waypoint não selecionado, UUID indisponível, dimensão diferente ou sublevel
+  diferente resultam em ausência de target; Y não influencia a direção horizontal
+  do compasso.
+
+## Canais de dados
+
+O módulo publica dois `AvionicsDataChannel` na Avionics Cable Network:
+
+| Canal | Contrato |
+| --- | --- |
+| `waypoint_selected` | `VALID` booleano; `true` quando há waypoint selecionado, caso contrário `false` |
+| `distance_to_waypoint` | Distância horizontal X/Z, em blocos; `UNAVAILABLE` sem alvo ou quando o alvo pertence a outra dimensão |
+
+A posição do módulo e os waypoints usam coordenadas lógicas/globais calculadas
+com a pose Sable. O estado é amostrado na cadência de sensores configurada
+(padrão atual: 5 ticks); eventos só são publicados quando status ou valor muda.
+No `modular_table`, os métodos de leitura consultam o estado atual e os eventos
+informam alterações confirmadas no servidor.
+
+### API CC:Tweaked
+
+- `getFmsWaypoints(column, row)`
+- `createWaypoint(column, row, name, x, y, z)`
+- `updateWaypoint(column, row, waypointId, name, x, y, z)`
+- `deleteWaypoint(column, row, waypointId)`
+- `selectWaypoint(column, row, waypointId)`
+- `clearWaypointSelection(column, row)`
+- `getFmsSignals(column, row)`
+- `getNetworkSignals()` para canais de endpoints conectados à rede física completa
+
+A lista marca com `>` o waypoint selecionado. Editar coordenadas preserva a
+dimensão original do waypoint; usar a posição atual cria um waypoint novo na
+dimensão atual.
+
+Eventos:
+
+- `modular_table_fms_waypoint_changed(name, action, column, row, waypoint)`
+- `modular_table_fms_signal_changed(name, column, row, channel, reading)`
+
+Leituras usam `status`, `unit`, `gameTime` e `value` quando válida. `getNetworkSignals`
+retorna tipo e deslocamento do endpoint mais canal e snapshot tipado. Canais de
+módulos virtuais também incluem `module_column` e `module_row` para distinguir
+múltiplos FMS no mesmo endpoint. A Network Bridge continua expondo topologia;
+a UI/API do FMS não despacha alertas ao GPWS.
+
+## Aparência nesta entrega
+
+Sem assets Blockbench ou texturas próprias. O FMS da mesa usa bloco de ferro
+como placeholder e o Navigator usa a textura vanilla de bússola. O trabalho
+visual é uma etapa futura.
+
+## Testes e aceite
+
+- CRUD, seleção, limpeza, validação de nome/coordenadas e persistência NBT;
+- item do módulo preserva dados ao remover, recolocar e quebrar/reinstalar mesa;
+- footprint 2×2 e rejeição de sobreposição/borda;
+- UUID duplicado gera identidade independente sem perder waypoints;
+- leitura dos canais, estados unavailable, distância X/Z, eventos e API Lua;
+- lookup do Navigator restringe dimensão e sublevel e não força chunk loading;
+- integração com o registry `NavigationTarget` do Aeronautics;
+- build automatizado; validar in-game o CRUD, inventário, vínculo, reload e compass.
+
+O build/teste automatizado não substitui o teste manual da Navigation Table em
+sublevel voador.

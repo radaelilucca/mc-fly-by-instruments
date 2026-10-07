@@ -2,6 +2,10 @@ package com.radaeli.aeronauticsflybyinstruments.integration;
 
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsModuleData;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsSignalSnapshot;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsWaypoint;
+import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsNetworkManager;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IComputerAccess;
@@ -102,10 +106,109 @@ public final class TablePeripheral implements IPeripheral {
         }).toList();
     }
 
+    @LuaFunction(mainThread = true)
+    public List<Map<String, Object>> getFmsWaypoints(int column, int row) throws LuaException {
+        validateCell(column, row);
+        FmsModuleData data = table.fmsAt(column - 1, row - 1)
+                .orElseThrow(() -> new LuaException("There is no FMS module at that cell")).data();
+        return data.waypoints().stream().map(waypoint -> describeWaypoint(waypoint,
+                data.selectedWaypointId().filter(waypoint.id()::equals).isPresent())).toList();
+    }
+
+    @LuaFunction(mainThread = true)
+    public Map<String, Object> getFmsSignals(int column, int row) throws LuaException {
+        validateCell(column, row);
+        var snapshot = table.fmsSignals(column - 1, row - 1);
+        if (snapshot == null) throw new LuaException("There is no FMS module at that cell");
+        return describeSignals(snapshot);
+    }
+
+    @LuaFunction(mainThread = true)
+    public List<Map<String, Object>> getNetworkSignals() {
+        if (table.getLevel() == null) return List.of();
+        return AvionicsNetworkManager.connectedSignals(table.getLevel(), table.getBlockPos()).stream()
+                .map(signal -> {
+                    var result = new java.util.HashMap<>(describeReading(signal.channel().reading()));
+                    result.put("type", signal.device().type());
+                    result.put("x", signal.device().x());
+                    result.put("y", signal.device().y());
+                    result.put("z", signal.device().z());
+                    result.put("channel", signal.channel().name());
+                    result.putAll(signal.channel().metadata());
+                    return Map.copyOf(result);
+                }).toList();
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean createWaypoint(int column, int row, String name, double x, double y, double z) throws LuaException {
+        validateFmsCoordinates(column, row, x, y, z);
+        return table.addFmsWaypoint(column - 1, row - 1, name, x, y, z);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean updateWaypoint(int column, int row, String waypointId, String name,
+                                 double x, double y, double z) throws LuaException {
+        validateFmsCoordinates(column, row, x, y, z);
+        return table.updateFmsWaypoint(column - 1, row - 1, parseId(waypointId), name, x, y, z);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean deleteWaypoint(int column, int row, String waypointId) throws LuaException {
+        validateCell(column, row);
+        return table.deleteFmsWaypoint(column - 1, row - 1, parseId(waypointId));
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean selectWaypoint(int column, int row, String waypointId) throws LuaException {
+        validateCell(column, row);
+        return table.selectFmsWaypoint(column - 1, row - 1, parseId(waypointId));
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean clearWaypointSelection(int column, int row) throws LuaException {
+        validateCell(column, row);
+        return table.selectFmsWaypoint(column - 1, row - 1, null);
+    }
+
     private static void validateCell(int column, int row) throws LuaException {
         if (column < 1 || column > PanelGrid.SIZE || row < 1 || row > PanelGrid.SIZE) {
             throw new LuaException("Column and row must be between 1 and 3");
         }
+    }
+
+    private void validateFmsCoordinates(int column, int row, double x, double y, double z) throws LuaException {
+        validateCell(column, row);
+        if (table.fmsAt(column - 1, row - 1).isEmpty()) throw new LuaException("There is no FMS module at that cell");
+        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(z)
+                || Math.abs(x) > FmsWaypoint.MAX_COORDINATE || Math.abs(y) > FmsWaypoint.MAX_COORDINATE
+                || Math.abs(z) > FmsWaypoint.MAX_COORDINATE) throw new LuaException("Coordinates are outside the supported range");
+    }
+
+    private static java.util.UUID parseId(String id) throws LuaException {
+        try {
+            if (id == null || id.isBlank()) throw new IllegalArgumentException();
+            return java.util.UUID.fromString(id);
+        }
+        catch (IllegalArgumentException invalid) { throw new LuaException("Invalid waypoint id"); }
+    }
+
+    public static Map<String, Object> describeWaypoint(FmsWaypoint waypoint, boolean selected) {
+        return Map.of("id", waypoint.id().toString(), "name", waypoint.name(), "dimension", waypoint.dimension(),
+                "x", waypoint.x(), "y", waypoint.y(), "z", waypoint.z(), "selected", selected);
+    }
+
+    public static Map<String, Object> describeSignals(FmsSignalSnapshot snapshot) {
+        return Map.of(FmsSignalSnapshot.WAYPOINT_SELECTED, describeReading(snapshot.waypointSelected()),
+                FmsSignalSnapshot.DISTANCE_TO_WAYPOINT, describeReading(snapshot.distanceToWaypoint()));
+    }
+
+    private static Map<String, Object> describeReading(com.radaeli.aeronauticsflybyinstruments.avionics.SensorReading<?> reading) {
+        var result = new java.util.HashMap<String, Object>();
+        result.put("status", reading.status().name().toLowerCase(java.util.Locale.ROOT));
+        result.put("unit", reading.unit());
+        result.put("gameTime", reading.gameTime());
+        reading.value().ifPresent(value -> result.put("value", value));
+        return Map.copyOf(result);
     }
 
     public static Map<String, Object> describe(PanelGrid.Module module) {
@@ -123,6 +226,31 @@ public final class TablePeripheral implements IPeripheral {
     public void testSignalChanged(String channel, double value) {
         for (var computer : computers) {
             computer.queueEvent("modular_table_signal_changed", computer.getAttachmentName(), channel, value);
+        }
+    }
+
+    public void fmsWaypointChanged(String action, PanelGrid.Module module, FmsWaypoint waypoint, boolean selected) {
+        Map<String, Object> waypointData = waypoint == null ? Map.of() : describeWaypoint(waypoint, selected);
+        for (var computer : computers) {
+            computer.queueEvent("modular_table_fms_waypoint_changed", computer.getAttachmentName(), action,
+                    module.column() + 1, module.row() + 1, waypointData);
+        }
+    }
+
+    public void fmsSignalChanged(ModularTableBlockEntity.FmsModuleAt module, FmsSignalSnapshot previous,
+                                 FmsSignalSnapshot snapshot) {
+        for (String channel : List.of(FmsSignalSnapshot.WAYPOINT_SELECTED, FmsSignalSnapshot.DISTANCE_TO_WAYPOINT)) {
+            var reading = channel.equals(FmsSignalSnapshot.WAYPOINT_SELECTED)
+                    ? snapshot.waypointSelected() : snapshot.distanceToWaypoint();
+            var oldReading = previous == null ? null : channel.equals(FmsSignalSnapshot.WAYPOINT_SELECTED)
+                    ? previous.waypointSelected() : previous.distanceToWaypoint();
+            if (oldReading != null && oldReading.status() == reading.status()
+                    && oldReading.value().equals(reading.value()) && oldReading.unit().equals(reading.unit())) continue;
+            var state = describeReading(reading);
+            for (var computer : computers) {
+                computer.queueEvent("modular_table_fms_signal_changed", computer.getAttachmentName(),
+                        module.column() + 1, module.row() + 1, channel, state);
+            }
         }
     }
 }

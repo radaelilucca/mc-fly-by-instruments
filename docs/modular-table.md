@@ -52,12 +52,18 @@ O módulo `lamp` ocupa 1×1. O `lamp_2x1` ocupa 2×1 por padrão e alterna para 
 com o scroll; a variante alonga a mesma geometria e gira junto com o footprint.
 Ambos os footprints são persistidos e expostos pelas dimensões do módulo na API.
 O `buzzer` ocupa sempre 1×1 e segue as mesmas regras de ocupação e remoção.
+O `fms` ocupa 2×2. Ele mantém UUID, waypoints e destino selecionado; ao remover
+o módulo ou quebrar a mesa, tudo é gravado no item `fms_module` e acompanha o
+módulo até sua próxima instalação.
 
 ## CC:Tweaked
 
 Conecte um computador ou modem cabeado diretamente à mesa. O tipo de peripheral
-é `modular_table`, exposto nas seis faces. A rede Avionics Cable será uma etapa
-posterior. Os módulos instalados são expostos por meio da mesa.
+é `modular_table`, exposto nas seis faces. A mesa também pode ser ligada à
+Avionics Cable Network; `getNetworkSignals()` consulta canais publicados por
+endpoints na rede física completa, sem carregar chunks. Os sinais de módulos
+virtuais incluem `module_column` e `module_row` para distinguir módulos no mesmo
+endpoint.
 
 As coordenadas Lua são **1-based**, de 1 a 3. Colunas seguem o eixo horizontal
 local da face e linhas seguem seu eixo vertical local. A origem permanece
@@ -74,6 +80,13 @@ consistente com o grid e a orientação da base.
 | `getOutputs()` | Lista módulos, sinal recebido e estado ativo |
 | `setLampTestIntensity(column, row, level)` | Sobreposição visual temporária 0–15 para uma lâmpada 1×1 ou 2×1 |
 | `clearLampTestIntensity(column, row)` | Remove a sobreposição e restaura o estado do sinal/threshold |
+| `getFmsWaypoints(column, row)` | Lista waypoints com UUID, nome, dimensão, coordenadas e seleção |
+| `createWaypoint(column, row, name, x, y, z)` | Cria waypoint na dimensão atual |
+| `updateWaypoint(column, row, id, name, x, y, z)` | Edita nome e coordenadas de um waypoint |
+| `deleteWaypoint(column, row, id)` | Exclui waypoint e limpa o destino se necessário |
+| `selectWaypoint(column, row, id)` / `clearWaypointSelection(column, row)` | Seleciona ou limpa o destino ativo |
+| `getFmsSignals(column, row)` | Lê os canais do módulo indicado |
+| `getNetworkSignals()` | Lê canais tipados de endpoints na rede de cabo conectada |
 
 Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1, channel = "test", threshold = 0.5}`.
 Uma célula livre retorna `{occupied = false, column = ..., row = ...}`.
@@ -85,6 +98,37 @@ Os métodos de intensidade funcionam com lâmpadas 1×1 e 2×1 e são apenas par
 thresholds ou dados persistidos da mesa e não emitem luz dinâmica no mundo.
 O programa [lamp-emission-test.lua](examples/lamp-emission-test.lua) percorre
 cada lâmpada instalada nos níveis 0 a 15, com meio segundo por nível.
+
+O buzzer e o FMS também aparecem em `getModules()` e `getSlot()`. O FMS tem
+footprint 2×2; seus métodos Lua validam que a célula inicial aponta para o FMS.
+O canal `waypoint_selected` retorna uma leitura booleana `VALID`, verdadeira
+quando existe um alvo escolhido. `distance_to_waypoint` retorna distância
+horizontal X/Z em blocos; sem alvo ou em outra dimensão, seu estado é
+`unavailable`. A distância usa a pose lógica/global do Sable sublevel. Eventos
+`modular_table_fms_waypoint_changed` e `modular_table_fms_signal_changed`
+notificam alterações confirmadas no servidor e atualizações do canal.
+
+O `fms_navigator` é vinculado ao módulo exato ao selecioná-lo no inventário
+pela aba Navigator da interface FMS; o item não é consumido. Vincular um item
+que aponta para outro FMS exige marcar a confirmação de substituição. Na
+Navigation Table do Aeronautics, ele segue o waypoint ativo somente no mesmo
+mundo e sublevel do módulo associado. Sem FMS/target compatível, não fornece um
+alvo; não carrega chunks. A API do FMS não injeta alertas no GPWS.
+
+As coordenadas de waypoint são salvas em blocos inteiros. Valores fracionários,
+incluindo os recebidos pela API Lua, são convertidos para o bloco que contém a
+posição (floor, também para coordenadas negativas); waypoints fracionários de
+saves antigos são normalizados ao serem carregados.
+
+```lua
+local tablePeripheral = assert(peripheral.find("modular_table"))
+local waypoints = tablePeripheral.getFmsWaypoints(1, 1)
+local signals = tablePeripheral.getFmsSignals(1, 1)
+local connected = tablePeripheral.getNetworkSignals()
+print(textutils.serialize(waypoints))
+print(textutils.serialize(signals))
+print(textutils.serialize(connected))
+```
 
 O buzzer também aparece em `getModules()`, `getSlot()` e no evento
 `modular_table_changed`, com `type = "buzzer"`, largura e altura 1. Em
@@ -111,10 +155,12 @@ while true do
 end
 ```
 
-O sinal é numérico e local à mesa: a lâmpada fica ativa quando
-`signal >= threshold`. Valores de teste e configuração persistem após salvar e
-reabrir o mundo. Esse canal não representa a futura Avionics Cable Network nem
-alertas GPWS. O módulo 2×1 continua apenas estrutural durante essa fase.
+O sinal de teste das lâmpadas é numérico e local à mesa: a lâmpada fica ativa
+quando `signal >= threshold`. Valores de teste e configuração persistem após
+salvar e reabrir o mundo. Esse sinal de teste não representa canais de sensores
+na Avionics Cable Network nem alertas GPWS. Os canais do FMS são publicados
+separadamente pelos endpoints da mesa. O módulo 2×1 continua apenas estrutural
+nesta fase.
 
 ## Validação
 

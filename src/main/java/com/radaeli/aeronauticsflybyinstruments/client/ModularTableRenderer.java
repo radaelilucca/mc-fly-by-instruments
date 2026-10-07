@@ -44,6 +44,10 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 renderLamp(table, module, poses, buffers, light, overlay);
             } else if (module.type().equals("buzzer")) {
                 renderBuzzer(table, module, poses, buffers, light, overlay);
+            } else if (module.type().equals("fms")) {
+                cube(poses, buffers, Blocks.IRON_BLOCK.defaultBlockState(),
+                        module.column() * CELL + 0.035, SURFACE, module.row() * CELL + 0.035,
+                        module.width() * CELL - 0.07, 3.0 / 16, module.height() * CELL - 0.07, light, overlay);
             } else {
                 // Keep a fallback for future module types without authored renderers.
                 var lampState = Blocks.REDSTONE_LAMP.defaultBlockState()
@@ -62,9 +66,11 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 || player.getOffhandItem().is(ModBlocks.LAMP_MODULE_2X1.get()));
         boolean holdingBuzzer = player != null && (player.getMainHandItem().is(ModBlocks.BUZZER_MODULE.get())
                 || player.getOffhandItem().is(ModBlocks.BUZZER_MODULE.get()));
+        boolean holdingFms = player != null && (player.getMainHandItem().is(ModBlocks.FMS_MODULE.get())
+                || player.getOffhandItem().is(ModBlocks.FMS_MODULE.get()));
         boolean removing = player != null && (ModularTableBaseBlock.isCreateWrench(player.getMainHandItem())
                 || ModularTableBaseBlock.isCreateWrench(player.getOffhandItem()));
-        if ((holdingSmallLamp || holdingLongLamp || holdingBuzzer || removing) && minecraft.hitResult instanceof BlockHitResult hit
+        if ((holdingSmallLamp || holdingLongLamp || holdingBuzzer || holdingFms || removing) && minecraft.hitResult instanceof BlockHitResult hit
                 && hit.getBlockPos().equals(table.getBlockPos()) && hit.getDirection() == facing) {
             for (int i = 0; i <= PanelGrid.SIZE; i++) {
                 double line = Math.min(1 - 0.012, Math.max(0, i * CELL - 0.006));
@@ -77,8 +83,8 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
             int column = PanelCoordinates.cell(point.x);
             int row = PanelCoordinates.cell(point.z);
             if (column >= 0 && row >= 0) {
-                int width = holdingLongLamp && PanelNetwork.isVertical(player) ? 1 : holdingLongLamp ? 2 : 1;
-                int height = holdingLongLamp && PanelNetwork.isVertical(player) ? 2 : 1;
+                int width = holdingFms ? 2 : holdingLongLamp && PanelNetwork.isVertical(player) ? 1 : holdingLongLamp ? 2 : 1;
+                int height = holdingFms ? 2 : holdingLongLamp && PanelNetwork.isVertical(player) ? 2 : 1;
                 int outlineColumn = column;
                 int outlineRow = row;
                 boolean valid = false;
@@ -95,7 +101,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 } else {
                     valid = table.grid().canFit(column, row, width, height);
                 }
-                if (holdingSmallLamp || holdingLongLamp || holdingBuzzer || valid) {
+                if (holdingSmallLamp || holdingLongLamp || holdingBuzzer || holdingFms || valid) {
                     var color = (valid ? Blocks.LIME_CONCRETE : Blocks.RED_CONCRETE).defaultBlockState();
                     outline(poses, buffers, color, outlineColumn, outlineRow, width, height, light, overlay);
                 }

@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Event-invalidated, per-level topology cache. World traversal only occurs on query or dirty events. */
 public final class AvionicsNetworkManager {
@@ -26,6 +28,25 @@ public final class AvionicsNetworkManager {
                     ignored -> NetworkDiscovery.discover(origin, new LevelAccess(level), ModConfig.MAX_AVIONICS_NETWORK_BLOCKS.get()));
         }
     }
+
+    /** Reads published channels from endpoints in the complete physical network without loading chunks. */
+    public static List<ConnectedSignal> connectedSignals(Level level, BlockPos origin) {
+        NetworkSnapshot topology = snapshot(level, origin);
+        if (topology.status() != NetworkStatus.CONNECTED) return List.of();
+        List<ConnectedSignal> result = new ArrayList<>();
+        for (NetworkDevice device : topology.devices()) {
+            BlockPos position = origin.offset(device.x(), device.y(), device.z());
+            if (!level.hasChunkAt(position)) continue;
+            var blockEntity = level.getBlockEntity(position);
+            if (!(blockEntity instanceof AvionicsSignalProvider provider)) continue;
+            for (AvionicsDataChannel<?> signal : provider.avionicsSignals()) {
+                result.add(new ConnectedSignal(device, signal));
+            }
+        }
+        return List.copyOf(result);
+    }
+
+    public record ConnectedSignal(NetworkDevice device, AvionicsDataChannel<?> channel) {}
 
     public static void register(NetworkBridgePeripheral peripheral, Level level) {
         if (level == null || level.isClientSide) return;

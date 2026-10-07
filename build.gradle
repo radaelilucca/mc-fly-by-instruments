@@ -39,6 +39,19 @@ def existingDependencyFiles = {
 
 def aeronauticsCompileJarsDirectory = layout.buildDirectory.dir('local-mod-dependencies/aeronautics')
 def sableCompileJarsDirectory = layout.buildDirectory.dir('local-mod-dependencies/sable')
+def createCompileJarsDirectory = layout.buildDirectory.dir('local-mod-dependencies/create')
+
+def extractCreateCompileJars = tasks.register('extractCreateCompileJars', Sync) {
+    onlyIf { createJar != null && createJar.isFile() }
+    from {
+        createJar == null ? files() : zipTree(createJar).matching {
+            include 'META-INF/jarjar/*.jar'
+        }
+    }
+    eachFile { path = name }
+    includeEmptyDirs = false
+    into(createCompileJarsDirectory)
+}
 
 def extractAeronauticsCompileJars = tasks.register('extractAeronauticsCompileJars', Sync) {
     onlyIf { aeronauticsJar != null && aeronauticsJar.isFile() }
@@ -75,6 +88,7 @@ dependencies {
     testImplementation files(computercraftJar)
     testImplementation files(rUiLibJar)
     compileOnly files(existingDependencyFiles)
+    compileOnly files { fileTree(createCompileJarsDirectory.get().asFile) { include '*.jar' } }
     compileOnly files { fileTree(aeronauticsCompileJarsDirectory.get().asFile) { include '*.jar' } }
     compileOnly files { fileTree(sableCompileJarsDirectory.get().asFile) { include '*.jar' } }
 
@@ -155,6 +169,7 @@ sourceSets.main.resources.srcDir generateModMetadata
 neoForge.ideSyncTask generateModMetadata
 
 tasks.withType(JavaCompile).configureEach {
+    dependsOn(extractCreateCompileJars)
     dependsOn(extractAeronauticsCompileJars, extractSableCompileJars)
     options.encoding = 'UTF-8'
 }

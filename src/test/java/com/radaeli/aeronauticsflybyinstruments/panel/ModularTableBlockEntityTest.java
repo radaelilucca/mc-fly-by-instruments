@@ -1,12 +1,17 @@
 package com.radaeli.aeronauticsflybyinstruments.panel;
 
 import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsModuleData;
+import com.radaeli.aeronauticsflybyinstruments.fms.FmsWaypoint;
+import com.radaeli.aeronauticsflybyinstruments.item.FmsModuleItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import org.junit.jupiter.api.Test;
 import java.util.stream.Stream;
+import java.util.List;
+import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ModularTableBlockEntityTest {
@@ -139,5 +144,45 @@ class ModularTableBlockEntityTest {
         var restored = table();
         restored.loadCustomOnly(data, REGISTRIES);
         assertEquals(1, restored.grid().modules().size());
+    }
+
+    @Test
+    void fmsWaypointsSurviveWorldSaveClientSyncTableRemovalAndReinstallation() {
+        UUID moduleId = UUID.randomUUID();
+        var waypoint = new FmsWaypoint(UUID.randomUUID(), "Hangar", "minecraft:overworld", 15.5, 72, -4.5);
+        var data = new FmsModuleData(moduleId, List.of(waypoint), waypoint.id());
+        var original = table();
+        assertTrue(original.placeFmsModule(0, 0, data));
+
+        for (var saved : new CompoundTag[]{original.saveWithoutMetadata(REGISTRIES), original.getUpdateTag(REGISTRIES)}) {
+            var restored = table();
+            restored.loadCustomOnly(saved, REGISTRIES);
+            var persisted = restored.fmsAt(0, 0).orElseThrow().data();
+            assertEquals(moduleId, persisted.id());
+            assertEquals(List.of(waypoint), persisted.waypoints());
+            assertEquals(waypoint.id(), persisted.selectedWaypointId().orElseThrow());
+
+            var droppedStack = restored.removeModuleStack(0, 0);
+            assertTrue(droppedStack.is(ModBlocks.FMS_MODULE.get()));
+            var carried = FmsModuleItem.load(droppedStack);
+            assertEquals(moduleId, carried.id());
+            assertEquals(List.of(waypoint), carried.waypoints());
+            assertEquals(waypoint.id(), carried.selectedWaypointId().orElseThrow());
+
+            var reinstalled = table();
+            assertTrue(reinstalled.placeFmsModule(1, 1, carried));
+            assertEquals(waypoint, reinstalled.fmsAt(1, 1).orElseThrow().data()
+                    .selectedWaypoint().orElseThrow());
+        }
+    }
+
+    @Test
+    void fmsModuleOccupiesItsWholeFootprintAndOnlyItCanReturnItsDataItem() {
+        var original = table();
+        assertTrue(original.placeFmsModule(0, 0, new FmsModuleData()));
+        assertFalse(original.placeLamp(1, 1));
+        assertFalse(original.placeFmsModule(1, 0, new FmsModuleData()));
+        assertTrue(original.removeModuleStack(1, 1).is(ModBlocks.FMS_MODULE.get()));
+        assertTrue(original.grid().modules().isEmpty());
     }
 }
