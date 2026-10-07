@@ -39,7 +39,25 @@ O mod oferece duas variantes físicas de scanner. Ambas apontam horizontalmente 
 - `terrain_scanner`: nove raios fixos em cone de abertura total de 90°.
 - `terrain_scanner_advanced`: distribuição aproximadamente uniforme de 9–81 raios. A abertura total é configurável de 30° a 180°, padrão 90°; a densidade é calculada automaticamente pela área angular.
 
-O scanner avançado abre sua tela ao interagir. Os botões ajustam a abertura em incrementos de 5° e há um atalho para voltar ao padrão de 90°. Alterações são validadas no servidor e persistidas por bloco.
+Os dois scanners abrem a configuração de saída ao interagir. A tela tem a
+largura do inventário, um slider de dois marcadores para delimitar a faixa em
+blocos, frequências fantasma lado a lado e inventário/hotbar com seleção sem
+consumir itens. O JEI, quando instalado, permite arrastar itens para os slots.
+Tooltips explicam que a saída cresce com a proximidade: 15 no limite inferior
+ou abaixo e 0 no limite superior ou acima; sem contato utilizável, é 0.
+
+No Advanced, um slider ajusta a abertura total de 30° a 180°. Abas **Frente / Esq. /
+Dir.** mantêm faixas e frequências independentes; as laterais só atuam acima de
+50°. Alterações ficam em rascunho e são validadas no servidor ao aplicar.
+**Salvar** envia e fecha, **Cancelar** descarta, e **ESC** aplica o rascunho
+válido e fecha sem reabrir a tela.
+
+O modo de saída é automático, tanto pela tela quanto por CC:Tweaked: sem par
+completo, a saída usa as faces; qualquer par completo seleciona Redstone Link.
+O modo continua global no Advanced: em Link, setores sem par completo ficam
+desabilitados e não emitem pelas faces. Limpar todos os pares retorna à saída
+local. `setOutputMode` permanece como compatibilidade e valida o nome, mas não
+sobrescreve essa seleção automática.
 
 O alcance máximo é controlado por `terrainScannerMaxRange` (padrão 128 blocos; limites de configuração 1–4096). A cadência usa `sensorScanIntervalTicks` (padrão 5 ticks), compartilhada com os demais sensores. A resolução do avançado é determinada automaticamente pela fórmula de cobertura angular; não há opção para configurar a contagem diretamente.
 

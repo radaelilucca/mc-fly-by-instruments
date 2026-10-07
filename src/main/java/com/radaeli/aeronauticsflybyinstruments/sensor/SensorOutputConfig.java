@@ -53,6 +53,10 @@ public final class SensorOutputConfig {
 
     public Mode mode() { return mode; }
     public void mode(Mode value) { mode = value; }
+    /** Routing is global per sensor: any complete pair selects Link, otherwise local faces. */
+    public void selectAutomaticMode() {
+        mode = frequencies.values().stream().anyMatch(FrequencyPair::enabled) ? Mode.LINK : Mode.FACES;
+    }
     public Range range(Channel channel) { return ranges.get(channel); }
     public Map<Channel, Range> ranges() { return Map.copyOf(ranges); }
     public FrequencyPair frequencies(Channel channel) { return frequencies.get(channel); }

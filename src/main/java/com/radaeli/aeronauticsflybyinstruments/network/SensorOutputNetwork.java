@@ -51,7 +51,7 @@ public final class SensorOutputNetwork {
                 if (scanner.advanced()) scanner.setOpeningAngle(payload.openingAngle());
                 scanner.applyOutputConfig(payload.config());
             }
-            open(serverPlayer, pos, kind, scanner.openingAngle(), scanner.outputConfig());
+            // As with the altimeter, applying a draft must not reopen a closed editor.
         }
     }
 }

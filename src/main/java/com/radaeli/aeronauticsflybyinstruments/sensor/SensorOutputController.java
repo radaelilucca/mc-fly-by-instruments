@@ -41,11 +41,7 @@ public final class SensorOutputController {
     public boolean apply(SensorOutputConfig updated, int maximumRange) {
         if (!valid(updated, maximumRange)) return false;
         updated = updated.copy();
-        if (altimeter) {
-            SensorOutputConfig.FrequencyPair pair = updated.frequencies(SensorOutputConfig.Channel.ALTITUDE);
-            updated.mode(pair != null && pair.enabled()
-                    ? SensorOutputConfig.Mode.LINK : SensorOutputConfig.Mode.FACES);
-        }
+        updated.selectAutomaticMode();
         var old = config;
         if (same(old, updated)) return false;
         unregisterAll();
@@ -66,15 +62,10 @@ public final class SensorOutputController {
     }
 
     public boolean setMode(String name, int maximumRange) {
-        SensorOutputConfig.Mode mode;
-        try { mode = SensorOutputConfig.Mode.valueOf(name.toUpperCase(java.util.Locale.ROOT)); }
+        try { SensorOutputConfig.Mode.valueOf(name.toUpperCase(java.util.Locale.ROOT)); }
         catch (RuntimeException exception) { return false; }
-        // Altimeter routing is automatic: a complete frequency pair selects Create Link,
-        // otherwise the sensor emits locally. Keep the legacy CC method harmless.
-        if (altimeter) return true;
-        if (mode == config.mode()) return true;
-        SensorOutputConfig next = config.copy(); next.mode(mode);
-        return apply(next, maximumRange);
+        // Retain the legacy CC method without allowing it to override automatic routing.
+        return true;
     }
 
     public boolean setFrequencies(SensorOutputConfig.Channel channel, ItemStack first, ItemStack second,
