@@ -2,9 +2,21 @@ package com.radaeli.aeronauticsflybyinstruments.client;
 
 import com.radaeli.aeronauticsflybyinstruments.network.GpwsControlPayload;
 import com.radaeli.aeronauticsflybyinstruments.network.GpwsScreenPayload;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.Screen;
+import com.radaeli.ruilib.ui.Alignment;
+import com.radaeli.ruilib.ui.Bounds;
+import com.radaeli.ruilib.ui.Button;
+import com.radaeli.ruilib.ui.Column;
+import com.radaeli.ruilib.ui.Insets;
+import com.radaeli.ruilib.ui.Panel;
+import com.radaeli.ruilib.ui.Row;
+import com.radaeli.ruilib.ui.UiComponent;
+import com.radaeli.ruilib.ui.UiContext;
+import com.radaeli.ruilib.ui.UiPaint;
+import com.radaeli.ruilib.ui.UiScreen;
+import com.radaeli.ruilib.ui.UiSize;
+import com.radaeli.ruilib.ui.UiText;
+import com.radaeli.ruilib.ui.UiTheme;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -12,106 +24,210 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.List;
 
 /** Small game-facing setup panel; detailed channel tuning remains optional via CC:Tweaked. */
-public final class GpwsComputerScreen extends Screen {
+public final class GpwsComputerScreen extends UiScreen {
     private static final int PANEL_WIDTH = 264;
-    private static final int PANEL_HEIGHT = 184;
-    private BlockPos position;
-    private String profile;
-    private String sensitivity;
-    private String mode;
-    private String phase;
-    private String networkStatus;
+    private static final int CONTENT_WIDTH = PANEL_WIDTH - 16;
+    private static final int BUTTON_WIDTH = 116;
+    private static final int BUTTON_HEIGHT = 18;
+    private static final int MODE_BUTTON_WIDTH = 74;
+    private static final Component TITLE =
+            Component.translatable("gui.aeronautics_fly_by_instruments.gpws.title");
+
+    private final State state;
 
     public GpwsComputerScreen(GpwsScreenPayload payload) {
-        super(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.title"));
+        this(payload, new State(payload));
+    }
+
+    private GpwsComputerScreen(GpwsScreenPayload payload, State state) {
+        super(TITLE, createRoot(state), UiTheme.DARK);
+        this.state = state;
         accept(payload);
     }
 
-    public BlockPos position() { return position; }
+    private static UiComponent createRoot(State state) {
+        Column content = new Column(UiTheme.DARK.tokens().smallGap(), Alignment.CENTER, Alignment.CENTER);
+        content.add(new TextLine(TITLE, CONTENT_WIDTH, false));
+        state.profileLine = new TextLine(Component.empty(), CONTENT_WIDTH, true);
+        content.add(state.profileLine);
+
+        Row profiles = centeredRow();
+        profiles.add(button("profile_basic", () -> state.send("profile", "basic"), BUTTON_WIDTH));
+        profiles.add(button("profile_advanced", () -> state.send("profile", "advanced"), BUTTON_WIDTH));
+        content.add(profiles);
+
+        Row enableControls = centeredRow();
+        enableControls.add(button("enable", () -> state.send("enable", ""), BUTTON_WIDTH));
+        enableControls.add(button("disable", () -> state.send("disable", ""), BUTTON_WIDTH));
+        content.add(enableControls);
+
+        Row sensitivityControls = centeredRow();
+        sensitivityControls.add(buttonText("−", () -> state.adjustSensitivity(-1), 28));
+        state.sensitivityLine = new TextLine(Component.empty(), 132, false);
+        sensitivityControls.add(state.sensitivityLine);
+        sensitivityControls.add(buttonText("+", () -> state.adjustSensitivity(1), 28));
+        content.add(sensitivityControls);
+
+        state.modeControls = centeredRow();
+        content.add(state.modeControls);
+
+        state.statusLine = new TextLine(Component.empty(), CONTENT_WIDTH, false);
+        content.add(state.statusLine);
+        state.networkLine = new TextLine(Component.empty(), CONTENT_WIDTH, true);
+        content.add(state.networkLine);
+
+        content.add(button("close", () -> Minecraft.getInstance().setScreen(null), 80));
+
+        Panel panel = new Panel(content, Insets.all(8));
+        panel.setPreferredSize(PANEL_WIDTH, null);
+        state.panel = panel;
+        state.updateModeControls();
+        state.updateText();
+        return panel;
+    }
+
+    private static Row centeredRow() {
+        return new Row(UiTheme.DARK.tokens().smallGap(), Alignment.CENTER, Alignment.CENTER);
+    }
+
+    private static Button button(String translationKey, Runnable action, int width) {
+        Button button = new Button(Component.translatable(
+                "gui.aeronautics_fly_by_instruments.gpws." + translationKey), action);
+        button.setPreferredSize(width, BUTTON_HEIGHT);
+        return button;
+    }
+
+    private static Button buttonText(String text, Runnable action, int width) {
+        Button button = new Button(Component.literal(text), action);
+        button.setPreferredSize(width, BUTTON_HEIGHT);
+        return button;
+    }
+
+    public BlockPos position() {
+        return state.position;
+    }
 
     public void accept(GpwsScreenPayload payload) {
-        position = payload.position().immutable();
-        profile = payload.profile();
-        sensitivity = payload.sensitivity();
-        mode = payload.mode();
-        phase = payload.phase();
-        networkStatus = payload.networkStatus();
-        if (minecraft != null) init();
-    }
-
-    @Override protected void init() {
-        clearWidgets();
-        int left = (width - PANEL_WIDTH) / 2;
-        int top = (height - PANEL_HEIGHT) / 2;
-        int pairWidth = 116;
-        addRenderableWidget(Button.builder(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.profile_basic"),
-                        button -> send("profile", "basic"))
-                .bounds(left + 10, top + 30, pairWidth, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.profile_advanced"),
-                        button -> send("profile", "advanced"))
-                .bounds(left + PANEL_WIDTH - 10 - pairWidth, top + 30, pairWidth, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.enable"),
-                        button -> send("enable", ""))
-                .bounds(left + 10, top + 53, 116, 18).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.disable"),
-                        button -> send("disable", ""))
-                .bounds(left + PANEL_WIDTH - 126, top + 53, 116, 18).build());
-        addRenderableWidget(Button.builder(Component.literal("−"), button -> adjustSensitivity(-1))
-                .bounds(left + 30, top + 76, 28, 18).build());
-        addRenderableWidget(Button.builder(Component.literal("+"), button -> adjustSensitivity(1))
-                .bounds(left + PANEL_WIDTH - 58, top + 76, 28, 18).build());
-        if (profile.equals("advanced")) {
-            addRenderableWidget(modeButton("arm", "armed", left + 10, top + 99, 74));
-            addRenderableWidget(modeButton("standby", "standby", left + 95, top + 99, 74));
-            addRenderableWidget(modeButton("test", "test", left + 180, top + 99, 74));
-        } else {
-            addRenderableWidget(modeButton("test", "test", left + (PANEL_WIDTH - 74) / 2, top + 99, 74));
+        String previousProfile = state.profile;
+        state.position = payload.position().immutable();
+        state.profile = payload.profile();
+        state.sensitivity = payload.sensitivity();
+        state.mode = payload.mode();
+        state.phase = payload.phase();
+        state.networkStatus = payload.networkStatus();
+        state.updateText();
+        if (!state.profile.equals(previousProfile)) {
+            state.updateModeControls();
+            if (minecraft != null) layoutRoot(UiTheme.DARK);
         }
-        addRenderableWidget(Button.builder(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.close"),
-                        button -> onClose())
-                .bounds(left + (PANEL_WIDTH - 80) / 2, top + 158, 80, 18).build());
     }
 
-    private Button modeButton(String label, String value, int x, int y, int buttonWidth) {
-        return Button.builder(Component.translatable("gui.aeronautics_fly_by_instruments.gpws." + label),
-                button -> send("mode", value)).bounds(x, y, buttonWidth, 18).build();
+    @Override
+    protected void layoutRoot(UiTheme theme) {
+        int panelWidth = Math.min(PANEL_WIDTH, Math.max(1, width - 24));
+        state.panel.setPreferredSize(panelWidth, null);
+        UiSize measured = state.panel.measure(font, theme, panelWidth, Math.max(1, height - 12));
+        state.panel.layout(font, theme, new Bounds((width - measured.width()) / 2,
+                (height - measured.height()) / 2, measured.width(), measured.height()));
     }
 
-    private void adjustSensitivity(int delta) {
-        List<String> values = List.of("low", "normal", "high");
-        int index = values.indexOf(sensitivity);
-        send("sensitivity", values.get(Math.floorMod(index + delta, values.size())));
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
-    private void send(String action, String value) {
-        PacketDistributor.sendToServer(new GpwsControlPayload(position, action, value));
+    private static final class State {
+        private BlockPos position;
+        private String profile;
+        private String sensitivity;
+        private String mode;
+        private String phase;
+        private String networkStatus;
+        private TextLine profileLine;
+        private TextLine sensitivityLine;
+        private TextLine statusLine;
+        private TextLine networkLine;
+        private Row modeControls;
+        private Panel panel;
+
+        private State(GpwsScreenPayload payload) {
+            acceptValues(payload);
+        }
+
+        private void acceptValues(GpwsScreenPayload payload) {
+            position = payload.position().immutable();
+            profile = payload.profile();
+            sensitivity = payload.sensitivity();
+            mode = payload.mode();
+            phase = payload.phase();
+            networkStatus = payload.networkStatus();
+        }
+
+        private void updateText() {
+            if (profileLine == null) return;
+            profileLine.setText(Component.translatable(
+                    "gui.aeronautics_fly_by_instruments.gpws.profile_status",
+                    Component.translatable("gui.aeronautics_fly_by_instruments.gpws.profile_" + profile)));
+            sensitivityLine.setText(Component.translatable(
+                    "gui.aeronautics_fly_by_instruments.gpws.sensitivity_" + sensitivity));
+            statusLine.setText(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.status",
+                    Component.translatable("gui.aeronautics_fly_by_instruments.gpws.mode." + mode),
+                    Component.translatable("gui.aeronautics_fly_by_instruments.gpws.phase." + phase)));
+            networkLine.setText(Component.translatable("gui.aeronautics_fly_by_instruments.gpws.network",
+                    Component.translatable("gui.aeronautics_fly_by_instruments.gpws.network." + networkStatus)));
+        }
+
+        private void updateModeControls() {
+            if (modeControls == null) return;
+            List.copyOf(modeControls.children()).forEach(modeControls::remove);
+            if (profile.equals("advanced")) {
+                modeControls.add(button("arm", () -> send("mode", "armed"), MODE_BUTTON_WIDTH));
+                modeControls.add(button("standby", () -> send("mode", "standby"), MODE_BUTTON_WIDTH));
+                modeControls.add(button("test", () -> send("mode", "test"), MODE_BUTTON_WIDTH));
+            } else {
+                modeControls.add(button("test", () -> send("mode", "test"), MODE_BUTTON_WIDTH));
+            }
+        }
+
+        private void adjustSensitivity(int delta) {
+            List<String> values = List.of("low", "normal", "high");
+            int index = values.indexOf(sensitivity);
+            send("sensitivity", values.get(Math.floorMod(index + delta, values.size())));
+        }
+
+        private void send(String action, String value) {
+            PacketDistributor.sendToServer(new GpwsControlPayload(position, action, value));
+        }
     }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
-        int left = (width - PANEL_WIDTH) / 2;
-        int top = (height - PANEL_HEIGHT) / 2;
-        graphics.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xE0101418);
-        graphics.renderOutline(left, top, PANEL_WIDTH, PANEL_HEIGHT, 0xFF6F8793);
-        graphics.drawCenteredString(font, title, width / 2, top + 7, 0xFFFFFFFF);
-        graphics.drawCenteredString(font,
-                Component.translatable("gui.aeronautics_fly_by_instruments.gpws.profile_status",
-                        Component.translatable("gui.aeronautics_fly_by_instruments.gpws.profile_" + profile)),
-                width / 2, top + 19, 0xFF9EABB0);
-        graphics.drawCenteredString(font,
-                Component.translatable("gui.aeronautics_fly_by_instruments.gpws.sensitivity_" + sensitivity),
-                width / 2, top + 80, 0xFFE5F1F5);
-        graphics.drawCenteredString(font,
-                Component.translatable("gui.aeronautics_fly_by_instruments.gpws.status",
-                        Component.translatable("gui.aeronautics_fly_by_instruments.gpws.mode." + mode),
-                        Component.translatable("gui.aeronautics_fly_by_instruments.gpws.phase." + phase)),
-                width / 2, top + 123, 0xFFE5F1F5);
-        graphics.drawCenteredString(font,
-                Component.translatable("gui.aeronautics_fly_by_instruments.gpws.network",
-                        Component.translatable("gui.aeronautics_fly_by_instruments.gpws.network." + networkStatus)),
-                width / 2, top + 140, 0xFF9EABB0);
-        super.render(graphics, mouseX, mouseY, partialTick);
-    }
+    /** Dynamic text leaf rendered and measured through R-UI's component/theme pipeline. */
+    private static final class TextLine extends UiComponent {
+        private Component text;
+        private final int width;
+        private final boolean muted;
 
-    @Override public boolean isPauseScreen() { return false; }
+        private TextLine(Component text, int width, boolean muted) {
+            this.text = text;
+            this.width = width;
+            this.muted = muted;
+            setPreferredSize(width, 10);
+        }
+
+        private void setText(Component text) {
+            this.text = text;
+        }
+
+        @Override
+        protected UiSize measureIntrinsic(net.minecraft.client.gui.Font font, UiTheme theme,
+                                          int maxWidth, int maxHeight) {
+            return new UiSize(width, 10).constrain(maxWidth, maxHeight);
+        }
+
+        @Override
+        public void render(UiContext context) {
+            int color = muted ? context.theme().palette().mutedText() : context.theme().palette().text();
+            UiPaint.textCentered(context, text, bounds().centerX(),
+                    bounds().centerY() - UiText.height(context) / 2, color);
+        }
+    }
 }
