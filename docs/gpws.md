@@ -7,6 +7,13 @@ Leituras com mais de dois intervalos de amostragem são consideradas obsoletas.
 
 ## Uso no jogo
 
+O gabinete possui painéis azul-petróleo e moldura metálica, com alça e controles
+na frente. Os sockets são centrais na frente, em cima e embaixo; laterais e
+traseira não possuem sockets visuais. A conectividade da rede não muda.
+Botão, knob e indicadores
+do modelo são decorativos; os controles funcionais continuam na interface.
+A fonte editável fica em [Blockbench](../blockbench/gpws-computer/README.md).
+
 Conecte o GPWS Computer e os sensores ao mesmo Avionics Cable Network. Interaja
 com o computador para abrir os controles:
 
