@@ -28,6 +28,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
     private final LampModuleRenderer lamps1x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE.get());
     private final LampModuleRenderer lamps2x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE_2X1.get());
     private final ItemStack buzzerStack = new ItemStack(ModBlocks.BUZZER_MODULE.get());
+    private final ItemStack fmsStack = new ItemStack(ModBlocks.FMS_MODULE.get());
 
     public ModularTableRenderer(BlockEntityRendererProvider.Context context) {
         blocks = context.getBlockRenderDispatcher();
@@ -45,9 +46,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
             } else if (module.type().equals("buzzer")) {
                 renderBuzzer(table, module, poses, buffers, light, overlay);
             } else if (module.type().equals("fms")) {
-                cube(poses, buffers, Blocks.IRON_BLOCK.defaultBlockState(),
-                        module.column() * CELL + 0.035, SURFACE, module.row() * CELL + 0.035,
-                        module.width() * CELL - 0.07, 3.0 / 16, module.height() * CELL - 0.07, light, overlay);
+                renderFms(table, module, poses, buffers, light, overlay);
             } else {
                 // Keep a fallback for future module types without authored renderers.
                 var lampState = Blocks.REDSTONE_LAMP.defaultBlockState()
@@ -84,7 +83,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
             int row = PanelCoordinates.cell(point.z);
             if (column >= 0 && row >= 0) {
                 int width = holdingFms ? 2 : holdingLongLamp && PanelNetwork.isVertical(player) ? 1 : holdingLongLamp ? 2 : 1;
-                int height = holdingFms ? 2 : holdingLongLamp && PanelNetwork.isVertical(player) ? 2 : 1;
+                int height = holdingFms ? 3 : holdingLongLamp && PanelNetwork.isVertical(player) ? 2 : 1;
                 int outlineColumn = column;
                 int outlineRow = row;
                 boolean valid = false;
@@ -136,6 +135,24 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
         var model = items.getModel(buzzerStack, table.getLevel(), null, 0);
         items.renderModelLists(model, buzzerStack, light, overlay, poses,
                 buffers.getBuffer(Sheets.cutoutBlockSheet()));
+        poses.popPose();
+    }
+
+    private void renderFms(ModularTableBlockEntity table, PanelGrid.Module module, PoseStack poses,
+                           MultiBufferSource buffers, int light, int overlay) {
+        poses.pushPose();
+        var offset = PanelCoordinates.modelOffset(module);
+        poses.translate(offset.x, offset.y, offset.z);
+        // Old occupied 2x2 saves retain their footprint; fit the visual inside it.
+        if (module.height() != 3) {
+            poses.translate(0.5, 0, 0.5);
+            poses.scale(1, 1, module.height() / 3.0f);
+            poses.translate(-0.5, 0, -0.5);
+        }
+        var items = Minecraft.getInstance().getItemRenderer();
+        var model = items.getModel(fmsStack, table.getLevel(), null, 0);
+        items.renderModelLists(model, fmsStack, light, overlay, poses,
+                buffers.getBuffer(Sheets.solidBlockSheet()));
         poses.popPose();
     }
 

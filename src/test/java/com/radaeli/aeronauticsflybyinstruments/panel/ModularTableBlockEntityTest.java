@@ -170,8 +170,8 @@ class ModularTableBlockEntityTest {
             assertEquals(waypoint.id(), carried.selectedWaypointId().orElseThrow());
 
             var reinstalled = table();
-            assertTrue(reinstalled.placeFmsModule(1, 1, carried));
-            assertEquals(waypoint, reinstalled.fmsAt(1, 1).orElseThrow().data()
+            assertTrue(reinstalled.placeFmsModule(1, 0, carried));
+            assertEquals(waypoint, reinstalled.fmsAt(1, 0).orElseThrow().data()
                     .selectedWaypoint().orElseThrow());
         }
     }
@@ -180,9 +180,46 @@ class ModularTableBlockEntityTest {
     void fmsModuleOccupiesItsWholeFootprintAndOnlyItCanReturnItsDataItem() {
         var original = table();
         assertTrue(original.placeFmsModule(0, 0, new FmsModuleData()));
+        assertEquals(2, original.grid().at(1, 0).orElseThrow().width());
+        assertEquals(3, original.grid().at(1, 0).orElseThrow().height());
         assertFalse(original.placeLamp(1, 1));
         assertFalse(original.placeFmsModule(1, 0, new FmsModuleData()));
         assertTrue(original.removeModuleStack(1, 1).is(ModBlocks.FMS_MODULE.get()));
         assertTrue(original.grid().modules().isEmpty());
+    }
+
+    @Test
+    void legacyFmsFootprintExpandsWhenPossibleAndPreservesDataWhenItCannot() {
+        var source = table();
+        var waypoint = new FmsWaypoint(UUID.randomUUID(), "Legacy", "minecraft:overworld", 8, 70, 9);
+        assertTrue(source.placeFmsModule(0, 0,
+                new FmsModuleData(UUID.randomUUID(), List.of(waypoint), waypoint.id())));
+        var expandable = source.saveWithoutMetadata(REGISTRIES);
+        var expandableModule = expandable.getList("Modules", net.minecraft.nbt.Tag.TAG_COMPOUND).getCompound(0);
+        expandableModule.putInt("Height", 2);
+        var restored = table();
+        restored.loadCustomOnly(expandable, REGISTRIES);
+        assertEquals(3, restored.grid().at(0, 2).orElseThrow().height());
+        assertEquals(waypoint, restored.fmsAt(0, 0).orElseThrow().data().waypoints().getFirst());
+
+        expandableModule.putInt("Row", 1);
+        var bottomAnchored = table();
+        bottomAnchored.loadCustomOnly(expandable, REGISTRIES);
+        assertEquals(2, bottomAnchored.grid().at(0, 2).orElseThrow().height());
+        assertEquals(waypoint, bottomAnchored.fmsAt(0, 1).orElseThrow().data().waypoints().getFirst());
+
+        expandableModule.putInt("Row", 0);
+        var lamp = new CompoundTag();
+        lamp.putString("Type", "lamp");
+        lamp.putInt("Column", 0);
+        lamp.putInt("Row", 2);
+        lamp.putInt("Width", 1);
+        lamp.putInt("Height", 1);
+        expandable.getList("Modules", net.minecraft.nbt.Tag.TAG_COMPOUND).add(lamp);
+        var occupied = table();
+        occupied.loadCustomOnly(expandable, REGISTRIES);
+        assertEquals(2, occupied.grid().at(0, 0).orElseThrow().height());
+        assertEquals("lamp", occupied.grid().at(0, 2).orElseThrow().type());
+        assertEquals(waypoint, occupied.fmsAt(0, 0).orElseThrow().data().waypoints().getFirst());
     }
 }

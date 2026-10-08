@@ -127,7 +127,9 @@ não são pixels da resolução da textura; um PNG 64×64 não aumenta o módulo
 | Lâmpada 1×1 | 3,4 × 3,4, altura 2 | Referência de altura e volume dos pequenos módulos. |
 | Lâmpada 2×1 | 6,8 × 3,4, altura 2 | Alongamento da mesma família; a mesa permite a orientação 1×2. |
 | Buzzer 1×1 | Diâmetro aproximado 2,85, altura 1,9 | Um pouco menor que a lâmpada, mas com altura semelhante. |
+| FMS 2×3 | 9,5 × 14,5, altura máxima 2,55 | Módulo de controle: display preto nos dois terços superiores, teclado compacto abaixo. |
 | Radar Altimeter | Dentro de 0–16; altura máxima 15,75 | Carcaça quase do tamanho do bloco, com recuos, conectores e antena inferior distintos. |
+| GPWS Computer | Corpo 14 × 14 × 14; sockets dentro de 0–16 | Gabinete robusto, metal claro e azul-petróleo, alça e controles frontais decorativos. |
 
 **Footprint não é silhueta:** um módulo 2×1 ocupa duas células, mas não precisa
 preencher toda a largura dessas células. Preservar respiro entre as peças e
@@ -243,6 +245,8 @@ uma integração de renderização deliberada.
 - [Lâmpada 1×1](../blockbench/lamp-module-1x1/README.md)
 - [Lâmpada 2×1](../blockbench/lamp-module-2x1/README.md)
 - [Buzzer 1×1](../blockbench/buzzer-module-1x1/README.md)
+- [FMS 2×3](../blockbench/fms-module-2x3/README.md)
+- [GPWS Computer](../blockbench/gpws-computer/README.md)
 - [Radar Altimeter](../blockbench/radar-altimeter/README.md)
 - [Terrain Scanner Basic](../blockbench/terrain-scanner-basic/README.md)
 - [Terrain Scanner Advanced](../blockbench/terrain-scanner-advanced/README.md)

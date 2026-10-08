@@ -9,7 +9,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.Vec3;
 
-/** 2x2 virtual FMS module. Its identity and waypoint database remain on the item when removed. */
+/** 2x3 virtual FMS module. Its identity and waypoint database remain on the item when removed. */
 public final class FmsModuleItem extends Item {
     public FmsModuleItem(Properties properties) { super(properties.stacksTo(1)); }
 
@@ -25,7 +25,7 @@ public final class FmsModuleItem extends Item {
                 context.getClickLocation().subtract(Vec3.atLowerCornerOf(pos)));
         int column = PanelCoordinates.cell(point.x);
         int row = PanelCoordinates.cell(point.z);
-        if (!table.grid().canFit(column, row, 2, 2)) return InteractionResult.FAIL;
+        if (!table.grid().canFit(column, row, 2, 3)) return InteractionResult.FAIL;
         if (!level.isClientSide) {
             FmsModuleData data = load(context.getItemInHand());
             if (!table.placeFmsModule(column, row, data)) return InteractionResult.FAIL;

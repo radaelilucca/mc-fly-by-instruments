@@ -3,7 +3,7 @@
   "block.aeronautics_fly_by_instruments.modular_table_base": "Modular Table Base",
   "item.aeronautics_fly_by_instruments.buzzer_module": "Buzzer Module (1x1)",
   "item.aeronautics_fly_by_instruments.buzzer_module.description": "Install on a modular table. Visual prototype; no audio yet.",
-  "item.aeronautics_fly_by_instruments.fms_module": "Flight Management System Module (2x2)",
+  "item.aeronautics_fly_by_instruments.fms_module": "Flight Management System Module (2x3)",
   "item.aeronautics_fly_by_instruments.fms_navigator": "FMS Compass",
   "item.aeronautics_fly_by_instruments.fms_navigator.unbound": "Not linked to an FMS",
   "item.aeronautics_fly_by_instruments.fms_navigator.bound": "Linked to an FMS module",

@@ -233,7 +233,7 @@ alerta GPWS.
 
 ### 4.8 Flight Management System (FMS)
 
-O FMS é um módulo virtual 2×2 da mesa modular que armazena waypoints dimensionais.
+O FMS é um módulo virtual de 2 células de largura × 3 de altura (2×3) da mesa modular que armazena waypoints dimensionais.
 Sua interface permite criar, listar, editar, excluir e selecionar um destino.
 Waypoints podem ser definidos na posição atual ou por coordenadas manuais.
 As coordenadas são persistidas em blocos inteiros; valores fracionários são
@@ -603,7 +603,7 @@ física de dados e o target nativo da Navigation Table.
 
 Entregas:
 
-- módulo FMS virtual 2×2 com CRUD de waypoints na UI R-UI;
+- módulo FMS virtual 2×3 (2 de largura × 3 de altura) com CRUD de waypoints na UI R-UI;
 - criação por posição atual e por coordenadas, com persistência por identidade;
 - seleção e limpeza de target;
 - item FMS Navigator vinculado ao módulo exato, com confirmação de rebind;

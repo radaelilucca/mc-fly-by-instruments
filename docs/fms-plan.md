@@ -10,7 +10,7 @@ O FMS fornece canais de dados; não cria alertas nem altera o GPWS.
 
 ## Módulo e persistência
 
-- `fms_module` ocupa um footprint virtual de 2×2 na mesa.
+- `fms_module` ocupa um footprint virtual de 2 células de largura × 3 de altura (2×3) na mesa.
 - A UI em R-UI oferece dois fluxos: gestão de waypoints e vínculo do Navigator.
 - Waypoints podem usar a posição atual ou coordenadas inseridas manualmente.
 - Cada waypoint tem UUID, nome de 1–32 caracteres, dimensão e coordenadas XYZ.
@@ -81,15 +81,18 @@ a UI/API do FMS não despacha alertas ao GPWS.
 
 ## Aparência nesta entrega
 
-Sem assets Blockbench ou texturas próprias. O FMS da mesa usa bloco de ferro
-como placeholder e o Navigator usa a textura vanilla de bússola. O trabalho
-visual é uma etapa futura.
+O FMS usa modelo e textura próprios, com carcaça grafite, aro prateado,
+teclas em relevo e display preto sem conteúdo. A região de display ocupa os
+dois terços superiores; o teclado ocupa o terço inferior. Fonte e exportação:
+[Blockbench FMS 2×3](../blockbench/fms-module-2x3/README.md).
+O FMS Compass ainda usa a textura vanilla de bússola. O display funcional
+continua reservado para uma etapa posterior.
 
 ## Testes e aceite
 
 - CRUD, seleção, limpeza, validação de nome/coordenadas e persistência NBT;
 - item do módulo preserva dados ao remover, recolocar e quebrar/reinstalar mesa;
-- footprint 2×2 e rejeição de sobreposição/borda;
+- footprint 2×3 (2 de largura × 3 de altura) e rejeição de sobreposição/borda;
 - UUID duplicado gera identidade independente sem perder waypoints;
 - leitura dos canais, estados unavailable, distância X/Z, eventos e API Lua;
 - lookup do Navigator restringe dimensão e sublevel e não força chunk loading;

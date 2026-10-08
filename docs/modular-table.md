@@ -52,9 +52,14 @@ O módulo `lamp` ocupa 1×1. O `lamp_2x1` ocupa 2×1 por padrão e alterna para 
 com o scroll; a variante alonga a mesma geometria e gira junto com o footprint.
 Ambos os footprints são persistidos e expostos pelas dimensões do módulo na API.
 O `buzzer` ocupa sempre 1×1 e segue as mesmas regras de ocupação e remoção.
-O `fms` ocupa 2×2. Ele mantém UUID, waypoints e destino selecionado; ao remover
+O `fms` ocupa 2 células de largura × 3 de altura (2×3), preenchendo toda a altura
+da mesa e podendo começar em uma das duas colunas. Ele mantém UUID, waypoints e destino selecionado; ao remover
 o módulo ou quebrar a mesa, tudo é gravado no item `fms_module` e acompanha o
 módulo até sua próxima instalação.
+
+Seu modelo tem carcaça grafite, aro prateado, tela preta nos dois terços
+superiores e teclado compacto abaixo. A tela ainda é decorativa e opaca.
+Fonte editável: [Blockbench FMS 2×3](../blockbench/fms-module-2x3/README.md).
 
 ## CC:Tweaked
 
@@ -100,7 +105,7 @@ O programa [lamp-emission-test.lua](examples/lamp-emission-test.lua) percorre
 cada lâmpada instalada nos níveis 0 a 15, com meio segundo por nível.
 
 O buzzer e o FMS também aparecem em `getModules()` e `getSlot()`. O FMS tem
-footprint 2×2; seus métodos Lua validam que a célula inicial aponta para o FMS.
+footprint 2×3; seus métodos Lua validam que a célula inicial aponta para o FMS.
 O canal `waypoint_selected` retorna uma leitura booleana `VALID`, verdadeira
 quando existe um alvo escolhido. `distance_to_waypoint` retorna distância
 horizontal X/Z em blocos; sem alvo ou em outra dimensão, seu estado é
@@ -144,7 +149,7 @@ no servidor; carregamento e sincronização não geram eventos.
 local tablePeripheral = assert(peripheral.find("modular_table"), "Mesa não encontrada")
 print(textutils.serialize(tablePeripheral.getGridSize()))
 print(textutils.serialize(tablePeripheral.getModules()))
-print("Cabe 2x2:", tablePeripheral.canFit(1, 1, 2, 2))
+print("Cabe FMS 2x3:", tablePeripheral.canFit(1, 0, 2, 3))
 tablePeripheral.configureModule(1, 1, "terrain", 30)
 tablePeripheral.setTestSignal("terrain", 42)
 print(textutils.serialize(tablePeripheral.getOutputs()))

@@ -10,10 +10,25 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FmsAssetsTest {
     @Test
-    void moduleAndNavigatorUseTheApprovedPlaceholders() throws Exception {
+    void moduleUsesCenteredModelAndNavigatorKeepsCompassPlaceholder() throws Exception {
         var module = readJson("/assets/aeronautics_fly_by_instruments/models/item/fms_module.json");
         var navigator = readJson("/assets/aeronautics_fly_by_instruments/models/item/fms_navigator.json");
-        assertEquals("minecraft:block/iron_block", module.get("parent").getAsString());
+        assertEquals("aeronautics_fly_by_instruments:block/fms_module_2x3", module.get("parent").getAsString());
+        var model = readJson("/assets/aeronautics_fly_by_instruments/models/block/fms_module_2x3.json");
+        double[] low = {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY};
+        double[] high = {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
+        for (var element : model.getAsJsonArray("elements")) {
+            var cube = element.getAsJsonObject();
+            for (int axis = 0; axis < 3; axis++) {
+                low[axis] = Math.min(low[axis], cube.getAsJsonArray("from").get(axis).getAsDouble());
+                high[axis] = Math.max(high[axis], cube.getAsJsonArray("to").get(axis).getAsDouble());
+            }
+        }
+        assertEquals(8, (low[0] + high[0]) / 2);
+        assertEquals(8, (low[2] + high[2]) / 2);
+        assertEquals(0, low[1]);
+        assertTrue(high[0] - low[0] < 16 * 2.0 / 3);
+        assertTrue(high[2] - low[2] < 16);
         assertEquals("minecraft:item/generated", navigator.get("parent").getAsString());
         assertEquals("minecraft:item/compass_00", navigator.getAsJsonObject("textures")
                 .get("layer0").getAsString());

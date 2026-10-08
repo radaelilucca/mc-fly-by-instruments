@@ -114,12 +114,12 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     }
 
     public boolean placeFmsModule(int column, int row, FmsModuleData data) {
-        if (data == null || !grid.canFit(column, row, 2, 2)) return false;
+        if (data == null || !grid.canFit(column, row, 2, 3)) return false;
         FmsModuleData installed = data.copy();
         if (level != null && FmsModuleIndex.hasIdentity(level, installed.id())) {
             installed.replaceIdentity(java.util.UUID.randomUUID());
         }
-        if (!grid.place(new PanelGrid.Module("fms", column, row, 2, 2))) return false;
+        if (!grid.place(new PanelGrid.Module("fms", column, row, 2, 3))) return false;
         fmsModules.put(cellKey(column, row), installed);
         sampleFmsSignals(true);
         changed("placed", grid.at(column, row).orElseThrow());
@@ -385,20 +385,29 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             boolean validLamp2x1 = type.equals("lamp_2x1")
                     && (width == 2 && height == 1 || width == 1 && height == 2);
             boolean validBuzzer = type.equals("buzzer") && width == 1 && height == 1;
-            boolean validFms = type.equals("fms") && width == 2 && height == 2;
+            boolean validFms = type.equals("fms") && width == 2 && (height == 3 || height == 2);
             if (validLamp || validLamp2x1 || validBuzzer || validFms) {
                 String channel = entry.contains("Channel", Tag.TAG_STRING) ? entry.getString("Channel") : "test";
                 double threshold = entry.contains("Threshold", Tag.TAG_DOUBLE) ? entry.getDouble("Threshold") : 0.5;
                 if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(threshold)) {
                     int column = entry.getInt("Column");
                     int row = entry.getInt("Row");
-                    if (grid.place(new PanelGrid.Module(type, column, row, width, height, channel, threshold))
-                            && validFms) {
+                    if (grid.place(new PanelGrid.Module(type, column, row, width, height,
+                            channel, threshold)) && validFms) {
                         fmsModules.put(cellKey(column, row), entry.contains("FmsData", Tag.TAG_COMPOUND)
                                 ? FmsModuleData.load(entry.getCompound("FmsData")) : new FmsModuleData());
                     }
                 }
             }
+        }
+        // Restore every saved module before growing legacy footprints, so an FMS
+        // cannot consume cells belonging to a module later in the saved list.
+        for (var module : grid.modules()) {
+            if (!module.type().equals("fms") || module.height() != 2) continue;
+            grid.removeAt(module.column(), module.row());
+            int height = grid.canFit(module.column(), module.row(), 2, 3) ? 3 : 2;
+            grid.place(new PanelGrid.Module(module.type(), module.column(), module.row(), 2, height,
+                    module.channel(), module.threshold()));
         }
         testSignals.clear();
         if (tag.contains("TestSignals", Tag.TAG_COMPOUND)) {

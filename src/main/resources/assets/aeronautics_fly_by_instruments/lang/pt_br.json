@@ -2,7 +2,7 @@
   "block.aeronautics_fly_by_instruments.modular_table_base": "Base da Mesa Modular",
   "item.aeronautics_fly_by_instruments.buzzer_module": "Módulo de Buzzer (1x1)",
   "item.aeronautics_fly_by_instruments.buzzer_module.description": "Instale na mesa modular. Protótipo visual; ainda sem som.",
-  "item.aeronautics_fly_by_instruments.fms_module": "Módulo de Sistema de Gerenciamento de Voo (2×2)",
+  "item.aeronautics_fly_by_instruments.fms_module": "Módulo de Sistema de Gerenciamento de Voo (2×3)",
   "item.aeronautics_fly_by_instruments.fms_navigator": "Bússola FMS",
   "item.aeronautics_fly_by_instruments.fms_navigator.unbound": "Sem vínculo com um FMS",
   "item.aeronautics_fly_by_instruments.fms_navigator.bound": "Vinculado a um módulo FMS",
