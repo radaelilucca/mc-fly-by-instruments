@@ -8,6 +8,9 @@ import java.util.Map;
 
 /** Pure mapping from cached sensor measurements to the integer redstone channels. */
 public final class SensorOutputLogic {
+    /** Left/right sectors only produce output when the opening angle is above this value, in degrees. */
+    public static final int SIDE_SECTORS_MIN_ANGLE = 50;
+
     private SensorOutputLogic() {}
 
     public static Map<SensorOutputConfig.Channel, Integer> altitude(SensorReadingView reading,
@@ -38,7 +41,7 @@ public final class SensorOutputLogic {
             else right = Math.min(right, contact.distance());
         }
         outputs.put(SensorOutputConfig.Channel.FRONT, power(front, config.range(SensorOutputConfig.Channel.FRONT)));
-        if (advanced && openingAngle > 50) {
+        if (advanced && openingAngle > SIDE_SECTORS_MIN_ANGLE) {
             outputs.put(SensorOutputConfig.Channel.LEFT, power(left, config.range(SensorOutputConfig.Channel.LEFT)));
             outputs.put(SensorOutputConfig.Channel.RIGHT, power(right, config.range(SensorOutputConfig.Channel.RIGHT)));
         }
