@@ -2,7 +2,7 @@
 
 <p align="center">An addon for <b>Create Aeronautics</b></p>
 
-## WHAT IS?
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/what_it_is.png" alt="WHAT IT IS?" width="267"></p>
 
 Flying a Create Aeronautics ship is great until a mountain shows up out of the fog,
 or you try to land and have no idea how far the ground still is. **Fly by Instruments**
@@ -16,10 +16,9 @@ Every sensor works **on a moving ship** as well as on the ground. It turns and t
 your ship, never mistakes your own hull for an obstacle, and spots terrain, buildings
 and other ships alike.
 
-## WHAT'S IN THIS RELEASE?
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/what_can_it_do.png" alt="WHAT CAN IT DO?" width="375"></p>
 
-This first release is all about **sensors**. Three blocks, each with a different job,
-and each recognizable at a glance.
+Three sensor blocks, each with a different job and each recognizable at a glance.
 
 <p align="center"><img src="https://media.forgecdn.net/attachments/2106/625/preview-bottom-png.png" alt="Radar Altimeter" width="200"></p>
 
@@ -62,7 +61,7 @@ on everything in front of the ship.
 
 ---
 
-## HOW DO I USE THEM?
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/how-do-i-use-it.png" alt="HOW DO I USE IT?" width="371"></p>
 
 **Right-click a sensor** to open its output screen.
 
@@ -87,7 +86,7 @@ so very long ranges near the edge of the loaded world may read less than you exp
 
 ---
 
-## WHAT ABOUT COMPUTERS?
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/cc.png" alt="WHAT ABOUT COMPUTERS?" width="593"></p>
 
 Every sensor is a **CC:Tweaked peripheral** of its own. Put a computer next to it, or
 connect it with a wired modem, and read the raw data:
@@ -117,7 +116,7 @@ Full API reference: [Radar Altimeter](https://github.com/radaelilucca/mc-fly-by-
 
 ---
 
-## CAN I CONFIGURE IT?
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/can_i_config.png" alt="CAN I CONFIGURE IT?" width="479"></p>
 
 Yes. These server config options apply to every sensor in the world:
 
@@ -131,7 +130,7 @@ Longer ranges and shorter intervals cost more server time on big fleets.
 
 ---
 
-## REQUIREMENTS
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/requirements.png" alt="REQUIREMENTS" width="355"></p>
 
 - **Minecraft 1.21.1** with **NeoForge 21.1.236** or newer
 - **Create** 6.0.10+
@@ -142,7 +141,7 @@ Longer ranges and shorter intervals cost more server time on big fleets.
 
 ---
 
-## WHAT'S NEXT?
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/whats_next.png" alt="WHAT'S NEXT?" width="326"></p>
 
 Sensors are only the beginning. These are planned for future releases:
 
@@ -159,18 +158,19 @@ please don't rely on them in a survival world yet.
 
 ---
 
-## FOUND A BUG? HAVE AN IDEA?
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/found_a_bug.png" alt="FOUND A BUG?" width="317"></p>
 
 Open an issue on [GitHub](https://github.com/radaelilucca/mc-fly-by-instruments/issues).
 Your Minecraft version, the mod versions and a description of what happened help a lot.
 A screenshot of your redstone setup helps even more.
 
-## CAN I USE THIS IN A MODPACK?
+---
+
+<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/can_i_use.png" alt="CAN I USE THIS IN A MODPACK?" width="679"></p>
 
 **Yes, go ahead!** Fly by Instruments is released under the **MIT License**. A link back
 to this page is appreciated.
 
 ---
 
-<sub>Developing or contributing? See [docs/development.md](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/development.md) and the
-[technical documentation](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/README.md).</sub>
+*Developing or contributing? See the [development guide](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/development.md) and the [technical documentation](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/README.md). What changed in each version: [CHANGELOG](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/CHANGELOG.md).*
