@@ -36,21 +36,34 @@ class RadarAltimeterPeripheralTest {
                 });
         sensor.peripheral().attach(computer);
 
+        // Default altitude range is 0-32 blocks: 12.5 -> 6, 11.0 -> 5, unavailable -> 0.
         sensor.acceptReading(SensorReading.valid(12.5, "blocks", 5));
-        assertEquals(1, events.size());
-        assertEquals(RadarAltimeterPeripheral.EVENT_NAME, events.getFirst()[0]);
-        Object[] arguments = (Object[]) events.getFirst()[1];
+        var readings = named(events, RadarAltimeterPeripheral.EVENT_NAME);
+        assertEquals(1, readings.size());
+        Object[] arguments = (Object[]) readings.getFirst()[1];
         assertEquals("ralt", arguments[0]);
         assertEquals(Map.of("status", "valid", "value", 12.5, "unit", "blocks", "gameTime", 5L),
                 arguments[1]);
+        var outputs = named(events, RadarAltimeterPeripheral.OUTPUT_EVENT);
+        assertEquals(1, outputs.size());
+        assertEquals(Map.of("altitude", 6), ((Object[]) outputs.getFirst()[1])[1]);
 
         sensor.acceptReading(SensorReading.valid(12.5, "blocks", 10));
-        assertEquals(1, events.size());
+        assertEquals(1, named(events, RadarAltimeterPeripheral.EVENT_NAME).size());
+        assertEquals(1, named(events, RadarAltimeterPeripheral.OUTPUT_EVENT).size());
         sensor.acceptReading(SensorReading.valid(11.0, "blocks", 15));
-        assertEquals(2, events.size());
+        assertEquals(2, named(events, RadarAltimeterPeripheral.EVENT_NAME).size());
+        assertEquals(2, named(events, RadarAltimeterPeripheral.OUTPUT_EVENT).size());
         sensor.acceptReading(SensorReading.unavailable("blocks", 20));
-        assertEquals(3, events.size());
+        assertEquals(3, named(events, RadarAltimeterPeripheral.EVENT_NAME).size());
+        outputs = named(events, RadarAltimeterPeripheral.OUTPUT_EVENT);
+        assertEquals(3, outputs.size());
+        assertEquals(Map.of("altitude", 0), ((Object[]) outputs.getLast()[1])[1]);
         sensor.peripheral().detach(computer);
+    }
+
+    private static java.util.List<Object[]> named(java.util.List<Object[]> events, String name) {
+        return events.stream().filter(event -> name.equals(event[0])).toList();
     }
 
     private static RadarAltimeterBlockEntity sensor() {

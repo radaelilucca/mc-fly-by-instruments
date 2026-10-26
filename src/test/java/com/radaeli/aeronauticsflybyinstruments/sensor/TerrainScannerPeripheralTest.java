@@ -57,15 +57,20 @@ class TerrainScannerPeripheralTest {
 
         var first = new TerrainScanSnapshot(ReadingStatus.VALID,
                 List.of(new TerrainScanContact(1, 10.0, 0, 0, 1)), 9, 9, 10);
+        // Default front range is 4-32 blocks: both 10.0 and 9.0 map to power 12.
         scanner.acceptReading(first);
-        assertEquals(1, events.size());
-        assertEquals("terrain_scanner_scan_changed", events.getFirst()[0]);
+        assertEquals(1, named(events, TerrainScannerPeripheral.SCAN_EVENT).size());
+        var outputs = named(events, RadarAltimeterPeripheral.OUTPUT_EVENT);
+        assertEquals(1, outputs.size());
+        assertEquals(java.util.Map.of("front", 12), ((Object[]) outputs.getFirst()[1])[1]);
 
         scanner.acceptReading(new TerrainScanSnapshot(ReadingStatus.VALID, first.contacts(), 9, 9, 15));
-        assertEquals(1, events.size());
+        assertEquals(1, named(events, TerrainScannerPeripheral.SCAN_EVENT).size());
         scanner.acceptReading(new TerrainScanSnapshot(ReadingStatus.VALID,
                 List.of(new TerrainScanContact(1, 9.0, 0, 0, 1)), 9, 9, 20));
-        assertEquals(2, events.size());
+        assertEquals(2, named(events, TerrainScannerPeripheral.SCAN_EVENT).size());
+        assertEquals(1, named(events, RadarAltimeterPeripheral.OUTPUT_EVENT).size(),
+                "Unchanged redstone power must not emit another output event");
         scanner.peripheral().detach(computer);
     }
 
@@ -87,6 +92,10 @@ class TerrainScannerPeripheralTest {
         tag.putInt("OpeningAngle", 181);
         restored.loadAdditional(tag, null);
         assertEquals(90, restored.openingAngle());
+    }
+
+    private static List<Object[]> named(List<Object[]> events, String name) {
+        return events.stream().filter(event -> name.equals(event[0])).toList();
     }
 
     private static TerrainScannerBlockEntity scanner(boolean advanced) {
