@@ -1,0 +1,97 @@
+GIMP Palette
+Name: Create + Aeronautics (Fly by Instruments)
+Columns: 8
+# Rampas extraidas das texturas do Create 6.0.10 e do Create Aeronautics 1.3.2.
+# Ordem: do mais escuro para o mais claro dentro de cada material.
+# Latao (brass)
+ 89  36  36	Latao (brass) 1
+114  71  49	Latao (brass) 2
+158 105  71	Latao (brass) 3
+191 142  85	Latao (brass) 4
+206 160  90	Latao (brass) 5
+228 183  99	Latao (brass) 6
+247 203 108	Latao (brass) 7
+255 235 140	Latao (brass) 8
+# Madeira escura (miolo brass_casing)
+ 48  30  14	Madeira escura (miolo brass_casing) 1
+ 58  36  17	Madeira escura (miolo brass_casing) 2
+ 68  43  21	Madeira escura (miolo brass_casing) 3
+ 79  49  24	Madeira escura (miolo brass_casing) 4
+ 83  56  26	Madeira escura (miolo brass_casing) 5
+ 90  62  30	Madeira escura (miolo brass_casing) 6
+# Madeira media (miolo andesite_casing)
+ 85  58  31	Madeira media (miolo andesite_casing) 1
+ 90  68  36	Madeira media (miolo andesite_casing) 2
+ 97  75  46	Madeira media (miolo andesite_casing) 3
+112  82  46	Madeira media (miolo andesite_casing) 4
+122  90  52	Madeira media (miolo andesite_casing) 5
+130  97  58	Madeira media (miolo andesite_casing) 6
+136 101  57	Madeira media (miolo andesite_casing) 7
+# Andesito
+ 80  83  81	Andesito 1
+ 96  99  95	Andesito 2
+104 108 104	Andesito 3
+112 117 112	Andesito 4
+130 135 132	Andesito 5
+143 150 145	Andesito 6
+154 164 157	Andesito 7
+168 179 171	Andesito 8
+# Cobre
+144  73  49	Cobre 1
+154  80  56	Cobre 2
+167  90  64	Cobre 3
+178  98  71	Cobre 4
+194 107  76	Cobre 5
+200 116  86	Cobre 6
+214 123  91	Cobre 7
+227 130 108	Cobre 8
+# Ferro industrial
+ 53  52  56	Ferro industrial 1
+ 63  62  66	Ferro industrial 2
+ 68  68  68	Ferro industrial 3
+ 73  72  72	Ferro industrial 4
+ 79  79  79	Ferro industrial 5
+ 89  88  88	Ferro industrial 6
+103  97  97	Ferro industrial 7
+117 113 113	Ferro industrial 8
+# Metal escuro
+ 43  43  43	Metal escuro 1
+ 53  53  53	Metal escuro 2
+ 59  59  60	Metal escuro 3
+ 70  70  71	Metal escuro 4
+ 74  74  75	Metal escuro 5
+ 82  82  85	Metal escuro 6
+# Pergaminho (mostradores)
+103 101  98	Pergaminho (mostradores) 1
+148 145 136	Pergaminho (mostradores) 2
+212 194 164	Pergaminho (mostradores) 3
+224 210 174	Pergaminho (mostradores) 4
+238 228 206	Pergaminho (mostradores) 5
+246 237 216	Pergaminho (mostradores) 6
+249 242 222	Pergaminho (mostradores) 7
+# Redstone desligado
+ 70   0   0	Redstone desligado 1
+ 80   1   1	Redstone desligado 2
+ 88   1   1	Redstone desligado 3
+# Redstone ligado
+151   0   0	Redstone ligado 1
+174   0   0	Redstone ligado 2
+205   0   0	Redstone ligado 3
+253   0   0	Redstone ligado 4
+# Lente escura
+ 19  22  29	Lente escura 1
+ 23  27  35	Lente escura 2
+ 32  35  42	Lente escura 3
+ 40  44  55	Lente escura 4
+ 51  56  70	Lente escura 5
+ 70  76  95	Lente escura 6
+# Gema azul (frequencia)
+ 80  89 171	Gema azul (frequencia) 1
+ 83 113 198	Gema azul (frequencia) 2
+# Lona (envelope)
+134 132 128	Lona (envelope) 1
+155 152 146	Lona (envelope) 2
+182 174 161	Lona (envelope) 3
+206 196 181	Lona (envelope) 4
+228 228 223	Lona (envelope) 5
+241 241 240	Lona (envelope) 6

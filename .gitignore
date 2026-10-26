@@ -11,3 +11,7 @@
 libs/*.jar
 !libs/.gitkeep
 reference/*.jar
+# Local renders of third-party assets used as visual reference
+reference/visual/
+# Local copies of Create textures for Blockbench previews (All Rights Reserved; never commit)
+reference/create-textures/

@@ -1,0 +1,170 @@
+// Shared helpers for the v2 Blockbench bootstraps and exporters (docs/visual-design-guide.md).
+// Pixel art is authored as character maps whose keys come from PALETTE (guide §5 ramps);
+// never procedural noise. Create textures are referenced by id only (All Rights Reserved).
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { deflateSync } from 'node:zlib';
+import { randomUUID } from 'node:crypto';
+import assert from 'node:assert/strict';
+
+export const NS = 'aeronautics_fly_by_instruments';
+// Blockbench's Java Block format shares ONE UV space (project resolution) for every texture
+// and ignores per-texture UV size on export. Smaller textures get their UVs scaled by px().
+export const RES = 32;
+export const px = (size, uv) => uv.map(v => v * RES / size);
+
+export const PALETTE = {
+  // brass, dark -> light
+  1: '#592424', 2: '#724731', 3: '#9E6947', 4: '#BF8E55', 5: '#CEA05A', 6: '#E4B763', 7: '#F7CB6C', 8: '#FFEB8C',
+  // dark wood
+  a: '#301E0E', b: '#3A2411', c: '#442B15', d: '#4F3118', e: '#53381A', f: '#5A3E1E',
+  // medium wood
+  g: '#553A1F', h: '#5A4424', i: '#614B2E', j: '#70522E', k: '#7A5A34', l: '#82613A', m: '#886539',
+  // andesite
+  A: '#505351', B: '#60635F', C: '#707570', D: '#828784', E: '#9AA49D', F: '#A8B3AB',
+  // industrial iron
+  n: '#353438', o: '#3F3E42', p: '#4F4F4F', q: '#595858', v: '#676161', W: '#757171',
+  // dark metal
+  w: '#2B2B2B', x: '#353535', y: '#3B3B3C', z: '#464647',
+  // redstone off / on
+  r: '#460000', s: '#500101', t: '#580101', R: '#970000', S: '#AE0000', T: '#CD0000', U: '#FD0000',
+  // dark lens + blue glint
+  L: '#13161D', M: '#171B23', N: '#20232A', O: '#282C37', Q: '#333846', V: '#464C5F', Y: '#5371C6', Z: '#5059AB',
+};
+
+export function canvas(width, height, fill) {
+  return Array.from({ length: height }, () => Array.from({ length: width }, () => PALETTE[fill]));
+}
+export function blit(target, map, x0, y0) {
+  map.forEach((row, y) => [...row].forEach((key, x) => {
+    if (key === '.') return; // transparent in the map: keep what is below
+    assert.ok(key in PALETTE, `Unknown palette key "${key}"`);
+    target[y0 + y][x0 + x] = PALETTE[key];
+  }));
+}
+export function checkMap(name, map, width, height) {
+  assert.equal(map.length, height, `${name}: ${map.length} rows, expected ${height}`);
+  map.forEach((row, y) => assert.equal(row.length, width, `${name} row ${y}: ${row.length} cols, expected ${width}`));
+  return map;
+}
+export const mirror = map => map.map(row => [...row].reverse().join(''));
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+function chunk(type, bytes) {
+  const data = Buffer.concat([Buffer.from(type), bytes]);
+  const size = Buffer.alloc(4), crc = Buffer.alloc(4);
+  size.writeUInt32BE(bytes.length); crc.writeUInt32BE(crc32(data));
+  return Buffer.concat([size, data, crc]);
+}
+export function png(img) {
+  const h = img.length, w = img[0].length;
+  const rows = Buffer.alloc(h * (w * 4 + 1));
+  img.forEach((row, y) => row.forEach((hex, x) => {
+    const o = y * (w * 4 + 1) + 1 + x * 4;
+    rows[o] = parseInt(hex.slice(1, 3), 16); rows[o + 1] = parseInt(hex.slice(3, 5), 16);
+    rows[o + 2] = parseInt(hex.slice(5, 7), 16); rows[o + 3] = 255;
+  }));
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(w, 0); header.writeUInt32BE(h, 4); header[8] = 8; header[9] = 6;
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk('IHDR', header), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
+}
+
+export function texture(name, size, { namespace = NS, source = null, relativePath = '', particle = false } = {}) {
+  return {
+    name: `${name}.png`, path: '', relative_path: relativePath, folder: 'block', namespace,
+    id: '', group: '', scope: 0, width: size, height: size, uv_width: RES, uv_height: RES,
+    particle, use_as_default: false, layers_enabled: false, sync_to_project: '', file_format: 'png',
+    render_mode: 'default', render_sides: 'auto', wrap_mode: 'limited', pbr_channel: 'color', fps: 7,
+    frame_time: 1, frame_order_type: 'loop', frame_order: '', frame_interpolate: false, visible: true,
+    internal: source !== null, saved: source !== null, uuid: randomUUID(),
+    ...(source ? { source: `data:image/png;base64,${png(source).toString('base64')}` } : {}),
+  };
+}
+export const face = (uv, tex) => ({ uv, texture: tex });
+export function cube(name, from, to, faces, color = 0) {
+  return {
+    name, box_uv: false, render_order: 'default', rescale: false, locked: false, shade: true,
+    light_emission: 0, export: true, scope: 0, allow_mirror_modeling: true, from, to, autouv: 0, color,
+    origin: [8, 8, 8], faces, type: 'cube', uuid: randomUUID(),
+  };
+}
+export function group(name, origin, children, color = 0) {
+  return { name, origin, color, uuid: randomUUID(), export: true, mirror_uv: false, isOpen: true,
+    locked: false, visibility: true, autouv: 0, children: children.map(c => c.uuid) };
+}
+export function writeProject(url, { name, elements, groups, textures }) {
+  textures.forEach((t, i) => { t.id = String(i); });
+  const project = {
+    meta: { format_version: '5.0', model_format: 'java_block', box_uv: false },
+    name, parent: '', java_block_version: '1.9', ambientocclusion: true, front_gui_light: false,
+    visible_box: [1, 1, 0], variable_placeholders: '', multi_file_ruleset: '', variable_placeholder_buttons: [],
+    unhandled_root_fields: {}, resolution: { width: RES, height: RES }, elements,
+    groups: groups.map(({ children, ...g }) => g),
+    outliner: groups.map(g => ({ uuid: g.uuid, isOpen: true, children: g.children })),
+    textures,
+  };
+  writeFileSync(url, JSON.stringify(project));
+  return project;
+}
+
+// --- Export -----------------------------------------------------------------------------
+const AXES = { north: [0, 1], south: [0, 1], east: [2, 1], west: [2, 1], up: [0, 2], down: [0, 2] };
+/**
+ * Exports a saved .bbmodel to models/block/<model>.json (+ variants) and this mod's PNGs.
+ * variants: { suffix: { fromTexture: toTexture } } — e.g. { _powered: { terrain_scanner: 'terrain_scanner_powered' } }.
+ * Fails on rotated cuboids, fractional coordinates or any face that is not 1 texel per unit.
+ */
+export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {} }) {
+  const project = JSON.parse(readFileSync(projectUrl, 'utf8'));
+  assert.equal(project.meta.model_format, 'java_block');
+  const base = t => t.name.replace(/\.png$/, '');
+  const ids = project.textures.map(t => `${t.namespace || NS}:${t.folder || 'block'}/${base(t)}`);
+  const indexOf = name => { const i = project.textures.findIndex(t => base(t) === name); assert.ok(i >= 0, name); return i; };
+  for (const t of project.textures) {
+    if ((t.namespace || NS) !== NS) continue;
+    assert.ok(t.source?.startsWith('data:image/png;base64,'), `${t.name} must be embedded`);
+    const target = new URL(`textures/block/${base(t)}.png`, assetsUrl);
+    mkdirSync(new URL('./', target), { recursive: true });
+    writeFileSync(target, Buffer.from(t.source.split(',')[1], 'base64'));
+  }
+  const used = new Set();
+  const elements = project.elements.map(c => {
+    assert.equal(c.type, 'cube');
+    assert.ok(!c.rotation?.some(v => v !== 0), `${c.name}: cuboids stay unrotated`);
+    for (const v of [...c.from, ...c.to]) assert.ok(Number.isInteger(v), `${c.name}: integer coordinates`);
+    const size = [0, 1, 2].map(i => c.to[i] - c.from[i]);
+    const faces = {};
+    for (const [side, f] of Object.entries(c.faces)) {
+      if (f.texture === null || f.texture === false || f.texture === undefined) continue;
+      const t = project.textures[f.texture]; assert.ok(t, `${c.name}.${side}: missing texture`);
+      let [gu, gv] = AXES[side].map(a => size[a]);
+      if (f.rotation === 90 || f.rotation === 270) [gu, gv] = [gv, gu];
+      assert.equal(Math.abs(f.uv[2] - f.uv[0]) * t.width / t.uv_width, gu, `${c.name}.${side}: 1 texel per unit (u)`);
+      assert.equal(Math.abs(f.uv[3] - f.uv[1]) * t.height / t.uv_height, gv, `${c.name}.${side}: 1 texel per unit (v)`);
+      faces[side] = { uv: f.uv.map((v, i) => v * 16 / (i % 2 ? t.uv_height : t.uv_width)), texture: `#${f.texture}` };
+      if (f.rotation) faces[side].rotation = f.rotation;
+      used.add(f.texture);
+    }
+    return { name: c.name, from: c.from, to: c.to, faces };
+  });
+  const particle = project.textures.findIndex(t => t.particle);
+  const write = (suffix, swap) => {
+    const map = i => (swap[base(project.textures[i])] ? `${NS}:block/${swap[base(project.textures[i])]}` : ids[i]);
+    const textures = { particle: map(particle >= 0 ? particle : [...used][0]) };
+    for (const i of [...used].sort((a, b) => a - b)) textures[String(i)] = map(i);
+    const json = { credit: 'Made with Blockbench for Aeronautics: Fly by Instruments',
+      parent: 'minecraft:block/block', ambientocclusion: true, textures, elements };
+    writeFileSync(new URL(`models/block/${model}${suffix}.json`, assetsUrl), `${JSON.stringify(json, null, 2)}\n`);
+  };
+  for (const target of Object.values(variants)) for (const to of Object.values(target)) indexOf(to);
+  write('', {});
+  for (const [suffix, swap] of Object.entries(variants)) write(suffix, swap);
+  return { cubes: elements.length, textures: [...used].map(i => ids[i]) };
+}
