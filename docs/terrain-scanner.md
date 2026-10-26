@@ -2,33 +2,34 @@
 
 ## Modelo visual Basic
 
-A versão Simple/Basic usa uma carcaça metálica com moldura em grafite e antena
-frontal rebaixada em cerâmica/latão. Setas amarelas nas laterais e na tampa
-apontam para a face de varredura. O conector traseiro e o emblema azul são
-decorativos; o padrão frontal não representa LEDs nem botões.
+Tier de andesito do Create: corpo de andesito com tábuas de madeira média e um
+**bocal escalonado** na frente (anel de andesito médio, anel claro e lente escura
+pequena), como um telescópio. As fendas de redstone verticais nas laterais acendem com
+o sinal. A traseira tem o socket de dados central. Não há setas pintadas: o bocal mostra
+a direção da varredura.
 
-A fonte canônica aponta para NORTH. O bloco pode ser colocado de ponta-cabeça na
-face inferior de um bloco: a carcaça e a colisão são invertidas, mas a face do
-scanner e seus casts continuam apontando horizontalmente conforme `FACING`. O
-modelo não emite luz.
+A fonte canônica aponta para NORTH. O bloco pode ser colocado de ponta-cabeça na face
+inferior de um bloco: a carcaça e a colisão são invertidas, mas a frente e os casts
+continuam apontando horizontalmente conforme `FACING`. O centro frontal da lente
+`(8, 8, 0)` coincide com a direção dos casts. O modelo não emite luz.
 
-Fonte e instruções de exportação: [Blockbench Basic](../blockbench/terrain-scanner-basic/README.md).
+Fonte e exportação: [Blockbench Basic](../blockbench/terrain-scanner-basic/README.md).
 
 ## Modelo visual Advanced
 
-O Advanced duplica a mesma carcaça, recuos e socket traseiro do Basic. A antena
-tem um padrão **5×5 de quadradinhos em latão**, em vez de 3×3, sem aumentar as
-texturas de 32×32. Uma faixa dupla azul dessaturada identifica as laterais,
-tampa e base; duas marcas correspondentes aparecem na traseira junto ao socket.
-Setas amarelas continuam indicando a frente. As marcas são estáticas e opacas,
-não LEDs ou estados de conexão.
+Tier de latão: faixa de latão sobre corpo de ferro industrial, tampa de latão com
+retângulos concêntricos e uma **barra panorâmica com três lentes**. A lente FRENTE fica
+saliente no centro; ESQUERDA e DIREITA ficam recuadas nas laterais, separadas por
+divisórias de latão, e espelham os três canais de saída. As fendas horizontais aparecem
+só nas faces que emitem (laterais e frente); a traseira, que não emite, tem apenas o
+socket.
 
-Seleção, colisão e encaixe adaptativo do cabo seguem a mesma geometria em todas
-as orientações. A densidade visual de 25 elementos não altera a quantidade
-de raios, a abertura, a GUI ou a API do Advanced.
+O corpo e os sockets têm o mesmo volume do Basic; a frente e a colisão são próprias.
+O Advanced se distingue do Basic pelo material e pela óptica, e do Radar Altimeter pela
+face de medição frontal e pelo corpo de ferro. A distinção está descrita no
+[guia visual](visual-design-guide.md).
 
-Fonte duplicada e refinada via Paint no editor:
-[Blockbench Advanced](../blockbench/terrain-scanner-advanced/README.md).
+Fonte e exportação: [Blockbench Advanced](../blockbench/terrain-scanner-advanced/README.md).
 
 ## Funcionamento
 

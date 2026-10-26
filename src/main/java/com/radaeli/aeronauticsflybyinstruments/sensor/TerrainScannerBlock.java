@@ -18,27 +18,14 @@ import java.util.Map;
 /** Fixed 9-ray Terrain Scanner block. */
 public final class TerrainScannerBlock extends AbstractTerrainScannerBlock implements CableSocketProvider {
     public static final MapCodec<TerrainScannerBlock> CODEC = simpleCodec(TerrainScannerBlock::new);
-    // Source model faces NORTH. Its antenna is recessed by 0.25/16 inside the
-    // front rim; the scanner's existing cast origin remains just outside the cell.
+    // v2 model (docs/visual-design-guide.md), source faces NORTH: andesite body plus a stepped
+    // nozzle whose lens front centre (8, 8, 0) faces the cast origin just outside the cell.
     private static final VoxelShape NORTH_SHAPE = Shapes.or(
-            Block.box(1, 2, 3, 15, 14, 15),
-            Block.box(2, 3, 1, 14, 13, 3),
-            Block.box(2, 3, 0.25, 14, 13, 1),
-            Block.box(1, 13, 0, 15, 14, 3),
-            Block.box(1, 2, 0, 15, 3, 3),
-            Block.box(1, 3, 0, 2, 13, 3),
-            Block.box(14, 3, 0, 15, 13, 3),
-            Block.box(0.5, 14, 0, 15.5, 15, 15.5),
-            Block.box(0, 0, 6, 3, 2, 14),
-            Block.box(13, 0, 6, 16, 2, 14),
-            Block.box(5, 15, 8, 11, 15.25, 13),
-            Block.box(5, 5, 15, 11, 11, 15.5),
-            Block.box(6, 6, 15.5, 10, 10, 16)).optimize();
-    private static final Map<Direction, VoxelShape> SHAPES = Map.of(
-            Direction.NORTH, NORTH_SHAPE,
-            Direction.EAST, rotateShape(Direction.EAST),
-            Direction.SOUTH, rotateShape(Direction.SOUTH),
-            Direction.WEST, rotateShape(Direction.WEST));
+            Block.box(0, 0, 4, 16, 16, 16),
+            Block.box(3, 3, 2, 13, 13, 4),
+            Block.box(4, 4, 1, 12, 12, 2),
+            Block.box(5, 5, 0, 11, 11, 1)).optimize();
+    private static final Map<Direction, VoxelShape> SHAPES = shapes(NORTH_SHAPE);
 
     public TerrainScannerBlock(Properties properties) { super(properties); }
 
@@ -47,12 +34,20 @@ public final class TerrainScannerBlock extends AbstractTerrainScannerBlock imple
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return housingShape(state);
+        return housingShape(state, SHAPES);
     }
 
-    // Both variants use exactly the same saved housing geometry and sockets.
-    static VoxelShape housingShape(BlockState state) {
-        VoxelShape shape = SHAPES.get(state.getValue(FACING));
+    /** Rotations of a NORTH-facing source shape for the four horizontal facings. */
+    static Map<Direction, VoxelShape> shapes(VoxelShape north) {
+        return Map.of(Direction.NORTH, north,
+                Direction.EAST, rotateShape(north, Direction.EAST),
+                Direction.SOUTH, rotateShape(north, Direction.SOUTH),
+                Direction.WEST, rotateShape(north, Direction.WEST));
+    }
+
+    // The variants differ in their front optics but share the body volume and sockets.
+    static VoxelShape housingShape(BlockState state, Map<Direction, VoxelShape> shapes) {
+        VoxelShape shape = shapes.get(state.getValue(FACING));
         return state.getValue(UPSIDE_DOWN) ? invertAroundFacing(shape, state.getValue(FACING)) : shape;
     }
 
@@ -66,12 +61,12 @@ public final class TerrainScannerBlock extends AbstractTerrainScannerBlock imple
         Direction socketFace = state.getValue(UPSIDE_DOWN) ? invertFaceAroundFacing(face, facing) : face;
         Direction localFace = toLocalFace(socketFace, facing);
         Vec3 p = switch (localFace) {
-            case NORTH -> new Vec3(8, 8, .25);
-            case SOUTH -> new Vec3(8, 8, 16); // Existing rear data socket is flush.
-            case WEST -> new Vec3(1, 8, 8);
-            case EAST -> new Vec3(15, 8, 8);
-            case DOWN -> new Vec3(8, 2, 8);
-            case UP -> new Vec3(8, 15, 4); // Lid, clear of the raised emblem.
+            case NORTH -> new Vec3(8, 8, 0);   // Lens front centre (both variants).
+            case SOUTH -> new Vec3(8, 8, 16);  // Rear data socket, flush.
+            case WEST -> new Vec3(0, 8, 10);   // Body sides span z 4..16.
+            case EAST -> new Vec3(16, 8, 10);
+            case DOWN -> new Vec3(8, 0, 10);
+            case UP -> new Vec3(8, 16, 10);
         };
         p = transformPoint(p, facing);
         if (state.getValue(UPSIDE_DOWN)) p = invertAroundFacing(p, facing);
@@ -123,8 +118,8 @@ public final class TerrainScannerBlock extends AbstractTerrainScannerBlock imple
         }).reduce(Shapes.empty(), Shapes::or).optimize();
     }
 
-    private static VoxelShape rotateShape(Direction facing) {
-        return NORTH_SHAPE.toAabbs().stream().map(box -> switch (facing) {
+    private static VoxelShape rotateShape(VoxelShape north, Direction facing) {
+        return north.toAabbs().stream().map(box -> switch (facing) {
             case EAST -> Shapes.box(1 - box.maxZ, box.minY, box.minX, 1 - box.minZ, box.maxY, box.maxX);
             case SOUTH -> Shapes.box(1 - box.maxX, box.minY, 1 - box.maxZ,
                     1 - box.minX, box.maxY, 1 - box.minZ);

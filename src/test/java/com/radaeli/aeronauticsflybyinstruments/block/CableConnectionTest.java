@@ -139,7 +139,11 @@ class CableConnectionTest {
             @Override public int getHeight() { return 384; }
             @Override public int getMinBuildHeight() { return -64; }
         };
-        assertEquals(1 + .25 / 16, cable.getShape(world, BlockPos.ZERO).bounds().maxZ, EPS);
+        // The cable stops at the neighbour's own socket. The v2 scanner's front lens ends on the block
+        // boundary, so the arm reaches exactly z = 1 instead of entering a recessed face.
+        double socketDepth = ((CableSocketProvider) scanner).cableSocket(neighbor, Direction.NORTH).z;
+        assertEquals(0, socketDepth, EPS);
+        assertEquals(1 + socketDepth, cable.getShape(world, BlockPos.ZERO).bounds().maxZ, EPS);
         assertSame(SoundType.NETHERITE_BLOCK, cable.getSoundType());
     }
 

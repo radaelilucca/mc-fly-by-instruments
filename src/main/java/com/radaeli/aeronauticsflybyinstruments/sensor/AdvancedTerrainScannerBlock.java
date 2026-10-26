@@ -15,10 +15,24 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.shapes.Shapes;
+
+import java.util.Map;
 
 /** Configurable Advanced Terrain Scanner block. */
 public final class AdvancedTerrainScannerBlock extends AbstractTerrainScannerBlock implements CableSocketProvider {
     public static final MapCodec<AdvancedTerrainScannerBlock> CODEC = simpleCodec(AdvancedTerrainScannerBlock::new);
+
+    // v2 model, source faces NORTH: same body as the Basic, full-width brass lens bar with the
+    // protruding FRONT lens (front centre (8, 8, 0)) and recessed LEFT (west) / RIGHT (east) lenses.
+    private static final VoxelShape NORTH_SHAPE = Shapes.or(
+            Block.box(0, 0, 4, 16, 16, 16),
+            Block.box(0, 4, 2, 16, 12, 4),
+            Block.box(1, 5, 1, 4, 11, 2),
+            Block.box(12, 5, 1, 15, 11, 2),
+            Block.box(5, 5, 0, 11, 11, 2)).optimize();
+    private static final Map<Direction, VoxelShape> SHAPES = TerrainScannerBlock.shapes(NORTH_SHAPE);
 
     public AdvancedTerrainScannerBlock(Properties properties) { super(properties); }
 
@@ -27,7 +41,7 @@ public final class AdvancedTerrainScannerBlock extends AbstractTerrainScannerBlo
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return TerrainScannerBlock.housingShape(state);
+        return TerrainScannerBlock.housingShape(state, SHAPES);
     }
 
     @Override

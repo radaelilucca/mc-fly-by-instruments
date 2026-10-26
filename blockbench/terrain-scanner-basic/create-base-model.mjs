@@ -1,75 +1,105 @@
-// Bootstrap only: import into Blockbench and refine through its native UI.
-// export-assets.mjs preserves the saved editor source; never rerun this over it.
-import {readFileSync,writeFileSync} from 'node:fs';
-import {deflateSync} from 'node:zlib';
-import {randomUUID} from 'node:crypto';
-const assets=new URL('../../src/main/resources/assets/aeronautics_fly_by_instruments/',import.meta.url);
-function crc32(bytes){let c=0xffffffff;for(const b of bytes){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return(c^0xffffffff)>>>0;}
-function chunk(type,bytes){const d=Buffer.concat([Buffer.from(type),bytes]),n=Buffer.alloc(4),c=Buffer.alloc(4);n.writeUInt32BE(bytes.length);c.writeUInt32BE(crc32(d));return Buffer.concat([n,d,c]);}
-function png(pixel){
-  const rows=Buffer.alloc(32*129),h=Buffer.alloc(13);
-  for(let y=0;y<32;y++)for(let x=0;x<32;x++)rows.set([...pixel(x,y),255],y*129+1+x*4);
-  h.writeUInt32BE(32,0);h.writeUInt32BE(32,4);h[8]=8;h[9]=6;
-  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',h),chunk('IDAT',deflateSync(rows)),chunk('IEND',Buffer.alloc(0))]);
-}
-const textures=[];
-function texture(name,bytes){const id=textures.length;textures.push({name,namespace:'aeronautics_fly_by_instruments',folder:'block',id:String(id),uuid:randomUUID(),width:32,height:32,uv_width:32,uv_height:32,particle:id===0,internal:true,saved:false,source:`data:image/png;base64,${bytes.toString('base64')}`});return id;}
-// Shared family materials remain byte-identical to the existing altimeter assets.
-const metal=texture('radar_altimeter_metal',readFileSync(new URL('textures/block/radar_altimeter_metal.png',assets)));
-const frame=texture('radar_altimeter_frame',readFileSync(new URL('textures/block/radar_altimeter_frame.png',assets)));
-const brass=texture('radar_altimeter_brass',readFileSync(new URL('textures/block/radar_altimeter_brass.png',assets)));
-const label=texture('radar_altimeter_label',readFileSync(new URL('textures/block/radar_altimeter_label.png',assets)));
-const socket=texture('radar_altimeter_socket',readFileSync(new URL('textures/block/radar_altimeter_socket.png',assets)));
-const noise=(x,y)=>((x*13+y*7)%5)-2;
-const casing=texture('terrain_scanner_case',png((x,y)=>{
-  let v=186+noise(x,y);
-  if(x<2||x>29||y<2||y>29)v=125;
-  else if(x===2||y===2)v=224;
-  else if(x===29||y===29)v=149;
-  if([4,27].includes(x)&&[4,27].includes(y))return[65,70,74];
-  if(y>=7&&y<=11&&y%2===1&&x>=6&&x<=25)return[67,75,80];
-  // Leftward arrow in the WEST face UV; mirrored UVs on EAST also point NORTH.
-  if((x>=11&&x<=23&&y>=19&&y<=22)||(x>=6&&x<=12&&Math.abs(y-20.5)<=x-6))return[228,169,47];
-  return[v,v+3,v+5];
-}));
-const antenna=texture('terrain_scanner_antenna',png((x,y)=>{
-  const edge=x<2||x>29||y<2||y>29;
-  if(edge)return[24,29,32];
-  for(const cx of[7,16,25])for(const cy of[7,16,25]){
-    const r=Math.max(Math.abs(x-cx),Math.abs(y-cy));
-    if(r<=2){const v=216+noise(x,y);return[v,v-3,v-14];}
-    if(r<=3)return[185,130,47];
+// Bootstrap of the v2 Terrain Scanner (Basic): Create andesite tier. Writes terrain_scanner_basic.bbmodel.
+// Model faces NORTH (front = z 0). Refine in Blockbench afterwards; do NOT rerun over a refined source.
+// Guide: docs/visual-design-guide.md. Differentiation vs Advanced/Altimeter: see README.md.
+import { canvas, blit, checkMap, texture, face, cube, group, writeProject, px } from '../_tools/bbtools.mjs';
+
+// --- Pixel maps --------------------------------------------------------------------------
+// Andesite casing frame (outer dark, inner bevel lit top/left) around vertical medium-wood planks.
+function frame(w, h, interior) {
+  const rows = [];
+  for (let y = 0; y < h; y++) {
+    let row = '';
+    for (let x = 0; x < w; x++) {
+      const edgeX = x === 0 || x === w - 1, edgeY = y === 0 || y === h - 1;
+      if (edgeX && edgeY) row += 'A';
+      else if (edgeX || edgeY) row += 'B';
+      else if (y === 1 || x === 1) row += (x === w - 2 || y === h - 2) ? 'D' : 'F';
+      else if (y === h - 2 || x === w - 2) row += 'C';
+      else row += interior(x, y);
+    }
+    rows.push(row);
   }
-  return[47+noise(x,y),52+noise(x,y),55+noise(x,y)];
-}));
-const top=texture('terrain_scanner_top',png((x,y)=>{
-  let v=157+noise(x,y);
-  if(x<2||y<2)v=209;
-  if(x>29||y>29)v=101;
-  if([4,27].includes(x)&&[4,27].includes(y))return[55,59,61];
-  // Arrow towards the canonical front (negative Z, top UV's upper edge).
-  if((y>=5&&y<=12&&x>=14&&x<=17)||(y>=3&&y<=8&&Math.abs(x-15.5)<=y-3))return[228,169,47];
-  return[v,v+4,v+6];
-}));
-const elements=[];
-function cube(name,from,to,t,overrides={}){
-  const faces=Object.fromEntries(['north','east','south','west','up','down'].map(side=>[side,{uv:[0,0,32,32],texture:overrides[side]??t}]));
-  elements.push({name,type:'cube',uuid:randomUUID(),from,to,origin:[8,8,8],rotation:[0,0,0],box_uv:false,autouv:0,rescale:false,shade:true,faces});
+  return rows;
 }
-cube('metal_case',[1,2,3],[15,14,15],metal,{west:casing,east:casing});
-elements.at(-1).faces.east.uv=[32,0,0,32];
-cube('antenna_backing',[2,3,1],[14,13,3],frame);
-cube('forward_antenna',[2,3,0],[14,13,1],brass,{north:antenna});
-cube('bezel_top',[1,13,0],[15,14,3],frame);
-cube('bezel_bottom',[1,2,0],[15,3,3],frame);
-cube('bezel_left',[1,3,0],[2,13,3],frame);
-cube('bezel_right',[14,3,0],[15,13,3],frame);
-cube('mounting_lid',[.5,14,0],[15.5,15,15.5],metal,{up:top});
-cube('mount_left',[0,0,6],[3,2,14],metal);
-cube('mount_right',[13,0,6],[16,2,14],metal);
-cube('radar_emblem',[5,15,8],[11,15.25,13],frame,{up:label});
-cube('rear_socket_mount',[5,5,15],[11,11,15.5],frame);
-cube('rear_data_connector',[6,6,15.5],[10,10,16],metal,{south:socket});
-const project={meta:{format_version:'4.10',model_format:'java_block',box_uv:false},name:'terrain_scanner_basic',java_block_version:'1.9',ambientocclusion:true,visible_box:[1,1,0],resolution:{width:32,height:32},elements,outliner:[{name:'terrain_scanner_basic',uuid:randomUUID(),origin:[8,8,8],children:elements.map(e=>e.uuid)}],textures};
-writeFileSync(new URL('./terrain_scanner_basic.bbmodel',import.meta.url),JSON.stringify(project));
-console.log(`Prepared ${elements.length} cubes with five shared materials and three dedicated textures.`);
+// Vertical planks: 3 px plank + 1 px seam, a darker knot mark every few rows.
+const planks = (x, y) => (x % 4 === 1 ? 'h' : ((x * 7 + y * 3) % 11 === 0 ? 'j' : (x % 4 === 2 ? 'l' : 'k')));
+// Vertical redstone slot (2 x 6) in a dark frame, centred horizontally.
+function withSlot(map, cx, top, lit) {
+  const rows = map.map(r => [...r]);
+  for (let y = top; y < top + 8; y++) for (let x = cx - 2; x < cx + 2; x++) rows[y][x] = 'g';
+  for (let y = top + 1; y < top + 7; y++) {
+    rows[y][cx - 1] = lit ? (y % 3 === 0 ? 'U' : 'T') : (y % 2 ? 't' : 's');
+    rows[y][cx] = lit ? 'R' : 'r';
+  }
+  return rows.map(r => r.join(''));
+}
+const SIDE = lit => checkMap('side', withSlot(frame(12, 16, planks), 6, 4, lit), 12, 16);     // east/west: z12 x y16
+// Rear: data socket (dark metal ring) at the centre, no slot.
+const REAR = (() => {
+  const rows = frame(16, 16, planks).map(r => [...r]);
+  const socket = ['xxxx', 'xwwz', 'xwwz', 'zzzz'];
+  socket.forEach((r, y) => [...r].forEach((k, x) => { rows[6 + y][6 + x] = k; }));
+  return checkMap('rear', rows.map(r => r.join('')), 16, 16);
+})();
+// Front: frame + corner rivets; the centre 10 x 10 is covered by the nozzle.
+const FRONT = (() => {
+  const rows = frame(16, 16, planks).map(r => [...r]);
+  for (const [x, y] of [[2, 2], [13, 2], [2, 13], [13, 13]]) rows[y][x] = 'E';
+  return checkMap('front', rows.map(r => r.join('')), 16, 16);
+})();
+const CAP = checkMap('cap', frame(16, 12, planks), 16, 12);                                     // up/down: x16 x z12
+
+// Optics texture (32 x 32): stepped nozzle ring (andesite), tip (dark metal), lens (dark glass).
+// Stepped telescope read: mid-andesite outer ring, light andesite inner ring, dark lens.
+const RING_FACE = checkMap('ring face', ['ADDDDDDDDA', ...Array(8).fill('DxxxxxxxxB'), 'ABBBBBBBBA'], 10, 10);
+const RING_TOP = checkMap('ring top', ['DDDDDDDDDD', 'CCCCCCCCCC'], 10, 2);     // up/down: x10 x z2
+const RING_SIDE = checkMap('ring side', Array(10).fill('DC'), 2, 10);            // east/west: z2 x y10
+const TIP_FACE = checkMap('tip face', ['FFFFFFFE', ...Array(6).fill('FxxxxxxC'), 'ECCCCCCC'], 8, 8);
+const TIP_TOP = checkMap('tip top', ['FFFFFFFF'], 8, 1);
+const TIP_SIDE = checkMap('tip side', Array(8).fill('E'), 1, 8);
+const LENS_FACE = checkMap('lens face', ['OOOOOO', 'OVVMMO', 'OVLYMO', 'OMLLMO', 'OMMMMO', 'OOOOOO'], 6, 6);
+const LENS_TOP = checkMap('lens top', ['NNNNNN'], 6, 1);
+const LENS_SIDE = checkMap('lens side', Array(6).fill('N'), 1, 6);
+
+// --- Texture assembly (pixels = model units, 1:1) ----------------------------------------
+const AT = { side: [0, 0, 12, 16], rear: [12, 0, 28, 16], front: [0, 16, 16, 32], cap: [16, 16, 32, 28] };
+function atlas(lit) {
+  const img = canvas(32, 32, 'B');
+  blit(img, SIDE(lit), 0, 0); blit(img, REAR, 12, 0); blit(img, FRONT, 0, 16); blit(img, CAP, 16, 16);
+  return img;
+}
+const OP = {
+  ringFace: [0, 0, 10, 10], ringTop: [0, 10, 10, 12], ringSide: [10, 0, 12, 10],
+  tipFace: [12, 0, 20, 8], tipTop: [12, 8, 20, 9], tipSide: [20, 0, 21, 8],
+  lensFace: [21, 0, 27, 6], lensTop: [21, 6, 27, 7], lensSide: [27, 0, 28, 6],
+};
+function optics() {
+  const img = canvas(32, 32, 'x');
+  blit(img, RING_FACE, 0, 0); blit(img, RING_TOP, 0, 10); blit(img, RING_SIDE, 10, 0);
+  blit(img, TIP_FACE, 12, 0); blit(img, TIP_TOP, 12, 8); blit(img, TIP_SIDE, 20, 0);
+  blit(img, LENS_FACE, 21, 0); blit(img, LENS_TOP, 21, 6); blit(img, LENS_SIDE, 27, 0);
+  return img;
+}
+
+// --- Geometry (front = NORTH) -------------------------------------------------------------
+const textures = [
+  texture('terrain_scanner', 32, { source: atlas(false), particle: true }),   // 0
+  texture('terrain_scanner_powered', 32, { source: atlas(true) }),           // 1 (variant only)
+  texture('terrain_scanner_optics', 32, { source: optics() }),               // 2
+];
+const box = (n, s, e, w, u, d, t) => ({ north: face(n, t), south: face(s, t), east: face(e, t),
+  west: face(w, t), up: face(u, t), down: face(d, t) });
+const elements = [
+  cube('body', [0, 0, 4], [16, 16, 16], box(AT.front, AT.rear, AT.side, AT.side, AT.cap, AT.cap, 0), 1),
+  cube('nozzle_ring', [3, 3, 2], [13, 13, 4],
+    box(OP.ringFace, OP.ringFace, OP.ringSide, OP.ringSide, OP.ringTop, OP.ringTop, 2), 2),
+  cube('nozzle_tip', [4, 4, 1], [12, 12, 2],
+    box(OP.tipFace, OP.tipFace, OP.tipSide, OP.tipSide, OP.tipTop, OP.tipTop, 2), 4),
+  // Name kept for code/tests: front centre (8, 8, 0) faces the cast origin.
+  cube('forward_antenna', [5, 5, 0], [11, 11, 1],
+    box(OP.lensFace, OP.lensFace, OP.lensSide, OP.lensSide, OP.lensTop, OP.lensTop, 2), 6),
+];
+const groups = [group('body', [8, 8, 8], elements.slice(0, 1)), group('nozzle', [8, 8, 0], elements.slice(1), 6)];
+writeProject(new URL('terrain_scanner_basic.bbmodel', import.meta.url),
+  { name: 'terrain_scanner', elements, groups, textures });
+console.log(`Wrote terrain_scanner_basic.bbmodel: ${elements.length} cubes, ${textures.length} textures.`);

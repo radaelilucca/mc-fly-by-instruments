@@ -1,47 +1,52 @@
-# Terrain Scanner Advanced — fonte visual
+# Advanced Terrain Scanner — fonte visual (v2, tier de latão)
 
-Fonte editável: `terrain_scanner_advanced.bbmodel`, Java Block/Item para
-Minecraft 1.21.1, com texturas **32×32 incorporadas**.
+Guia obrigatório: [guia visual v2](../../docs/visual-design-guide.md), seção
+"Diferenciação entre os sensores". Referências diretas: content observer e smart
+observer (Create), optical sensor (Simulated).
 
-O projeto começa como cópia do `.bbmodel` Basic já refinado, não como uma nova
-carcaça. Os 13 cuboides, recuos, pés, emblema e socket traseiro são idênticos.
-`duplicate-basic.mjs` registra essa origem e recusa sobrescrever uma fonte
-existente. Não reexecute o bootstrap sobre o modelo editado.
+Abra `terrain_scanner_advanced.bbmodel` no Blockbench (Java Block/Item, 1.21.1, *Box UV*
+desligado, resolução 32×32). A fonte aponta para **NORTH**: a frente fica em z = 0.
 
-## Diferenciação
+## Identidade
 
-- Antena frontal com **5×5 elementos**: 25 quadradinhos de quatro texels por lado,
-  separados por dois texels. Não aumenta a resolução nem a geometria.
-- Os centros receberam latão claro `#E7C78D` usando Paint Bucket/Colors na
-  interface nativa do Blockbench; bordas e realces preservam a família do Basic.
-- Faixa dupla azul dessaturada `#31657E` perto da traseira nas laterais, tampa e
-  face inferior. Na traseira, duas marcas reaparecem ao lado do socket.
-- Setas amarelas preservadas. Marcas azuis são pintura, não LEDs/estado.
-- Frente canônica **NORTH**, painel em Z=0,25 e socket traseiro em Z=16. Modelo
-  opaco, sem emissão, transparência, animação ou alterações nos casts.
+- **Material:** faixa de latão sobre corpo de **ferro industrial**, como o content
+  observer (dourado sobre grafite). Distingue-se do Radar Altimeter, que é latão sobre
+  madeira escura.
+- **Óptica:** barra de latão panorâmica com **três lentes**, que espelham os canais de
+  saída. A lente FRENTE `(8, 8, 0)` é a mais saliente. As lentes ESQUERDA (oeste,
+  x baixo) e DIREITA (leste) ficam recuadas 1 unidade, separadas por divisórias de
+  latão.
+- **Redstone:** fendas **horizontais** só nas faces que emitem: laterais (ESQUERDA e
+  DIREITA) e frente (abaixo das lentes).
+- **Traseira:** socket central, sem fenda, porque não emite.
+- **Tampa:** placa de latão com retângulos concêntricos.
 
-## Materiais e exportação
+## Peças
 
-As cinco texturas compartilhadas do Radar Altimeter são somente leitura. As
-seis texturas próprias usam prefixo `terrain_scanner_advanced_`. Basic e seus
-assets não são sobrescritos. Não é necessário salvar PNGs separados no editor:
-o `.bbmodel` incorpora as texturas e o exportador gera os PNGs de runtime.
+| Elemento | Volume | Material |
+| --- | --- | --- |
+| `body` | `[0,0,4]–[16,16,16]` | Mesmo volume do Basic (os sockets são idênticos) |
+| `lens_bar` | `[0,4,2]–[16,12,4]` | Barra de latão com divisórias em x 4 e x 11 |
+| `lens_left` | `[1,5,1]–[4,11,2]` | Lente do setor ESQUERDA |
+| `lens_right` | `[12,5,1]–[15,11,2]` | Lente do setor DIREITA |
+| `forward_antenna` | `[5,5,0]–[11,11,2]` | Lente do setor FRENTE, com linha de varredura azul |
 
-Após salvar no Blockbench, na raiz do mod:
+## Texturas (1 texel = 1 unidade)
+
+- `terrain_scanner_advanced.png` (32×32): lateral 12×16, traseira 16×16, frente
+  16×16 e tampa 16×12.
+- `terrain_scanner_advanced_powered.png`: fendas acesas. Uma única variante acende os
+  três canais juntos; acender por canal exigiria três estados no bloco.
+- `terrain_scanner_advanced_optics.png` (32×32): barra e três lentes.
+
+## Exportação
 
 ```powershell
 node blockbench/terrain-scanner-advanced/export-assets.mjs
 ```
 
-O exportador verifica a geometria contra o Basic, dimensões das texturas e
-integridade dos materiais compartilhados. Preserva UVs e edições nativas.
+Gera `terrain_scanner_advanced.json`, `terrain_scanner_advanced_powered.json` e os
+PNGs, com as mesmas verificações do Basic. `create-base-model.mjs` é só o bootstrap.
 
-Seleção, colisão e encaixe adaptativo do Avionics Cable compartilham a geometria
-do Basic nas quatro orientações. API, alcance, abertura configurável, GUI e
-distribuição de raios do Advanced permanecem inalterados; os 25 quadradinhos
-não representam literalmente 25 raios.
-
-Testes cobrem equivalência geométrica, faces/rotações, sockets, 25 elementos
-separados, marcas azuis, texturas opacas e UVs. Verificação no jogo permanece
-necessária: comparar Basic/Advanced, checar inventário, colocação, cabos em todas
-as faces e acesso à tela de configuração.
+Mudou a geometria? Atualize `NORTH_SHAPE` em `AdvancedTerrainScannerBlock` e rode
+`AdvancedTerrainScannerAssetsTest` e `CableConnectionTest`.
