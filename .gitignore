@@ -2,6 +2,7 @@
 /.gradle-aeronauticsflybyinstruments/
 /build/
 /run/
+/run-gametests/
 /logs/
 /crash-reports/
 /.idea/

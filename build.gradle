@@ -14,6 +14,15 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
+// Opt-in server integration harness; never included in a normal release build.
+if (providers.gradleProperty('tableGameTests').isPresent()) {
+    sourceSets.main.java.srcDir 'src/gametest/java'
+}
+def prepareTableGameTests = tasks.register('prepareTableGameTests', Copy) {
+    from 'src/gametest/structures'
+    into 'run-gametests/gameteststructures'
+}
+
 repositories {
     mavenCentral()
 }
@@ -116,6 +125,14 @@ neoForge {
         server {
             server()
             programArgument '--nogui'
+        }
+
+        gameTestServer {
+            server()
+            gameDirectory = file('run-gametests')
+            systemProperty 'neoforge.gameTestServer', 'true'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+            taskBefore prepareTableGameTests
         }
 
         configureEach {
