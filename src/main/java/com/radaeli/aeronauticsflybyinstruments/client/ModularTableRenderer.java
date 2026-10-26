@@ -7,7 +7,6 @@ import com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelCoordinates;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
-import com.radaeli.aeronauticsflybyinstruments.network.PanelNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
@@ -59,18 +58,12 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
 
         var minecraft = Minecraft.getInstance();
         var player = minecraft.player;
-        boolean holdingSmallLamp = player != null && (player.getMainHandItem().is(ModBlocks.LAMP_MODULE.get())
-                || player.getOffhandItem().is(ModBlocks.LAMP_MODULE.get()));
-        boolean holdingLongLamp = player != null && (player.getMainHandItem().is(ModBlocks.LAMP_MODULE_2X1.get())
-                || player.getOffhandItem().is(ModBlocks.LAMP_MODULE_2X1.get()));
-        boolean holdingBuzzer = player != null && (player.getMainHandItem().is(ModBlocks.BUZZER_MODULE.get())
-                || player.getOffhandItem().is(ModBlocks.BUZZER_MODULE.get()));
-        boolean holdingFms = player != null && (player.getMainHandItem().is(ModBlocks.FMS_MODULE.get())
-                || player.getOffhandItem().is(ModBlocks.FMS_MODULE.get()));
-        boolean removing = player != null && (ModularTableBaseBlock.isCreateWrench(player.getMainHandItem())
-                || ModularTableBaseBlock.isCreateWrench(player.getOffhandItem()));
-        if ((holdingSmallLamp || holdingLongLamp || holdingBuzzer || holdingFms || removing) && minecraft.hitResult instanceof BlockHitResult hit
-                && hit.getBlockPos().equals(table.getBlockPos()) && hit.getDirection() == facing) {
+        var held = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.heldModule(player).orElse(null);
+        boolean removing = player != null && ModularTableBaseBlock.isCreateWrench(player.getMainHandItem());
+        if (minecraft.screen == null && (held != null || removing) && minecraft.hitResult instanceof BlockHitResult hit
+                && hit.getBlockPos().equals(table.getBlockPos())
+                && (hit.getDirection() == facing || removing && com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction
+                .target(table, hit.getDirection(), hit.getLocation()).module() != null)) {
             for (int i = 0; i <= PanelGrid.SIZE; i++) {
                 double line = Math.min(1 - 0.012, Math.max(0, i * CELL - 0.006));
                 cube(poses, buffers, Blocks.GRAY_CONCRETE.defaultBlockState(),
@@ -78,12 +71,13 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 cube(poses, buffers, Blocks.GRAY_CONCRETE.defaultBlockState(),
                         0, SURFACE + 0.001, line, 1, 0.004, 0.012, light, overlay);
             }
-            var point = PanelCoordinates.toPanel(facing, hit.getLocation().subtract(Vec3.atLowerCornerOf(table.getBlockPos())));
-            int column = PanelCoordinates.cell(point.x);
-            int row = PanelCoordinates.cell(point.z);
+            var target = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.target(table,
+                    hit.getDirection(), hit.getLocation());
+            int column = target.column();
+            int row = target.row();
             if (column >= 0 && row >= 0) {
-                int width = holdingFms ? 2 : holdingLongLamp && PanelNetwork.isVertical(player) ? 1 : holdingLongLamp ? 2 : 1;
-                int height = holdingFms ? 3 : holdingLongLamp && PanelNetwork.isVertical(player) ? 2 : 1;
+                int width = held == null ? 1 : held.width();
+                int height = held == null ? 1 : held.height();
                 int outlineColumn = column;
                 int outlineRow = row;
                 boolean valid = false;
@@ -100,7 +94,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                 } else {
                     valid = table.grid().canFit(column, row, width, height);
                 }
-                if (holdingSmallLamp || holdingLongLamp || holdingBuzzer || holdingFms || valid) {
+                if (held != null || valid) {
                     var color = (valid ? Blocks.LIME_CONCRETE : Blocks.RED_CONCRETE).defaultBlockState();
                     outline(poses, buffers, color, outlineColumn, outlineRow, width, height, light, overlay);
                 }

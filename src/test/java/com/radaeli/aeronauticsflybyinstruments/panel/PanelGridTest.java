@@ -56,6 +56,36 @@ class PanelGridTest {
         assertEquals(12.5, configured.threshold());
         assertEquals(1, configured.width());
         assertEquals(2, configured.height());
+        assertEquals("test", configured.outputSource());
+    }
+
+    @Test
+    void alertRoutingAndBuzzerVolumeAreStoredIndependentlyOfLegacyTestSignals() {
+        var grid = new PanelGrid();
+        assertTrue(grid.place(new PanelGrid.Module("buzzer", 1, 1, 1, 1,
+                "test", 0.5, "gpws", "gpws.any", 2, 100)));
+        assertTrue(grid.configureAlertAt(1, 1, "gpws", "gpws.pull_up", 3, "bench", 4.5));
+        assertTrue(grid.setBuzzerVolumeAt(1, 1, 37));
+        var output = grid.at(1, 1).orElseThrow();
+        assertEquals("gpws", output.outputSource());
+        assertEquals("gpws.pull_up", output.alertChannel());
+        assertEquals(3, output.minimumSeverity());
+        assertEquals(37, output.buzzerVolume());
+        assertEquals("test", output.channel());
+        assertEquals(0.5, output.threshold());
+        assertFalse(grid.setBuzzerVolumeAt(1, 1, 101));
+    }
+
+    @Test
+    void localSignalConfigurationKeepsItsOwnNumericThreshold() {
+        var grid = new PanelGrid();
+        assertTrue(grid.place(new PanelGrid.Module("lamp", 0, 0, 1, 1,
+                "test", 0.5, "gpws", "gpws.any", 2, 100)));
+        assertTrue(grid.configureAlertAt(0, 0, "test", "gpws.any", 2, "bench", 8));
+        var output = grid.at(0, 0).orElseThrow();
+        assertEquals("test", output.outputSource());
+        assertEquals("bench", output.channel());
+        assertEquals(8, output.threshold());
     }
 
     @Test

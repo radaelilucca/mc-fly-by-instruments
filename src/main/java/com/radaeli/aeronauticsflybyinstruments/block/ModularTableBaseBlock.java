@@ -25,6 +25,11 @@ import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelCoordinates;
 import com.radaeli.aeronauticsflybyinstruments.network.FmsNetwork;
+import com.radaeli.aeronauticsflybyinstruments.network.PanelNetwork;
+import com.radaeli.aeronauticsflybyinstruments.item.BuzzerModuleItem;
+import com.radaeli.aeronauticsflybyinstruments.item.FmsModuleItem;
+import com.radaeli.aeronauticsflybyinstruments.item.LampModule2x1Item;
+import com.radaeli.aeronauticsflybyinstruments.item.LampModuleItem;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -103,42 +108,78 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
     @Override
     protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                                     Player player, BlockHitResult hit) {
-        if (hit.getDirection() != state.getValue(FACING)
-                || !(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) {
+        // Default interaction is exclusively the empty MAIN hand, regardless of the offhand.
+        if (!player.getMainHandItem().isEmpty()) {
             return net.minecraft.world.InteractionResult.PASS;
         }
-        var point = PanelCoordinates.toPanel(state.getValue(FACING),
-                hit.getLocation().subtract(Vec3.atLowerCornerOf(pos)));
-        int column = PanelCoordinates.cell(point.x);
-        int row = PanelCoordinates.cell(point.z);
-        var module = table.grid().at(column, row);
+        if (!(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) {
+            return net.minecraft.world.InteractionResult.PASS;
+        }
+        var target = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.target(table,
+                hit.getDirection(), hit.getLocation());
+        if (!target.interactive()) return net.minecraft.world.InteractionResult.PASS;
+        var module = java.util.Optional.ofNullable(player.isShiftKeyDown() ? null : target.module());
         if (module.isPresent() && module.get().type().equals("fms")
                 && !level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             FmsNetwork.open(serverPlayer, pos, module.get().column(), module.get().row(), table);
         }
-        return module.filter(value -> value.type().equals("fms")).isPresent()
+        boolean controlPanel = module.isEmpty() || module.filter(value -> value.type().equals("lamp")
+                || value.type().equals("lamp_2x1") || value.type().equals("buzzer")).isPresent();
+        if (controlPanel && !level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+            PanelNetwork.open(serverPlayer, table, module.orElse(null));
+        }
+        return module.filter(value -> value.type().equals("fms")).isPresent() || controlPanel
                 ? net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide)
                 : net.minecraft.world.InteractionResult.PASS;
+    }
+
+    static boolean isPanelModule(ItemStack stack) {
+        return com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.isModule(stack);
     }
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                                Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!isCreateWrench(stack) || hit.getDirection() != state.getValue(FACING)
-                || !(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) {
+        if (hand != InteractionHand.MAIN_HAND) {
+            return isPanelModule(stack) || isCreateWrench(stack)
+                    ? ItemInteractionResult.sidedSuccess(level.isClientSide)
+                    : ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (isPanelModule(stack)) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        if (!stack.isEmpty() && !isCreateWrench(stack)) return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        if (!isCreateWrench(stack) || !(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        var point = PanelCoordinates.toPanel(state.getValue(FACING), hit.getLocation().subtract(Vec3.atLowerCornerOf(pos)));
-        int column = PanelCoordinates.cell(point.x);
-        int row = PanelCoordinates.cell(point.z);
-        var module = table.grid().at(column, row);
-        if (module.isEmpty()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        var target = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.target(table,
+                hit.getDirection(), hit.getLocation());
+        int column = target.column(), row = target.row();
+        if (target.module() == null) return ItemInteractionResult.sidedSuccess(level.isClientSide);
         if (!level.isClientSide) {
             var moduleStack = table.removeModuleStack(column, row);
             if (moduleStack.isEmpty()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-            if (!player.addItem(moduleStack)) popResource(level, pos, moduleStack);
+            var inventory = new net.neoforged.neoforge.items.wrapper.PlayerMainInvWrapper(player.getInventory());
+            var remainder = net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(inventory, moduleStack, false);
+            if (!remainder.isEmpty()) popResource(level, pos, remainder);
+            player.getInventory().setChanged();
+            player.containerMenu.broadcastChanges();
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public net.minecraft.world.InteractionResult onSneakWrenched(BlockState state,
+                                                                 net.minecraft.world.item.context.UseOnContext context) {
+        if (context.getHand() != InteractionHand.MAIN_HAND || context.getPlayer() == null
+                || !isCreateWrench(context.getPlayer().getMainHandItem())) return net.minecraft.world.InteractionResult.FAIL;
+        return AvionicsWrenchable.super.onSneakWrenched(state, context);
+    }
+
+    @Override
+    protected BlockState updateShape(BlockState state, Direction direction, BlockState neighbor,
+                                     net.minecraft.world.level.LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        return direction == state.getValue(FACING).getOpposite() && !canSurvive(state, level, pos)
+                ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
+                : super.updateShape(state, direction, neighbor, level, pos, neighborPos);
     }
 
     public static ItemStack itemStack(PanelGrid.Module module) {
@@ -155,7 +196,7 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
                 && level.getBlockEntity(pos) instanceof ModularTableBlockEntity table) {
-            for (var stack : table.moduleStacks()) {
+            for (var stack : table.drainModuleStacks()) {
                 popResource(level, pos, stack);
             }
         }

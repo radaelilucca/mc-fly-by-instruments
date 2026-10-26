@@ -1,9 +1,7 @@
 package com.radaeli.aeronauticsflybyinstruments.client;
 
-import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
 import com.radaeli.aeronauticsflybyinstruments.network.PanelNetwork;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
-import com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.client.event.InputEvent;
@@ -15,15 +13,15 @@ public final class PanelInputHandler {
         if (event.getScrollDeltaY() == 0) return;
         var minecraft = Minecraft.getInstance();
         var player = minecraft.player;
-        if (player == null || !(minecraft.hitResult instanceof BlockHitResult hit)
+        if (minecraft.screen != null || player == null || !(minecraft.hitResult instanceof BlockHitResult hit)
                 || !(player.level().getBlockEntity(hit.getBlockPos()) instanceof ModularTableBlockEntity table)
-                || hit.getDirection() != table.getBlockState().getValue(ModularTableBaseBlock.FACING)) return;
+                || !com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction
+                .target(table, hit.getDirection(), hit.getLocation()).exposed()) return;
 
-        boolean mainHand = player.getMainHandItem().is(ModBlocks.LAMP_MODULE_2X1.get());
-        boolean offhand = player.getOffhandItem().is(ModBlocks.LAMP_MODULE_2X1.get());
-        if (!mainHand && !offhand) return;
+        var held = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.heldModule(player).orElse(null);
+        if (held == null || !held.type().equals("lamp_2x1")) return;
 
-        PanelNetwork.rotateClient(!mainHand && offhand);
+        PanelNetwork.rotateClient(false);
         event.setCanceled(true);
     }
 }

@@ -23,7 +23,7 @@ public final class FmsNetwork {
     private FmsNetwork() {}
 
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar("2");
         registrar.playToServer(FmsActionPayload.TYPE, FmsActionPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> handle(payload, context.player())));
         registrar.playToClient(FmsScreenPayload.TYPE, FmsScreenPayload.STREAM_CODEC,
@@ -36,7 +36,8 @@ public final class FmsNetwork {
 
     public static void open(ServerPlayer player, BlockPos position, int column, int row,
                             ModularTableBlockEntity table) {
-        if (player.distanceToSqr(Vec3.atCenterOf(position)) > 64.0) return;
+        if (!position.equals(table.getBlockPos())
+                || !com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.canReach(player, table)) return;
         sendScreen(player, position, column, row, table);
     }
 
@@ -48,7 +49,7 @@ public final class FmsNetwork {
         Vec3 current = FmsLocation.forEntity(player);
         PacketDistributor.sendToPlayer(player, new FmsScreenPayload(position, column, row, data,
                 player.level().dimension().location().toString(), current.x, current.y, current.z,
-                bound.displaySlot(), bound.id() == null ? "" : bound.id().toString()));
+                bound.displaySlot(), bound.id() == null ? "" : bound.id().toString(), table.moduleToken(column, row)));
     }
 
     private static void handle(FmsActionPayload payload, net.minecraft.world.entity.player.Player player) {
@@ -56,8 +57,9 @@ public final class FmsNetwork {
         if (payload.column() < 0 || payload.column() >= 3 || payload.row() < 0 || payload.row() >= 3) return;
         BlockPos position = payload.position();
         if (!serverPlayer.level().hasChunkAt(position)
-                || serverPlayer.distanceToSqr(Vec3.atCenterOf(position)) > 64.0
                 || !(serverPlayer.level().getBlockEntity(position) instanceof ModularTableBlockEntity table)
+                || !com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.canReach(serverPlayer, table)
+                || !payload.interactionToken().equals(table.moduleToken(payload.column(), payload.row()))
                 || table.fmsAt(payload.column(), payload.row()).isEmpty()) return;
 
         FmsModuleData data = table.fmsAt(payload.column(), payload.row()).orElseThrow().data();

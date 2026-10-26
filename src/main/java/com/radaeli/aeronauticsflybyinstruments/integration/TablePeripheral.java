@@ -102,9 +102,61 @@ public final class TablePeripheral implements IPeripheral {
             var output = new java.util.HashMap<>(describe(module));
             output.put("active", table.isModuleActive(module));
             output.put("signal", table.testSignal(module.channel()));
+            output.put("source", module.outputSource());
+            output.put("minimumSeverity", module.minimumSeverity());
+            output.put("severity", table.moduleSeverity(module));
+            output.put("buzzerVolume", module.buzzerVolume());
             return Map.copyOf(output);
         }).toList();
     }
+
+    @LuaFunction(mainThread = true)
+    public List<String> getAvailableChannels() {
+        return List.of("gpws.any", "gpws.terrain", "gpws.pull_up", "gpws.sink_rate", "gpws.dont_sink",
+                "gpws.too_low", "gpws.bank_angle", "gpws.sensor_fail");
+    }
+
+    @LuaFunction(mainThread = true)
+    public Map<String, Object> getPanelStatus() {
+        long installed = table.grid().modules().stream().filter(module ->
+                ModularTableBlockEntity.isLampModule(module) || module.type().equals("buzzer")).count();
+        long active = table.grid().modules().stream().filter(module ->
+                (ModularTableBlockEntity.isLampModule(module) || module.type().equals("buzzer"))
+                        && table.isModuleActive(module)).count();
+        return Map.of("networkStatus", table.alertNetworkStatus().name().toLowerCase(java.util.Locale.ROOT),
+                "gpwsAvailable", table.gpwsAvailable(), "muted", table.muted(),
+                "installedModules", installed, "activeModules", active);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean configureAlertModule(int column, int row, String source, String channel,
+                                        String minimumSeverity) throws LuaException {
+        validateCell(column, row);
+        int rank = switch (minimumSeverity == null ? "" : minimumSeverity.toLowerCase(java.util.Locale.ROOT)) {
+            case "advisory" -> 1; case "caution" -> 2; case "warning" -> 3;
+            default -> throw new LuaException("Severity must be advisory, caution, or warning");
+        };
+        if (channel == null || channel.isBlank() || channel.length() > 64)
+            throw new LuaException("Channel must contain 1 to 64 characters");
+        if (!(source.equals("gpws") || source.equals("test"))) throw new LuaException("Source must be gpws or test");
+        return table.configureAlertModule(column - 1, row - 1, source, channel, rank);
+    }
+
+    @LuaFunction(mainThread = true)
+    public boolean setBuzzerVolume(int column, int row, int volume) throws LuaException {
+        validateCell(column, row);
+        if (volume < 0 || volume > 100) throw new LuaException("Buzzer volume must be between 0 and 100");
+        return table.setBuzzerVolume(column - 1, row - 1, volume);
+    }
+
+    @LuaFunction(mainThread = true)
+    public int applyBasicSetup() { return table.applyBasicSetup(); }
+
+    @LuaFunction(mainThread = true)
+    public boolean testPanel() { table.testPanel(); return true; }
+
+    @LuaFunction(mainThread = true)
+    public boolean setMuted(boolean muted) { table.setMuted(muted); return true; }
 
     @LuaFunction(mainThread = true)
     public List<Map<String, Object>> getFmsWaypoints(int column, int row) throws LuaException {
@@ -212,9 +264,12 @@ public final class TablePeripheral implements IPeripheral {
     }
 
     public static Map<String, Object> describe(PanelGrid.Module module) {
-        return Map.of("occupied", true, "type", module.type(), "column", module.column() + 1,
-                "row", module.row() + 1, "width", module.width(), "height", module.height(),
-                "channel", module.channel(), "threshold", module.threshold());
+        return Map.ofEntries(Map.entry("occupied", true), Map.entry("type", module.type()),
+                Map.entry("column", module.column() + 1), Map.entry("row", module.row() + 1),
+                Map.entry("width", module.width()), Map.entry("height", module.height()),
+                Map.entry("channel", module.channel()), Map.entry("threshold", module.threshold()),
+                Map.entry("source", module.outputSource()), Map.entry("alertChannel", module.alertChannel()),
+                Map.entry("minimumSeverity", module.minimumSeverity()), Map.entry("buzzerVolume", module.buzzerVolume()));
     }
 
     public void moduleChanged(String action, PanelGrid.Module module) {
@@ -227,6 +282,17 @@ public final class TablePeripheral implements IPeripheral {
         for (var computer : computers) {
             computer.queueEvent("modular_table_signal_changed", computer.getAttachmentName(), channel, value);
         }
+    }
+
+    public void alertOutputsChanged() {
+        for (var computer : computers)
+            computer.queueEvent("modular_table_alert_outputs_changed", computer.getAttachmentName(),
+                    getPanelStatus(), getOutputs());
+    }
+
+    public void panelStateChanged(String state, boolean value) {
+        for (var computer : computers)
+            computer.queueEvent("modular_table_panel_state_changed", computer.getAttachmentName(), state, value);
     }
 
     public void fmsWaypointChanged(String action, PanelGrid.Module module, FmsWaypoint waypoint, boolean selected) {

@@ -10,7 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public record FmsActionPayload(BlockPos position, int column, int row, String action, String waypointId,
                                String name, double x, double y, double z, int navigatorDisplaySlot,
-                               boolean confirmRebind) implements CustomPacketPayload {
+                               boolean confirmRebind, java.util.UUID interactionToken) implements CustomPacketPayload {
     public static final Type<FmsActionPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(
             AeronauticsFlyByInstruments.MOD_ID, "fms_action"));
     public static final StreamCodec<ByteBuf, FmsActionPayload> STREAM_CODEC = StreamCodec.of(
@@ -25,6 +25,8 @@ public record FmsActionPayload(BlockPos position, int column, int row, String ac
 
     private static void encode(ByteBuf buf, FmsActionPayload payload) {
         FmsNetworkWire.writePosition(buf, payload.position);
+        buf.writeLong(payload.interactionToken.getMostSignificantBits());
+        buf.writeLong(payload.interactionToken.getLeastSignificantBits());
         ByteBufCodecs.VAR_INT.encode(buf, payload.column);
         ByteBufCodecs.VAR_INT.encode(buf, payload.row);
         ByteBufCodecs.STRING_UTF8.encode(buf, payload.action);
@@ -38,11 +40,13 @@ public record FmsActionPayload(BlockPos position, int column, int row, String ac
     }
 
     private static FmsActionPayload decode(ByteBuf buf) {
-        return new FmsActionPayload(FmsNetworkWire.readPosition(buf), ByteBufCodecs.VAR_INT.decode(buf),
+        var position = FmsNetworkWire.readPosition(buf);
+        var token = new java.util.UUID(buf.readLong(), buf.readLong());
+        return new FmsActionPayload(position, ByteBufCodecs.VAR_INT.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf),
                 ByteBufCodecs.STRING_UTF8.decode(buf), ByteBufCodecs.STRING_UTF8.decode(buf),
                 buf.readDouble(), buf.readDouble(), buf.readDouble(), ByteBufCodecs.VAR_INT.decode(buf),
-                buf.readBoolean());
+                buf.readBoolean(), token);
     }
 
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }

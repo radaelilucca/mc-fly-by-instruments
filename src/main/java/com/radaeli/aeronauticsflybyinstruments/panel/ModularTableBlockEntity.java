@@ -12,6 +12,7 @@ import com.radaeli.aeronauticsflybyinstruments.fms.FmsSignalSnapshot;
 import com.radaeli.aeronauticsflybyinstruments.fms.FmsWaypoint;
 import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsDataChannel;
 import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsSignalProvider;
+import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsNetworkManager;
 import com.radaeli.aeronauticsflybyinstruments.item.FmsModuleItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.server.level.ServerLevel;
@@ -26,14 +27,34 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import com.radaeli.aeronauticsflybyinstruments.avionics.NetworkStatus;
+import com.radaeli.aeronauticsflybyinstruments.avionics.ReadingStatus;
+import com.radaeli.aeronauticsflybyinstruments.sound.PanelAudio;
 
 public final class ModularTableBlockEntity extends BlockEntity implements AvionicsEndpoint, AvionicsSignalProvider {
     private PanelGrid grid = new PanelGrid();
+    private final UUID interactionToken = UUID.randomUUID();
+    private final Map<Integer, UUID> installationTokens = new HashMap<>();
+
+    public UUID interactionToken() { return interactionToken; }
+    public UUID moduleToken(int column, int row) {
+        return grid.at(column, row).map(m -> installationTokens.computeIfAbsent(
+                cellKey(m.column(), m.row()), ignored -> UUID.randomUUID())).orElse(null);
+    }
     private final Map<String, Double> testSignals = new HashMap<>();
     private final Map<Integer, Integer> lampTestIntensities = new HashMap<>();
     private final Map<Integer, FmsModuleData> fmsModules = new HashMap<>();
     private final Map<java.util.UUID, FmsSignalSnapshot> fmsSignals = new HashMap<>();
     private long lastFmsSignalUpdate = Long.MIN_VALUE;
+    private long lastAlertUpdate = Long.MIN_VALUE;
+    private Map<String, Integer> gpwsSeverities = Map.of();
+    private NetworkStatus alertNetworkStatus = NetworkStatus.DISCONNECTED;
+    private boolean gpwsAvailable;
+    private boolean muted;
+    private long testPanelUntil;
+    private final Map<Integer, Long> nextBuzzerAt = new HashMap<>();
+    private Map<String, Integer> activeSoundAlerts = Map.of();
     private final TablePeripheral peripheral = new TablePeripheral(this);
 
     public ModularTableBlockEntity(BlockPos pos, BlockState state) {
@@ -54,18 +75,127 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
 
     public boolean setTestSignal(String channel, double value) {
         if (channel == null || channel.isBlank() || channel.length() > 64 || !Double.isFinite(value)) return false;
+        Map<Integer, Integer> previousOutputs = outputLevels();
         testSignals.put(channel, value);
         setChanged();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             peripheral.testSignalChanged(channel, value);
+            if (!previousOutputs.equals(outputLevels())) peripheral.alertOutputsChanged();
         }
         return true;
     }
 
     public double testSignal(String channel) { return testSignals.getOrDefault(channel, 0.0); }
     public boolean isModuleActive(PanelGrid.Module module) {
-        return isLampModule(module) && testSignal(module.channel()) >= module.threshold();
+        if (!isLampModule(module) && !module.type().equals("buzzer")) return false;
+        if (testPanelUntil > (level == null ? 0 : level.getGameTime())) return true;
+        if (module.outputSource().equals("test")) return testSignal(module.channel()) >= module.threshold();
+        return com.radaeli.aeronauticsflybyinstruments.panel.PanelAlertLogic.active(
+                gpwsSeverities.getOrDefault(module.alertChannel(), 0), module.minimumSeverity());
+    }
+
+    public int moduleSeverity(PanelGrid.Module module) {
+        if (!isModuleActive(module)) return 0;
+        if (testPanelUntil > (level == null ? 0 : level.getGameTime())) return 3;
+        if (module.outputSource().equals("test")) return 3;
+        return gpwsSeverities.getOrDefault(module.alertChannel(), 0);
+    }
+
+    public NetworkStatus alertNetworkStatus() { return alertNetworkStatus; }
+    public String alertStatusId() {
+        return alertNetworkStatus == NetworkStatus.CONNECTED && !gpwsAvailable
+                ? "no_gpws" : alertNetworkStatus.name().toLowerCase(java.util.Locale.ROOT);
+    }
+    public boolean gpwsAvailable() { return gpwsAvailable; }
+    public boolean muted() { return muted; }
+
+    public boolean configureAlertModule(int column, int row, String source, String channel, int severity) {
+        return configureAlertModule(column, row, source, channel, severity, channel, 0.5);
+    }
+
+    public boolean configureAlertModule(int column, int row, String source, String channel, int severity,
+                                        String localChannel, double localThreshold) {
+        var target = grid.at(column, row);
+        if (target.isEmpty() || !(isLampModule(target.get()) || target.get().type().equals("buzzer"))) return false;
+        PanelGrid.Module previous = target.orElseThrow();
+        if (!grid.configureAlertAt(column, row, source, channel, severity, localChannel, localThreshold)) return false;
+        if (previous.equals(grid.at(column, row).orElseThrow())) return true;
+        changed("configured", grid.at(column, row).orElseThrow());
+        return true;
+    }
+
+    public boolean setBuzzerVolume(int column, int row, int volume) {
+        var previous = grid.at(column, row);
+        if (!grid.setBuzzerVolumeAt(column, row, volume)) return false;
+        if (previous.equals(grid.at(column, row))) return true;
+        changed("volume_changed", grid.at(column, row).orElseThrow());
+        return true;
+    }
+
+    /** Apply one validated UI draft and publish only one configuration event. */
+    public boolean saveAlertDraft(int column, int row, String source, String channel, int severity,
+                                  String localChannel, double localThreshold, int volume) {
+        var previous = grid.at(column, row).orElse(null);
+        if (previous == null || !(isLampModule(previous) || previous.type().equals("buzzer"))
+                || volume < 0 || volume > 100) return false;
+        if (!grid.configureAlertAt(column, row, source, channel, severity, localChannel, localThreshold)) return false;
+        if (previous.type().equals("buzzer")) grid.setBuzzerVolumeAt(column, row, volume);
+        var current = grid.at(column, row).orElseThrow();
+        if (!previous.equals(current)) changed("configured", current);
+        return true;
+    }
+
+    /** Drain before dropping, making repeated teardown callbacks harmless. */
+    public java.util.List<ItemStack> drainModuleStacks() {
+        var stacks = moduleStacks();
+        grid = new PanelGrid();
+        installationTokens.clear();
+        fmsModules.clear();
+        fmsSignals.clear();
+        lampTestIntensities.clear();
+        return stacks;
+    }
+
+    public void setMuted(boolean value) {
+        if (muted == value) return;
+        muted = value;
+        if (level != null && !level.isClientSide) {
+            syncClient();
+            peripheral.panelStateChanged("mute", muted);
+        }
+    }
+
+    public void testPanel() {
+        if (level == null || level.isClientSide) return;
+        testPanelUntil = level.getGameTime() + 60;
+        syncClient();
+        peripheral.panelStateChanged("test", true);
+        peripheral.alertOutputsChanged();
+    }
+
+    /** Plays one immediate test beep from a specific buzzer without activating the whole panel. */
+    public boolean testBuzzer(int column, int row) {
+        return grid.at(column, row).filter(m -> m.type().equals("buzzer"))
+                .map(m -> testBuzzer(column, row, m.buzzerVolume())).orElse(false);
+    }
+
+    public boolean testBuzzer(int column, int row, int draftVolume) {
+        if (!(level instanceof ServerLevel serverLevel)) return false;
+        var module = grid.at(column, row).filter(value -> value.type().equals("buzzer"));
+        if (module.isEmpty() || draftVolume <= 0 || draftVolume > 100) return false;
+        PanelAudio.play(serverLevel, this, module.get(), 3, draftVolume);
+        return true;
+    }
+
+    public int applyBasicSetup() {
+        int configured = 0;
+        for (PanelGrid.Module module : grid.modules()) {
+            if (!isLampModule(module) && !module.type().equals("buzzer")) continue;
+            if (configureAlertModule(module.column(), module.row(), "gpws", "gpws.any", 2)) configured++;
+            if (module.type().equals("buzzer")) setBuzzerVolume(module.column(), module.row(), 100);
+        }
+        return configured;
     }
 
     public static boolean isLampModule(PanelGrid.Module module) {
@@ -73,6 +203,7 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     }
 
     public int lampRenderIntensity(PanelGrid.Module module) {
+        if (testPanelUntil > (level == null ? 0 : level.getGameTime())) return 15;
         int key = cellKey(module.column(), module.row());
         return lampTestIntensities.getOrDefault(key, isModuleActive(module) ? 15 : 0);
     }
@@ -106,11 +237,16 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     }
 
     public boolean placeLamp(int column, int row) {
-        return placeModule(new PanelGrid.Module("lamp", column, row, 1, 1));
+        return placeModule(defaultAlertModule("lamp", column, row, 1, 1));
     }
 
     public boolean placeBuzzer(int column, int row) {
-        return placeModule(new PanelGrid.Module("buzzer", column, row, 1, 1));
+        return placeModule(defaultAlertModule("buzzer", column, row, 1, 1));
+    }
+
+    private static PanelGrid.Module defaultAlertModule(String type, int column, int row, int width, int height) {
+        return new PanelGrid.Module(type, column, row, width, height,
+                "test", 0.5, "gpws", "gpws.any", 2, 100);
     }
 
     public boolean placeFmsModule(int column, int row, FmsModuleData data) {
@@ -128,8 +264,8 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
 
     public boolean placeLamp2x1(int column, int row, boolean vertical) {
         var module = vertical
-                ? new PanelGrid.Module("lamp_2x1", column, row, 1, 2)
-                : new PanelGrid.Module("lamp_2x1", column, row, 2, 1);
+                ? defaultAlertModule("lamp_2x1", column, row, 1, 2)
+                : defaultAlertModule("lamp_2x1", column, row, 2, 1);
         return placeModule(module);
     }
 
@@ -258,12 +394,86 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     }
 
     public static void serverTick(ServerLevel level, BlockPos pos, BlockState state, ModularTableBlockEntity table) {
-        if (!table.grid.modules().stream().anyMatch(module -> module.type().equals("fms"))) return;
         int interval = ModConfig.SENSOR_SCAN_INTERVAL_TICKS.get();
         long now = level.getGameTime();
-        if (table.lastFmsSignalUpdate != Long.MIN_VALUE && now - table.lastFmsSignalUpdate < interval) return;
-        table.lastFmsSignalUpdate = now;
-        table.sampleFmsSignals(true);
+        if (table.lastFmsSignalUpdate == Long.MIN_VALUE || now - table.lastFmsSignalUpdate >= interval) {
+            table.lastFmsSignalUpdate = now;
+            if (table.grid.modules().stream().anyMatch(module -> module.type().equals("fms"))) table.sampleFmsSignals(true);
+        }
+        if (table.lastAlertUpdate == Long.MIN_VALUE || now - table.lastAlertUpdate >= interval) {
+            table.lastAlertUpdate = now;
+            table.sampleGpwsAlerts(level);
+        }
+        table.tickBuzzers(level, now);
+    }
+
+    private void sampleGpwsAlerts(ServerLevel serverLevel) {
+        if (grid.modules().stream().noneMatch(module -> module.outputSource().equals("gpws"))) return;
+        var topology = AvionicsNetworkManager.snapshot(serverLevel, worldPosition);
+        Map<String, Integer> updated = new HashMap<>();
+        boolean foundGpws = false;
+        if (topology.status() == NetworkStatus.CONNECTED) {
+            for (AvionicsNetworkManager.ConnectedSignal signal :
+                    AvionicsNetworkManager.connectedSignals(serverLevel, worldPosition)) {
+                String channel = signal.channel().name();
+                if (!channel.startsWith("gpws.")) continue;
+                foundGpws = true;
+                var reading = signal.channel().reading();
+                if (reading.status() != ReadingStatus.VALID || reading.value().isEmpty()) continue;
+                int severity = reading.value().filter(Integer.class::isInstance).map(Integer.class::cast).orElse(0);
+                updated.merge(channel, severity, Math::max);
+            }
+        }
+        boolean changed = !updated.equals(gpwsSeverities) || alertNetworkStatus != topology.status()
+                || gpwsAvailable != foundGpws;
+        gpwsSeverities = Map.copyOf(updated);
+        alertNetworkStatus = topology.status();
+        gpwsAvailable = foundGpws;
+        Map<String, Integer> nowActive = new HashMap<>();
+        for (PanelGrid.Module module : grid.modules()) {
+            if (module.outputSource().equals("gpws") && module.type().equals("buzzer")
+                    && isModuleActive(module)) {
+                String moduleKey = module.column() + "," + module.row() + "|";
+                if (module.alertChannel().equals("gpws.any")) {
+                    gpwsSeverities.forEach((channel, severity) -> {
+                        if (!channel.equals("gpws.any") && severity >= module.minimumSeverity())
+                            nowActive.put(moduleKey + channel, severity);
+                    });
+                } else {
+                    nowActive.put(moduleKey + module.alertChannel(), moduleSeverity(module));
+                }
+            }
+        }
+        boolean newOrEscalated = PanelAlertLogic.hasNewOrEscalated(nowActive, activeSoundAlerts);
+        if (muted && (nowActive.isEmpty() || newOrEscalated)) {
+            setMuted(false);
+        }
+        activeSoundAlerts = Map.copyOf(nowActive);
+        if (changed) {
+            syncClient();
+            peripheral.alertOutputsChanged();
+        }
+    }
+
+    private void tickBuzzers(ServerLevel serverLevel, long now) {
+        if (now >= testPanelUntil && testPanelUntil != 0) {
+            testPanelUntil = 0;
+            syncClient();
+            peripheral.panelStateChanged("test", false);
+            peripheral.alertOutputsChanged();
+        }
+        for (PanelGrid.Module module : grid.modules()) {
+            if (!module.type().equals("buzzer") || module.buzzerVolume() <= 0) continue;
+            boolean testing = testPanelUntil > now;
+            int severity = testing ? 3 : moduleSeverity(module);
+            if (severity == 0 || (!testing && muted)) continue;
+            int interval = PanelAlertLogic.buzzerInterval(severity);
+            int key = cellKey(module.column(), module.row());
+            long next = nextBuzzerAt.getOrDefault(key, Long.MIN_VALUE);
+            if (now < next) continue;
+            nextBuzzerAt.put(key, now + interval);
+            PanelAudio.play(serverLevel, this, module, severity, module.buzzerVolume());
+        }
     }
 
     private void sampleFmsSignals(boolean publish) {
@@ -321,6 +531,7 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     private boolean removeModuleInternal(int column, int row) {
         var removed = grid.removeAt(column, row);
         removed.ifPresent(module -> {
+            installationTokens.remove(cellKey(module.column(), module.row()));
             for (int rowOffset = 0; rowOffset < module.height(); rowOffset++) {
                 for (int columnOffset = 0; columnOffset < module.width(); columnOffset++) {
                     lampTestIntensities.remove(cellKey(module.column() + columnOffset, module.row() + rowOffset));
@@ -340,7 +551,17 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
             peripheral.moduleChanged(action, module);
+            if (isLampModule(module) || module.type().equals("buzzer")) peripheral.alertOutputsChanged();
         }
+    }
+
+    private Map<Integer, Integer> outputLevels() {
+        Map<Integer, Integer> outputs = new HashMap<>();
+        for (PanelGrid.Module module : grid.modules()) {
+            if (isLampModule(module) || module.type().equals("buzzer"))
+                outputs.put(cellKey(module.column(), module.row()), moduleSeverity(module));
+        }
+        return outputs;
     }
 
     @Override
@@ -356,6 +577,10 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             entry.putInt("Height", module.height());
             entry.putString("Channel", module.channel());
             entry.putDouble("Threshold", module.threshold());
+            entry.putString("OutputSource", module.outputSource());
+            entry.putString("AlertChannel", module.alertChannel());
+            entry.putInt("MinimumSeverity", module.minimumSeverity());
+            entry.putInt("BuzzerVolume", module.buzzerVolume());
             if (module.type().equals("fms")) {
                 var data = fmsModules.get(cellKey(module.column(), module.row()));
                 if (data != null) entry.put("FmsData", data.save());
@@ -372,6 +597,7 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         grid = new PanelGrid();
+        installationTokens.clear();
         fmsModules.clear();
         fmsSignals.clear();
         var list = tag.getList("Modules", Tag.TAG_COMPOUND);
@@ -389,11 +615,22 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             if (validLamp || validLamp2x1 || validBuzzer || validFms) {
                 String channel = entry.contains("Channel", Tag.TAG_STRING) ? entry.getString("Channel") : "test";
                 double threshold = entry.contains("Threshold", Tag.TAG_DOUBLE) ? entry.getDouble("Threshold") : 0.5;
-                if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(threshold)) {
+                String outputSource = entry.contains("OutputSource", Tag.TAG_STRING)
+                        ? entry.getString("OutputSource") : "test";
+                String alertChannel = entry.contains("AlertChannel", Tag.TAG_STRING)
+                        ? entry.getString("AlertChannel") : "gpws.any";
+                int minimumSeverity = entry.contains("MinimumSeverity", Tag.TAG_INT)
+                        ? entry.getInt("MinimumSeverity") : 2;
+                int buzzerVolume = entry.contains("BuzzerVolume", Tag.TAG_INT)
+                        ? entry.getInt("BuzzerVolume") : 100;
+                if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(threshold)
+                        && (outputSource.equals("test") || outputSource.equals("gpws"))
+                        && !alertChannel.isBlank() && alertChannel.length() <= 64
+                        && minimumSeverity >= 1 && minimumSeverity <= 3 && buzzerVolume >= 0 && buzzerVolume <= 100) {
                     int column = entry.getInt("Column");
                     int row = entry.getInt("Row");
                     if (grid.place(new PanelGrid.Module(type, column, row, width, height,
-                            channel, threshold)) && validFms) {
+                            channel, threshold, outputSource, alertChannel, minimumSeverity, buzzerVolume)) && validFms) {
                         fmsModules.put(cellKey(column, row), entry.contains("FmsData", Tag.TAG_COMPOUND)
                                 ? FmsModuleData.load(entry.getCompound("FmsData")) : new FmsModuleData());
                     }
@@ -407,7 +644,8 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             grid.removeAt(module.column(), module.row());
             int height = grid.canFit(module.column(), module.row(), 2, 3) ? 3 : 2;
             grid.place(new PanelGrid.Module(module.type(), module.column(), module.row(), 2, height,
-                    module.channel(), module.threshold()));
+                    module.channel(), module.threshold(), module.outputSource(), module.alertChannel(),
+                    module.minimumSeverity(), module.buzzerVolume()));
         }
         testSignals.clear();
         if (tag.contains("TestSignals", Tag.TAG_COMPOUND)) {
@@ -432,6 +670,9 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
                 }
             }
         }
+        if (level != null && level.isClientSide && tag.contains("PanelTestRemaining", Tag.TAG_LONG)) {
+            testPanelUntil = level.getGameTime() + Math.max(0, tag.getLong("PanelTestRemaining"));
+        }
     }
 
     @Override
@@ -446,6 +687,8 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
             overrides.add(entry);
         });
         tag.put("LampTestIntensities", overrides);
+        tag.putLong("PanelTestRemaining", level == null ? 0
+                : Math.max(0, testPanelUntil - level.getGameTime()));
         return tag;
     }
 

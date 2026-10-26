@@ -1,0 +1,11 @@
+{
+  "buzzer": {
+    "subtitle": "sound.aeronautics_fly_by_instruments.buzzer",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bit",
+        "type": "event"
+      }
+    ]
+  }
+}

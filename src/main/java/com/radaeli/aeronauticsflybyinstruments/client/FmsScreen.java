@@ -239,7 +239,7 @@ public final class FmsScreen extends UiScreen {
 
     boolean matches(FmsScreenPayload payload) {
         return state.position.equals(payload.position()) && state.column == payload.column()
-                && state.row == payload.row();
+                && state.row == payload.row() && state.interactionToken.equals(payload.interactionToken());
     }
 
     void acceptServerState(FmsScreenPayload payload) {
@@ -395,6 +395,7 @@ public final class FmsScreen extends UiScreen {
 
     private static final class State {
         private final net.minecraft.core.BlockPos position;
+        private java.util.UUID interactionToken;
         private final int column;
         private final int row;
         private FmsModuleData data;
@@ -433,6 +434,7 @@ public final class FmsScreen extends UiScreen {
 
         private State(FmsScreenPayload payload) {
             position = payload.position();
+            interactionToken = payload.interactionToken();
             column = payload.column();
             row = payload.row();
             data = payload.data().copy();
@@ -625,7 +627,7 @@ public final class FmsScreen extends UiScreen {
         private void send(String action, String waypointId, String name, double x, double y, double z,
                           int displaySlot, boolean confirmRebind) {
             PacketDistributor.sendToServer(new FmsActionPayload(position, column, row, action, waypointId,
-                    name, x, y, z, displaySlot, confirmRebind));
+                    name, x, y, z, displaySlot, confirmRebind, interactionToken));
         }
 
         private void message(String key) {

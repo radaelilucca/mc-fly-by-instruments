@@ -11,6 +11,8 @@ import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
 import net.minecraft.world.item.ItemStack;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModularTableBaseBlockTest {
     private static ModularTableBaseBlock block;
@@ -30,6 +32,15 @@ class ModularTableBaseBlockTest {
                 ModularTableBaseBlock.itemStack(new PanelGrid.Module("lamp_2x1", 0, 0, 2, 1)).getItem());
         assertEquals(ItemStack.EMPTY,
                 ModularTableBaseBlock.itemStack(new PanelGrid.Module("unknown", 0, 0, 1, 1)));
+    }
+
+    @Test
+    void moduleStacksAreRecognizedForSuppressingTheGuiFallback() {
+        assertTrue(ModularTableBaseBlock.isPanelModule(new ItemStack(ModBlocks.LAMP_MODULE.get())));
+        assertTrue(ModularTableBaseBlock.isPanelModule(new ItemStack(ModBlocks.LAMP_MODULE_2X1.get())));
+        assertTrue(ModularTableBaseBlock.isPanelModule(new ItemStack(ModBlocks.BUZZER_MODULE.get())));
+        assertTrue(ModularTableBaseBlock.isPanelModule(new ItemStack(ModBlocks.FMS_MODULE.get())));
+        assertFalse(ModularTableBaseBlock.isPanelModule(ItemStack.EMPTY));
     }
 
     @Test

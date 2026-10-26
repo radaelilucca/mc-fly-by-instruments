@@ -1,12 +1,9 @@
 package com.radaeli.aeronauticsflybyinstruments.item;
 
-import com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
-import com.radaeli.aeronauticsflybyinstruments.panel.PanelCoordinates;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.phys.Vec3;
 
 public final class LampModuleItem extends Item {
     public LampModuleItem(Properties properties) { super(properties); }
@@ -17,25 +14,32 @@ public final class LampModuleItem extends Item {
     }
 
     static InteractionResult place(UseOnContext context, String type, int width, int height) {
+        if (!com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.validPlacement(context, type))
+            return InteractionResult.FAIL;
         var level = context.getLevel();
         var pos = context.getClickedPos();
-        var state = level.getBlockState(pos);
         if (!(level.getBlockEntity(pos) instanceof ModularTableBlockEntity table)) return InteractionResult.PASS;
-        var facing = state.getValue(ModularTableBaseBlock.FACING);
-        if (context.getClickedFace() != facing) return InteractionResult.FAIL;
-        var point = PanelCoordinates.toPanel(facing, context.getClickLocation().subtract(Vec3.atLowerCornerOf(pos)));
-        int column = PanelCoordinates.cell(point.x);
-        int row = PanelCoordinates.cell(point.z);
+        var target = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.target(table,
+                context.getClickedFace(), context.getClickLocation());
+        if (!target.exposed()) return InteractionResult.FAIL;
+        var held = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.heldModule(context.getPlayer()).orElse(null);
+        if (held == null || !held.type().equals(type) || held.width() != width || held.height() != height)
+            return InteractionResult.FAIL;
+        int column = target.column();
+        int row = target.row();
         if (!table.grid().canFit(column, row, width, height)) return InteractionResult.FAIL;
         if (!level.isClientSide) {
             boolean placed = switch (type) {
                 case "lamp" -> table.placeLamp(column, row);
                 case "lamp_2x1" -> table.placeLamp2x1(column, row, height > width);
                 case "buzzer" -> table.placeBuzzer(column, row);
+                case "fms" -> table.placeFmsModule(column, row, FmsModuleItem.load(context.getItemInHand()));
                 default -> false;
             };
             if (!placed) return InteractionResult.FAIL;
             context.getItemInHand().consume(1, context.getPlayer());
+            context.getPlayer().getInventory().setChanged();
+            context.getPlayer().containerMenu.broadcastChanges();
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

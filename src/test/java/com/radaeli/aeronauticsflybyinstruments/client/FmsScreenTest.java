@@ -58,7 +58,7 @@ class FmsScreenTest {
         var data = new FmsModuleData();
         data.add(new FmsWaypoint(UUID.randomUUID(), "Landing", "minecraft:overworld", 3.25, 82, -9.5));
         var screen = new FmsScreen(new FmsScreenPayload(BlockPos.ZERO, 0, 0, data,
-                "minecraft:overworld", 0, 64, 0, -1, ""));
+                "minecraft:overworld", 0, 64, 0, -1, "", UUID.randomUUID()));
         var root = screen.root();
         var measured = root.measure(font, UiTheme.DARK, 168, 240);
         root.layout(font, UiTheme.DARK, new Bounds(30, 8, measured.width(), measured.height()));
@@ -96,7 +96,7 @@ class FmsScreenTest {
     @Test
     void noTargetDoesNotReserveBlankCoordinateAndDistanceRows() {
         var screen = new FmsScreen(new FmsScreenPayload(BlockPos.ZERO, 0, 0, new FmsModuleData(),
-                "minecraft:overworld", 0, 64, 0, -1, ""));
+                "minecraft:overworld", 0, 64, 0, -1, "", UUID.randomUUID()));
         var root = screen.root();
         root.layout(font, UiTheme.DARK, new Bounds(30, 8, 168, 180));
 
@@ -119,7 +119,7 @@ class FmsScreenTest {
         data.add(target);
         data.select(target.id());
         var screen = new FmsScreen(new FmsScreenPayload(BlockPos.ZERO, 0, 0, data,
-                "minecraft:overworld", -2, 60, -9, -1, ""));
+                "minecraft:overworld", -2, 60, -9, -1, "", UUID.randomUUID()));
         var root = screen.root();
         root.layout(font, UiTheme.DARK, new Bounds(30, 8, 168, 240));
         components(root, Tabs.class).getFirst().select(1);

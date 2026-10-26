@@ -29,7 +29,7 @@ class FmsNetworkWireTest {
     @Test
     void actionPayloadCodecRoundTripsCoordinatesAndConfirmation() {
         var payload = new FmsActionPayload(new net.minecraft.core.BlockPos(-10, 64, 24), 2, 1,
-                "update", UUID.randomUUID().toString(), "Mountain", -14.5, 88, 120.25, 34, true);
+                "update", UUID.randomUUID().toString(), "Mountain", -14.5, 88, 120.25, 34, true, UUID.randomUUID());
         var buffer = Unpooled.buffer();
 
         FmsActionPayload.STREAM_CODEC.encode(buffer, payload);
@@ -46,5 +46,6 @@ class FmsNetworkWireTest {
         assertEquals(payload.z(), decoded.z());
         assertEquals(payload.navigatorDisplaySlot(), decoded.navigatorDisplaySlot());
         assertTrue(decoded.confirmRebind());
+        assertEquals(payload.interactionToken(), decoded.interactionToken());
     }
 }

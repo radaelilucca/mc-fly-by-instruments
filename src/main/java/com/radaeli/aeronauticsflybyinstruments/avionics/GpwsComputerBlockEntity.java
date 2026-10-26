@@ -32,7 +32,7 @@ import java.util.OptionalDouble;
 import java.util.HashMap;
 
 /** GPWS endpoint: fuses cached network snapshots and evaluates them without running new scans. */
-public final class GpwsComputerBlockEntity extends BlockEntity implements AvionicsEndpoint {
+public final class GpwsComputerBlockEntity extends BlockEntity implements AvionicsEndpoint, AvionicsSignalProvider {
     private static final Logger LOGGER = LogUtils.getLogger();
     private GpwsConfiguration configuration = new GpwsConfiguration();
     private GpwsMode mode = GpwsMode.STANDBY;
@@ -52,6 +52,27 @@ public final class GpwsComputerBlockEntity extends BlockEntity implements Avioni
     public GpwsMode mode() { return mode; }
     public GpwsEngine.Evaluation evaluation() { return latestEvaluation; }
     public GpwsSample latestSample() { return latestSample; }
+
+    @Override
+    public List<AvionicsDataChannel<?>> avionicsSignals() {
+        List<AvionicsDataChannel<?>> result = new ArrayList<>();
+        int maximum = 0;
+        boolean anyUsable = false;
+        for (AlertChannel channel : AlertChannel.values()) {
+            AlertReading reading = latestEvaluation.alerts().get(channel);
+            int rank = com.radaeli.aeronauticsflybyinstruments.panel.PanelAlertLogic.severity(reading);
+            maximum = Math.max(maximum, rank);
+            anyUsable |= reading != null && reading.state() != AlertState.UNAVAILABLE;
+            var value = reading == null || reading.state() == AlertState.UNAVAILABLE
+                    ? SensorReading.<Integer>unavailable("severity", latestSample.gameTime())
+                    : SensorReading.valid(rank, "severity", reading.gameTime());
+            result.add(new AvionicsDataChannel<>("gpws." + channel.id(), value));
+        }
+        result.add(new AvionicsDataChannel<>("gpws.any", anyUsable
+                ? SensorReading.valid(maximum, "severity", latestSample.gameTime())
+                : SensorReading.unavailable("severity", latestSample.gameTime())));
+        return List.copyOf(result);
+    }
 
     public Map<String, Object> statusSnapshot() {
         Map<String, Object> result = new HashMap<>();

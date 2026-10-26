@@ -23,6 +23,7 @@ import com.radaeli.aeronauticsflybyinstruments.network.TerrainScannerNetwork;
 import com.radaeli.aeronauticsflybyinstruments.network.GpwsNetwork;
 import com.radaeli.aeronauticsflybyinstruments.network.SensorOutputNetwork;
 import com.radaeli.aeronauticsflybyinstruments.network.FmsNetwork;
+import com.radaeli.aeronauticsflybyinstruments.sound.ModSounds;
 import com.radaeli.aeronauticsflybyinstruments.fms.FmsRegistries;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -34,6 +35,7 @@ public final class AeronauticsFlyByInstruments {
 
     public AeronauticsFlyByInstruments(IEventBus modEventBus, ModContainer modContainer) {
         FmsRegistries.register(modEventBus);
+        ModSounds.SOUNDS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlocks.ITEMS.register(modEventBus);
         ModBlocks.BLOCK_ENTITIES.register(modEventBus);
@@ -46,6 +48,7 @@ public final class AeronauticsFlyByInstruments {
         modEventBus.addListener(FmsNetwork::registerPayloads);
         modEventBus.addListener(this::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(PanelNetwork::onPlayerLoggedIn);
+        NeoForge.EVENT_BUS.addListener(com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction::onRightClick);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             PanelClient.register(modEventBus);
             AvionicsCableModels.register(modEventBus);

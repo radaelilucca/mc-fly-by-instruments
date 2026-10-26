@@ -47,6 +47,30 @@ class ModularTableBlockEntityTest {
     }
 
     @Test
+    void newModulesUseGpwsDefaultsAndLegacyModuleDataKeepsLocalTestMode() {
+        var table = table();
+        assertTrue(table.placeLamp(0, 0));
+        assertTrue(table.placeBuzzer(1, 0));
+        var newLamp = table.grid().at(0, 0).orElseThrow();
+        var newBuzzer = table.grid().at(1, 0).orElseThrow();
+        assertEquals("gpws", newLamp.outputSource());
+        assertEquals("gpws.any", newLamp.alertChannel());
+        assertEquals(2, newLamp.minimumSeverity());
+        assertEquals(100, newBuzzer.buzzerVolume());
+
+        CompoundTag legacy = table.saveWithoutMetadata(REGISTRIES);
+        var modules = legacy.getList("Modules", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for (int i = 0; i < modules.size(); i++) {
+            var entry = modules.getCompound(i);
+            entry.remove("OutputSource"); entry.remove("AlertChannel");
+            entry.remove("MinimumSeverity"); entry.remove("BuzzerVolume");
+        }
+        var restored = table();
+        restored.loadCustomOnly(legacy, REGISTRIES);
+        assertTrue(restored.grid().modules().stream().allMatch(module -> module.outputSource().equals("test")));
+    }
+
+    @Test
     void persistedBuzzerWithInvalidFootprintIsIgnored() {
         var original = table();
         original.placeBuzzer(1, 1);
