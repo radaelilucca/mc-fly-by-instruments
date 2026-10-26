@@ -1,25 +1,61 @@
-# Mesa modular — grid e primeiro módulo
+# Mesa modular — montagem e interações
 
 A base mantém espessura de 3/16 de bloco e textura placeholder de ferro.
 Sua face exposta é dividida em 3 colunas × 3 linhas: cada célula tem
 16/3 pixels de largura e profundidade. Ela pode ser montada em qualquer face
 sólida, inclusive no teto do cockpit. As lâmpadas 1×1 e 2×1 têm modelos próprios
 com carcaça opaca, vidro vermelho translúcido e emissão visual por módulo. Veja
-[emissão e teste dos módulos](lamp-emission.md). Na Fase 1, ambas servem como
-atuadores de teste: acendem quando o sinal simulado do canal associado alcança
-o threshold do módulo.
+[emissão e teste dos módulos](lamp-emission.md). Módulos novos são associados
+ao `gpws.any`, com severidade mínima Caution. Ao clicar com a mão vazia em uma
+lâmpada ou buzzer, abre a configuração individual; ao clicar numa célula vazia,
+abre o painel geral. O setup básico aplica esse canal e severidade a todos os
+annunciators.
 
 O módulo de buzzer `buzzer` ocupa uma célula 1×1 e tem modelo cilíndrico preto,
 ligeiramente menor que a lâmpada: lateral com acabamento preto piano e topo
-poroso com pequeno furo central. Nesta entrega ele pode ser instalado, removido
-e salvo com a mesa; ainda não tem som nem configuração de sinais. Sua fonte
+poroso com pequeno furo central. O som acompanha a posição do módulo no mundo,
+inclusive quando montado em avião/sublevel. Volume individual de 0 a 100%
+controla também o alcance: até 16 blocos a 100%, reduzindo proporcionalmente.
+Sua fonte
 editável está em [Blockbench: buzzer 1×1](../blockbench/buzzer-module-1x1/README.md).
 
 ## Montagem
 
+Todas as operações físicas, o preview e a rotação usam **somente a mão principal**.
+A secundária não instala nem remove módulos, mesmo quando a principal está vazia.
+
+| Mão principal / ação | Alvo | Resultado |
+| --- | --- | --- |
+| Vazia, clique direito | Célula vazia na face exposta | Painel geral |
+| Vazia, clique direito | Lâmpada ou buzzer | Configuração individual |
+| Vazia, clique direito | Qualquer célula coberta pelo FMS | Interface do mesmo FMS |
+| Vazia, Shift + clique direito | Face exposta ou módulo | Painel geral, inclusive com grid cheio |
+| Módulo, clique direito, com ou sem Shift | Footprint livre na face exposta | Instalar uma unidade |
+| Módulo, clique direito | Sobreposição ou fora do grid | Rejeitar sem consumir nem abrir tela |
+| Wrench, clique direito | Módulo instalado | Remover o módulo inteiro |
+| Wrench, clique direito | Célula vazia | Nenhuma ação ou interface |
+| Wrench, Shift + clique direito | Mesa | Recolher pela ação nativa do Create; devolver conteúdo uma vez |
+| Outro item | Mesa | Não abrir interface; preservar uso do item |
+
+O topo e as laterais do volume de seleção do módulo permitem abrir ou remover
+o módulo inteiro. A instalação exige a face exposta. Traseira e bordas da base
+não abrem interfaces. Um item devolvido que não cabe no inventário cai no mundo,
+inclusive no criativo. Quebra, recolhimento e perda do suporte devolvem o conteúdo
+sem duplicar. UUID, waypoints e destino do FMS acompanham seu item.
+
+Nas configurações individuais, **Save** aplica o rascunho; **Cancel** descarta.
+Fechar com ESC aplica o rascunho válido. **Test sound** usa o volume do rascunho
+para um beep imediato, sem salvar esse volume. A lista do painel geral abre a
+configuração correspondente, incluindo o FMS.
+
+As mensagens das telas exigem mesa carregada, mesmo mundo e alcance global de
+oito blocos (posição transformada no Sable). Tokens temporários distinguem a mesa
+e cada instalação: uma tela antiga não modifica um módulo removido/reinstalado
+nem uma mesa substituída. Não há alteração do formato persistido ou da API Lua.
+
 1. Pegue a Base da Mesa Modular e os módulos de lâmpada ou buzzer na aba Aeronautics: Fly by Instruments.
 2. Coloque a base sobre uma face sólida, incluindo a parte inferior de um bloco.
-3. Segure um módulo e mire na face exposta: o grid mostra seu footprint.
+3. Segure um módulo na mão principal e mire na face exposta: o grid mostra seu footprint.
    Verde indica que ele cabe; vermelho indica colisão ou borda.
 4. Com o módulo 2×1, role o scroll enquanto mira na mesa para alternar entre
    orientação horizontal (2 colunas × 1 linha) e vertical (1 coluna × 2 linhas).
@@ -80,7 +116,14 @@ consistente com o grid e a orientação da base.
 | `getModules()` | Lista dos módulos instalados |
 | `getSlot(column, row)` | Estado da célula e, se ocupada, descrição do módulo |
 | `canFit(column, row, width, height)` | Se o footprint cabe e está livre |
-| `configureModule(column, row, channel, threshold)` | Associa qualquer módulo de lâmpada a canal e threshold |
+| `configureModule(column, row, channel, threshold)` | Configura uma lâmpada para sinais de teste locais (compatibilidade Lua) |
+| `getAvailableChannels()` | Lista `gpws.any` e os sete canais do GPWS |
+| `configureAlertModule(column, row, source, channel, minimumSeverity)` | Configura lâmpada ou buzzer; source é `gpws` ou `test`, severidade `advisory`, `caution` ou `warning` |
+| `setBuzzerVolume(column, row, percent)` | Define volume e alcance do buzzer, de 0 a 100 |
+| `applyBasicSetup()` | Associa todas as lâmpadas e buzzers ao alerta geral Caution; retorna quantos módulos configurou |
+| `testPanel()` | Acende lâmpadas e exercita buzzers por 3 segundos |
+| `setMuted(muted)` | Silencia/reativa os buzzers da mesa sem desligar lâmpadas |
+| `getPanelStatus()` | Retorna estado da rede GPWS, mute e contagem de módulos ativos |
 | `setTestSignal(channel, value)` | Define o valor simulado do canal |
 | `getOutputs()` | Lista módulos, sinal recebido e estado ativo |
 | `setLampTestIntensity(column, row, level)` | Sobreposição visual temporária 0–15 para uma lâmpada 1×1 ou 2×1 |
@@ -93,7 +136,7 @@ consistente com o grid e a orientação da base.
 | `getFmsSignals(column, row)` | Lê os canais do módulo indicado |
 | `getNetworkSignals()` | Lê canais tipados de endpoints na rede de cabo conectada |
 
-Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1, channel = "test", threshold = 0.5}`.
+Módulos também incluem `source`, `alertChannel`, `minimumSeverity` e `buzzerVolume` na descrição e em `getOutputs()`. `signal` continua representando o sinal numérico local anterior; `severity` informa a severidade GPWS ativa. Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1, channel = "test", threshold = 0.5, source = "gpws", alertChannel = "gpws.any", minimumSeverity = 2, buzzerVolume = 100}`.
 Uma célula livre retorna `{occupied = false, column = ..., row = ...}`.
 Coordenadas ou dimensões fora de 1–3 geram erro Lua; um footprint válido que
 ultrapasse a borda retorna `false`. `canFit` só consulta: não instala módulos.
@@ -135,10 +178,26 @@ print(textutils.serialize(signals))
 print(textutils.serialize(connected))
 ```
 
-O buzzer também aparece em `getModules()`, `getSlot()` e no evento
-`modular_table_changed`, com `type = "buzzer"`, largura e altura 1. Em
-`getOutputs()`, permanece inativo. Métodos de configuração e intensidade
-de lâmpadas rejeitam esse módulo enquanto seu comportamento não for implementado.
+O `gpws.any` combina os alertas ativos; se mais de um GPWS estiver conectado,
+prevalece a maior severidade por canal. `Advisory`, `Caution` e `Warning`
+correspondem a 1, 2 e 3. Sem leitura utilizável ou sem GPWS conectado, os
+módulos não ativam e a tela informa o estado da rede. Thresholds de voo ficam
+no GPWS; o painel seleciona canal e severidade mínima.
+
+Sinais de teste locais continuam disponíveis para scripts. Chamar
+`configureModule` em uma lâmpada seleciona essa fonte, preservando os scripts
+antigos que usam `setTestSignal`. Para buzzer, `configureAlertModule` seleciona
+`source = "test"`; o canal e o limiar numérico podem ser configurados na tela.
+Defaults novos e Basic setup usam `gpws.any` a partir de Caution.
+
+Cada buzzer toca a partir da posição espacial do módulo. A posição da mesa é
+transformada pela pose lógica do Sable; distância e ouvintes são calculados no
+mundo global, para jogadores a bordo ou fora do avião. O mute cobre os alertas
+atuais; alerta novo ou escalada reativa o som. Teste e mute não são persistidos.
+
+Eventos novos: `modular_table_alert_outputs_changed` para atuação e
+`modular_table_panel_state_changed` para mute/teste. Eventos existentes de
+alterações, sinais de teste e FMS permanecem disponíveis.
 
 Evento `modular_table_changed`: nome do peripheral, ação (`placed`, `removed`
 ou `configured`) e descrição do módulo. Evento `modular_table_signal_changed`:
@@ -160,16 +219,15 @@ while true do
 end
 ```
 
-O sinal de teste das lâmpadas é numérico e local à mesa: a lâmpada fica ativa
-quando `signal >= threshold`. Valores de teste e configuração persistem após
-salvar e reabrir o mundo. Esse sinal de teste não representa canais de sensores
-na Avionics Cable Network nem alertas GPWS. Os canais do FMS são publicados
-separadamente pelos endpoints da mesa. O módulo 2×1 continua apenas estrutural
-nesta fase.
+O sinal de teste é numérico e local à mesa: o módulo fica ativo quando
+`signal >= threshold`. Valores e configuração persistem após salvar e reabrir o
+mundo. Esses sinais não representam leituras da Avionics Cable Network nem
+alertas GPWS. Os canais do FMS continuam publicados separadamente pelos
+endpoints da mesa.
 
 ## Validação
 
-Testes automatizados cobrem ocupação, footprints maiores, bordas, mapeamento
-de cliques nas seis orientações, persistência, sincronização por NBT e contrato
-do peripheral/eventos. Ainda é necessário validar visualmente o highlight,
-a montagem/remoção em jogo, a conexão Lua real e a interação em sublevels voadores.
+Testes automatizados cobrem também roteamento por severidade, defaults, limites
+de volume/alcance e compatibilidade de sinais locais. Ainda falta validar no
+jogo o som espacial em voo/sublevels, instalação/remoção, conexão Lua real e
+interação com múltiplos jogadores.

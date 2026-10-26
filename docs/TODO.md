@@ -29,14 +29,14 @@ continuar funcionando no estado atual enquanto não forem tratados.
 
 ## Funcionalidades e integração
 
-- [ ] **BUZZER-01 — Implementar o comportamento do módulo de buzzer.**
-  Definir e adicionar som, associação com os canais de alerta e opções de
-  configuração. Hoje o módulo pode ser instalado na mesa, mas não emite som nem
-  responde a sinais.
-- [ ] **PAINEL-01 — Conectar os módulos da mesa aos alertas reais do GPWS.**
-  Permitir escolher o canal e configurar o threshold dos módulos compatíveis;
-  incluir uma configuração rápida com defaults úteis para quem prefere montar e
-  voar sem ajustar cada slot. Preservar a configuração manual para entusiastas.
+- **BUZZER-01 — Implementado; validação de voo pendente.** Bipes por severidade,
+  volume individual com alcance proporcional, teste, mute e posição sonora
+  global para aviões/sublevels. Falta comprovar a espacialização no jogo durante
+  movimento.
+- **PAINEL-01 — Integração implementada; validação funcional pendente.**
+  Módulos ligados aos canais GPWS por severidade, agregação de fontes,
+  configuração R-UI e setup básico automático. Falta validar alertas em voo e
+  multiplayer antes de encerrar a fase.
 - [ ] **GPWS-01 — Validar em voo os alertas GPWS dependentes do Terrain Scanner.**
   A integração lógica já existe: contatos conhecidos podem sustentar `TERRAIN`
   e `PULL_UP`, enquanto cobertura parcial sem contato não significa caminho

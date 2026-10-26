@@ -5,6 +5,7 @@
 - [Mesa modular: montagem, grid e API CC:Tweaked](modular-table.md)
 - [Módulos de lâmpada 1×1 e 2×1: emissão visual e teste](lamp-emission.md)
 - [Avionics Cable Network: topologia e API CC:Tweaked](avionics-network.md)
+- [Mesa modular: revisão das interações e evidências de validação](modular-table-interaction-validation.md)
 - [FMS: plano, waypoints, Navigator e canais](fms-plan.md)
 - [Avionics Cable: modelo Blockbench e encaixe adaptativo nos sensores](avionics-cable-visuals.md)
 - [Radar Altimeter: amostragem, leituras e API CC:Tweaked](radar-altimeter.md)

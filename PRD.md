@@ -201,6 +201,18 @@ A Network Bridge será o gateway CC:Tweaked para consultar a topologia completa 
 
 O Annunciator Panel será uma mesa modular inspirada nas mesas do Aeroworks.
 
+O contrato físico vigente está em [Mesa modular](docs/modular-table.md): somente
+a mão principal instala/remove módulos e controla preview/rotação. Clique com
+essa mão vazia abre o módulo atingido ou o painel numa célula vazia; Shift +
+clique com a mão principal vazia abre sempre o painel geral na face exposta ou
+num módulo, mesmo com o grid cheio e a secundária ocupada. Laterais do volume de
+seleção dos módulos permitem abertura/remoção; bordas e traseira da base não.
+Falhas de colocação não consomem itens nem abrem telas. Recolhimento com
+Shift + Wrench e quebra/perda do suporte devolvem os módulos uma única vez,
+preservando dados do FMS. Teste de som não salva o rascunho; Save aplica,
+Cancel descarta e ESC aplica quando válido. Acesso às telas usa distância global
+de oito blocos e mensagens de uma instalação substituída são rejeitadas.
+
 Durante o design e a construção desse painel, o projeto deverá consultar
 `reference/aeroworks-1.5.0.jar` como referência local para a experiência de
 mesa modular, slots predefinidos, seleção de módulos e highlight visual. Esse
@@ -575,6 +587,13 @@ Saída da fase: GPWS funcional sem depender ainda do painel final.
 
 ### Fase 5 — Annunciator Panel: integração com alertas reais
 
+**Estado:** integração, configuração R-UI, peripheral/eventos CC:Tweaked, setup
+básico, teste/mute e volume/alcance espacial dos buzzers implementados. Testes
+automatizados focados passaram; a suíte completa ainda apresenta sete falhas
+conhecidas nos testes de telas/assets dos sensores e contratos periféricos de
+Altimeter/Terrain. Validação do áudio em avião/sublevel e testes funcionais em
+voo/multiplayer continuam pendentes.
+
 Objetivo: conectar a fundação da mesa aos alertas reais e completar os módulos
 de apresentação.
 
@@ -583,11 +602,16 @@ Entregas:
 - módulos de lâmpada;
 - módulos de buzzer;
 - ligação de módulos a canais;
-- thresholds por módulo;
+- severidade mínima por módulo; thresholds de voo permanecem configurados no GPWS;
+- buzzer espacial no referencial global da aeronave/sublevel e dos ouvintes;
+  volume individual de 0–100% controla intensidade e alcance, até 16 blocos;
+- cadência por severidade (Advisory 2 s, Caution 1 s, Warning 0,5 s a 20 TPS);
+- teste geral de 3 s; mute encerra sem alertas ou reativa diante de alerta novo
+  ou escalado;
 - preset ou configuração rápida para o caminho básico (por exemplo, associar
   automaticamente lâmpada/buzzer aos alertas mais úteis sem configurar cada
   slot ou threshold manualmente);
-- estados de teste, acknowledge/mute se aprovados;
+- teste do painel e mute temporário dos buzzers; acknowledge permanece fora do escopo;
 - testes de painel e estados de falha;
 - eventos, métodos e testes CC:Tweaked dos módulos e canais reais.
 
