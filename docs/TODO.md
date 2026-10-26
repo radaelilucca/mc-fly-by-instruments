@@ -28,6 +28,12 @@ continuar funcionando no estado atual enquanto não forem tratados.
   mudar para o perfil Basic não resolveu. Identificar a causa e conferir que
   módulos ligados e desligados continuam distinguíveis individualmente.
 
+## Revisão dos sensores (2026-10-21)
+
+- [ ] **SENSORES-01 — Executar o [plano de ação da revisão](plano-acao-sensores.md).**
+  18 achados em 4 fases; críticos: faces do Advanced (SEN-01) e salvamento em
+  sublevel (SEN-02).
+
 ## Funcionalidades e integração
 
 - **BUZZER-01 — Implementado; validação de voo pendente.** Bipes por severidade,
