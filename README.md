@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/gallery/title.png" alt="Aeronautics: Fly by Instruments"></p>
+<p align="center"><img src="https://media.forgecdn.net/attachments/2106/624/title-png.png" alt="Aeronautics: Fly by Instruments"></p>
 
 <p align="center">An addon for <b>Create Aeronautics</b></p>
 
@@ -21,7 +21,7 @@ and other ships alike.
 This first release is all about **sensors**. Three blocks, each with a different job,
 and each recognizable at a glance.
 
-<p align="center"><img src="blockbench/radar-altimeter/preview-case.png" alt="Radar Altimeter" width="200"></p>
+<p align="center"><img src="https://media.forgecdn.net/attachments/2106/625/preview-bottom-png.png" alt="Radar Altimeter" width="200"></p>
 
 ### Radar Altimeter
 
@@ -34,7 +34,7 @@ lone tree or lamp post.
   drop below your cruise floor, whatever you need.
 - Sees up to **128 blocks** down.
 
-<p align="center"><img src="blockbench/terrain-scanner-basic/preview.png" alt="Terrain Scanner" width="200"></p>
+<p align="center"><img src="https://media.forgecdn.net/attachments/2106/627/preview-png.png" alt="Terrain Scanner" width="200"></p>
 
 ### Terrain Scanner
 
@@ -46,7 +46,7 @@ on everything in front of the ship.
 - The signal comes out of every side, so it's easy to wire.
 - Works mounted on a ceiling too. It still looks forward.
 
-<p align="center"><img src="blockbench/terrain-scanner-advanced/preview.png" alt="Advanced Terrain Scanner" width="200"></p>
+<p align="center"><img src="https://media.forgecdn.net/attachments/2106/626/preview-png.png" alt="Advanced Terrain Scanner" width="200"></p>
 
 ### Advanced Terrain Scanner
 
