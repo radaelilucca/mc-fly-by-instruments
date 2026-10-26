@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "SSS",
+    "TCT",
+    " O "
+  ],
+  "key": {
+    "S": {
+      "item": "create:iron_sheet"
+    },
+    "T": {
+      "item": "create:electron_tube"
+    },
+    "C": {
+      "item": "create:brass_casing"
+    },
+    "O": {
+      "item": "minecraft:observer"
+    }
+  },
+  "result": {
+    "id": "aeronautics_fly_by_instruments:radar_altimeter",
+    "count": 1
+  }
+}

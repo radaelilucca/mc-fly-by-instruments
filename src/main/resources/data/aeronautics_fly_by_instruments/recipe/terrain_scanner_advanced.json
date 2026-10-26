@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    " P ",
+    "TXT"
+  ],
+  "key": {
+    "P": {
+      "item": "create:precision_mechanism"
+    },
+    "T": {
+      "item": "create:electron_tube"
+    },
+    "X": {
+      "item": "aeronautics_fly_by_instruments:terrain_scanner"
+    }
+  },
+  "result": {
+    "id": "aeronautics_fly_by_instruments:terrain_scanner_advanced",
+    "count": 1
+  }
+}
