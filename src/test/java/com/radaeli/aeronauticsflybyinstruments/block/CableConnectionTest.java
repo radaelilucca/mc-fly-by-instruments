@@ -80,10 +80,10 @@ class CableConnectionTest {
     }
 
     @Test
-    void radarUsesOffCentreDataSocketAndScannerRearSocketRotatesWithBlock() {
+    void radarUsesCentredSocketsAndScannerRearSocketRotatesWithBlock() {
         var radar = ModBlocks.RADAR_ALTIMETER.get();
-        equalVector(new Vec3(5.5 / 16, 11.0 / 16, 0),
-                radar.cableSocket(radar.defaultBlockState(), Direction.NORTH));
+        equalVector(new Vec3(.5, 9.0 / 16, 0), radar.cableSocket(radar.defaultBlockState(), Direction.NORTH));
+        equalVector(new Vec3(.5, 0, .5), radar.cableSocket(radar.defaultBlockState(), Direction.DOWN));
         var scanner = ModBlocks.TERRAIN_SCANNER.get();
         for (var facing : Direction.Plane.HORIZONTAL) {
             var rear = facing.getOpposite();

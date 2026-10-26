@@ -1,1 +1,6 @@
-{"parent":"aeronautics_fly_by_instruments:block/radar_altimeter"}
+{
+  "parent": "aeronautics_fly_by_instruments:block/radar_altimeter",
+  "display": {
+    "gui": { "rotation": [-30, 225, 0], "translation": [0, 0, 0], "scale": [0.625, 0.625, 0.625] }
+  }
+}

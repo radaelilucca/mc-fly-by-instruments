@@ -1,422 +1,64 @@
 {
-  "credit": "Prepared locally and refined in Blockbench for Aeronautics: Fly by Instruments",
+  "credit": "Made with Blockbench for Aeronautics: Fly by Instruments",
   "parent": "minecraft:block/block",
   "ambientocclusion": true,
   "textures": {
-    "0": "aeronautics_fly_by_instruments:block/radar_altimeter_case",
-    "1": "aeronautics_fly_by_instruments:block/radar_altimeter_metal",
-    "2": "aeronautics_fly_by_instruments:block/radar_altimeter_frame",
-    "3": "aeronautics_fly_by_instruments:block/radar_altimeter_antenna",
-    "4": "aeronautics_fly_by_instruments:block/radar_altimeter_socket",
-    "5": "aeronautics_fly_by_instruments:block/radar_altimeter_brass",
-    "6": "aeronautics_fly_by_instruments:block/radar_altimeter_label",
-    "particle": "aeronautics_fly_by_instruments:block/radar_altimeter_case"
+    "0": "aeronautics_fly_by_instruments:block/radar_altimeter",
+    "2": "aeronautics_fly_by_instruments:block/radar_altimeter_lens",
+    "3": "create:block/brass_casing",
+    "particle": "aeronautics_fly_by_instruments:block/radar_altimeter"
   },
   "elements": [
     {
-      "name": "metal_case",
+      "name": "body",
       "from": [
-        1,
-        3,
-        1
-      ],
-      "to": [
-        15,
-        14,
-        15
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#0"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#0"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#0"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#0"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        }
-      }
-    },
-    {
-      "name": "lid_seam",
-      "from": [
-        1,
-        14,
-        1
-      ],
-      "to": [
-        15,
-        14.5,
-        15
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        }
-      }
-    },
-    {
-      "name": "mounting_lid",
-      "from": [
-        0.5,
-        14.5,
-        0.5
-      ],
-      "to": [
-        15.5,
-        15.5,
-        15.5
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        }
-      }
-    },
-    {
-      "name": "radar_emblem",
-      "from": [
-        4,
-        15.5,
-        5
-      ],
-      "to": [
-        12,
-        15.75,
-        11
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#6"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        }
-      }
-    },
-    {
-      "name": "lower_protective_frame",
-      "from": [
-        1,
-        1,
-        1
-      ],
-      "to": [
-        15,
-        3,
-        15
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        }
-      }
-    },
-    {
-      "name": "downward_antenna",
-      "from": [
-        3,
         0,
-        3
+        2,
+        0
       ],
       "to": [
-        13,
-        1,
-        13
+        16,
+        16,
+        16
       ],
       "faces": {
         "north": {
           "uv": [
             0,
             0,
-            16,
-            16
+            8,
+            7
           ],
-          "texture": "#1"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
             0,
             0,
-            16,
-            16
+            8,
+            7
           ],
-          "texture": "#1"
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            8,
+            7
+          ],
+          "texture": "#0"
         },
         "west": {
           "uv": [
             0,
             0,
-            16,
-            16
+            8,
+            7
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "down": {
           "uv": [
             0,
             0,
@@ -424,489 +66,153 @@
             16
           ],
           "texture": "#3"
-        }
-      }
-    },
-    {
-      "name": "socket_mount",
-      "from": [
-        2.5,
-        8.5,
-        0.5
-      ],
-      "to": [
-        8.5,
-        13.5,
-        1
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#2"
         },
         "down": {
           "uv": [
-            0,
+            8,
             0,
             16,
-            16
+            8
           ],
-          "texture": "#2"
+          "texture": "#0"
         }
       }
     },
     {
-      "name": "data_connector",
+      "name": "lens_bezel",
       "from": [
-        3.5,
-        9,
-        0
-      ],
-      "to": [
-        7.5,
-        13,
-        0.5
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#4"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        }
-      }
-    },
-    {
-      "name": "coax_mount",
-      "from": [
-        10,
-        5,
-        0.5
-      ],
-      "to": [
-        14,
-        12.5,
-        1
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
-        }
-      }
-    },
-    {
-      "name": "coax_tx",
-      "from": [
-        10.75,
-        9.75,
-        0
-      ],
-      "to": [
-        13.25,
-        12.25,
-        0.5
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#4"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        }
-      }
-    },
-    {
-      "name": "coax_rx",
-      "from": [
-        10.75,
-        5.25,
-        0
-      ],
-      "to": [
-        13.25,
-        7.75,
-        0.5
-      ],
-      "faces": {
-        "north": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#4"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "south": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "west": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "up": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        },
-        "down": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#5"
-        }
-      }
-    },
-    {
-      "name": "mount_left",
-      "from": [
-        0,
-        12.5,
-        3
-      ],
-      "to": [
+        2,
         1,
+        2
+      ],
+      "to": [
         14,
-        13
+        2,
+        14
       ],
       "faces": {
         "north": {
           "uv": [
-            0,
-            0,
-            16,
-            16
+            6,
+            8,
+            12,
+            8.5
           ],
-          "texture": "#1"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "south": {
           "uv": [
-            0,
-            0,
-            16,
-            16
+            6,
+            8,
+            12,
+            8.5
           ],
-          "texture": "#1"
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            6,
+            8,
+            12,
+            8.5
+          ],
+          "texture": "#0"
         },
         "west": {
           "uv": [
-            0,
-            0,
-            16,
-            16
+            6,
+            8,
+            12,
+            8.5
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "up": {
           "uv": [
             0,
-            0,
-            16,
-            16
+            8,
+            6,
+            14
           ],
-          "texture": "#1"
+          "texture": "#0"
         },
         "down": {
           "uv": [
             0,
-            0,
-            16,
-            16
+            8,
+            6,
+            14
           ],
-          "texture": "#1"
+          "texture": "#0"
         }
       }
     },
     {
-      "name": "mount_right",
+      "name": "downward_antenna",
       "from": [
-        15,
-        12.5,
-        3
+        4,
+        0,
+        4
       ],
       "to": [
-        16,
-        14,
-        13
+        12,
+        1,
+        12
       ],
       "faces": {
         "north": {
           "uv": [
             0,
-            0,
-            16,
-            16
+            8,
+            8,
+            9
           ],
-          "texture": "#1"
-        },
-        "east": {
-          "uv": [
-            0,
-            0,
-            16,
-            16
-          ],
-          "texture": "#1"
+          "texture": "#2"
         },
         "south": {
           "uv": [
             0,
-            0,
-            16,
-            16
+            8,
+            8,
+            9
           ],
-          "texture": "#1"
+          "texture": "#2"
+        },
+        "east": {
+          "uv": [
+            0,
+            8,
+            8,
+            9
+          ],
+          "texture": "#2"
         },
         "west": {
           "uv": [
             0,
-            0,
-            16,
-            16
+            8,
+            8,
+            9
           ],
-          "texture": "#1"
+          "texture": "#2"
         },
         "up": {
           "uv": [
             0,
             0,
-            16,
-            16
+            8,
+            8
           ],
-          "texture": "#1"
+          "texture": "#2"
         },
         "down": {
           "uv": [
             0,
             0,
-            16,
-            16
+            8,
+            8
           ],
-          "texture": "#1"
+          "texture": "#2"
         }
       }
     }

@@ -30,22 +30,13 @@ import org.jetbrains.annotations.Nullable;
 /** Fixed-orientation range sensor whose marked lower face emits the measurement beam. */
 public final class RadarAltimeterBlock extends BaseEntityBlock implements AvionicsWrenchable, CableSocketProvider {
     public static final MapCodec<RadarAltimeterBlock> CODEC = simpleCodec(RadarAltimeterBlock::new);
-    // Matches the Blockbench cuboids. The antenna's lower face remains at (8, 0, 8),
-    // exactly where RadarAltimeterScanner starts its local downward casts.
+    // Matches the Blockbench cuboids of the v2 model (docs/visual-design-guide.md): brass body,
+    // lens bezel and the downward lens, whose lower face stays centred at (8, 0, 8), exactly where
+    // RadarAltimeterScanner starts its local downward casts.
     private static final VoxelShape SHAPE = Shapes.or(
-            Block.box(1, 3, 1, 15, 14, 15),
-            Block.box(1, 14, 1, 15, 14.5, 15),
-            Block.box(0.5, 14.5, 0.5, 15.5, 15.5, 15.5),
-            Block.box(4, 15.5, 5, 12, 15.75, 11),
-            Block.box(1, 1, 1, 15, 3, 15),
-            Block.box(3, 0, 3, 13, 1, 13),
-            Block.box(2.5, 8.5, 0.5, 8.5, 13.5, 1),
-            Block.box(3.5, 9, 0, 7.5, 13, 0.5),
-            Block.box(10, 5, 0.5, 14, 12.5, 1),
-            Block.box(10.75, 9.75, 0, 13.25, 12.25, 0.5),
-            Block.box(10.75, 5.25, 0, 13.25, 7.75, 0.5),
-            Block.box(0, 12.5, 3, 1, 14, 13),
-            Block.box(15, 12.5, 3, 16, 14, 13)).optimize();
+            Block.box(0, 2, 0, 16, 16, 16),
+            Block.box(2, 1, 2, 14, 2, 14),
+            Block.box(4, 0, 4, 12, 1, 12)).optimize();
 
     public RadarAltimeterBlock(Properties properties) {
         super(properties);
@@ -89,15 +80,14 @@ public final class RadarAltimeterBlock extends BaseEntityBlock implements Avioni
 
     @Override
     public Vec3 cableSocket(BlockState state, Direction face) {
-        // NORTH uses the existing 4x4 data socket, not the decorative TX/RX pair.
-        // The top lead lands on the lid, clear of the raised identity badge.
+        // Centred on every face of the v2 body; the lower lead lands on the lens centre.
         return (switch (face) {
-            case NORTH -> new Vec3(5.5, 11, 0);
-            case SOUTH -> new Vec3(8, 8, 15);
-            case WEST -> new Vec3(1, 8, 8);
-            case EAST -> new Vec3(15, 8, 8);
+            case NORTH -> new Vec3(8, 9, 0);
+            case SOUTH -> new Vec3(8, 9, 16);
+            case WEST -> new Vec3(0, 9, 8);
+            case EAST -> new Vec3(16, 9, 8);
             case DOWN -> new Vec3(8, 0, 8);
-            case UP -> new Vec3(8, 15.5, 3);
+            case UP -> new Vec3(8, 16, 8);
         }).scale(1.0 / 16);
     }
 

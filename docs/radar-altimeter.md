@@ -6,16 +6,17 @@ block also samples normally when placed in a stationary world.
 
 ## Visual and placement
 
-The metal enclosure has rivets, vents and decorative side connectors. Yellow
-arrows point toward the **lower sensing face**: an off-white antenna with a
-brass target and a small blue centre. The top has a blue radar emblem, not a
-sensing surface. The side connectors do not define the cast direction or
-restrict cable connections.
+The v2 model follows Create's brass instruments (optical sensor, stockpile switch):
+a brass lid band over a dark-wood body between brass corner posts, with a framed
+redstone slot on every side. The **lower sensing face** carries a brass bezel and
+a dark glass lens with concentric rings; the top uses Create's brass casing. There
+are no painted arrows: the lens below and the silhouette show the cast direction.
+The inventory icon is rendered slightly from below so the lens is visible.
 
-The model stays within its block cell. Its outline and collision follow the
-enclosure and connectors rather than a full cube. The lower antenna is centred
-at model `(8, 0, 8)`, matching the unchanged local cast origin. In a sublevel,
-this local bottom follows the vessel's attitude as before.
+The model stays within its block cell. Its outline and collision follow the body,
+bezel and lens rather than a full cube. The lens is centred at model `(8, 0, 8)`,
+matching the unchanged local cast origin. In a sublevel, this local bottom follows
+the vessel's attitude as before. Cable sockets are centred on each face.
 
 Editable source and export instructions: [Blockbench project](../blockbench/radar-altimeter/README.md).
 

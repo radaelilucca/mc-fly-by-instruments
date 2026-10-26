@@ -10,7 +10,8 @@ continuar funcionando no estado atual enquanto não forem tratados.
   O artefato parece z-fighting e muda conforme o ângulo de visão. Reproduzir e
   localizar a origem antes de escolher a correção; validar a aparência com e sem
   shaders e em diferentes ângulos.
-- [ ] **CABO-02 — Levar o socket do Radar Altimeter para o centro.**
+- [x] **CABO-02 — Levar o socket do Radar Altimeter para o centro.** Feito no
+  redesign v2 (2026-10-21): sockets centrados em todas as faces.
   Reposicionar o socket/ponto físico de conexão na face e manter o modelo, o
   encaixe visual do cabo e sua forma de seleção coerentes com essa posição.
 - [ ] **CABO-03 — Retirar o desvio flexível do Avionics Cable.**
