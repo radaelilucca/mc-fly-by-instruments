@@ -146,14 +146,12 @@ Longer ranges and shorter intervals cost more server time on big fleets.
 
 Sensors are only the beginning. These are planned for future releases:
 
-- [ ] **Modular Instrument Table:** a cockpit panel with a 3×3 grid to install modules into.
-- [ ] **Lamp Modules** (1×1 and 2×1): warning lights for the panel.
-- [ ] **Buzzer Module:** audio alerts with adjustable volume.
-- [ ] **FMS Module and Navigator:** store waypoints and a navigation target.
-- [ ] **Avionics Cable and Network Bridge:** connect instruments into one data network
-      and query it from CC:Tweaked.
-- [ ] **GPWS Computer:** a ground proximity warning system that turns sensor readings
-      into "TERRAIN" and "PULL UP" alerts.
+- **Modular Instrument Table:** a cockpit panel with a 3×3 grid to install modules into.
+- **Lamp Modules** (1×1 and 2×1): warning lights for the panel.
+- **Buzzer Module:** audio alerts with adjustable volume.
+- **FMS Module and Navigator:** store waypoints and a navigation target.
+- **Avionics Cable and Network Bridge:** connect instruments into one data network and query it from CC:Tweaked.
+- **GPWS Computer:** a ground proximity warning system that turns sensor readings into "TERRAIN" and "PULL UP" alerts.
 
 You may already spot some of these in the creative tab marked **(Experimental)**. They
 have no recipes, are still being built and may change or break between versions, so
