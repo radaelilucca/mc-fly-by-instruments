@@ -1,5 +1,6 @@
 # Documentação técnica
 
+- [Desenvolvimento: baseline, comandos e escopo do release](development.md)
 - [TODOs de longo prazo](TODO.md)
 - [Identidade visual: estilo, paleta, materiais e convenções de modelagem](visual-design-guide.md)
 - [Plano de ação da revisão dos sensores (redstone + CC)](plano-acao-sensores.md)
