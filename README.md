@@ -112,8 +112,8 @@ while true do
 end
 ```
 
-Full API reference: [Radar Altimeter](docs/radar-altimeter.md) ·
-[Terrain Scanners](docs/terrain-scanner.md).
+Full API reference: [Radar Altimeter](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/radar-altimeter.md) ·
+[Terrain Scanners](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/terrain-scanner.md).
 
 ---
 
@@ -172,5 +172,5 @@ to this page is appreciated.
 
 ---
 
-<sub>Developing or contributing? See [docs/development.md](docs/development.md) and the
-[technical documentation](docs/README.md).</sub>
+<sub>Developing or contributing? See [docs/development.md](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/development.md) and the
+[technical documentation](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/README.md).</sub>
