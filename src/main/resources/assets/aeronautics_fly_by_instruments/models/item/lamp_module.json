@@ -1,5 +1,14 @@
 {
   "parent": "aeronautics_fly_by_instruments:block/lamp_module_1x1_off",
+  "display": {
+    "gui": { "rotation": [30, 225, 0], "translation": [0, 13, 0], "scale": [2.5, 2.5, 2.5] },
+    "ground": { "rotation": [0, 0, 0], "translation": [0, 6, 0], "scale": [1, 1, 1] },
+    "fixed": { "rotation": [0, 0, 0], "translation": [0, 9, 0], "scale": [1.5, 1.5, 1.5] },
+    "thirdperson_righthand": { "rotation": [75, 45, 0], "translation": [0, 4, 4], "scale": [1, 1, 1] },
+    "thirdperson_lefthand": { "rotation": [75, 45, 0], "translation": [0, 4, 4], "scale": [1, 1, 1] },
+    "firstperson_righthand": { "rotation": [0, 45, 0], "translation": [0, 8, 0], "scale": [1.5, 1.5, 1.5] },
+    "firstperson_lefthand": { "rotation": [0, 225, 0], "translation": [0, 8, 0], "scale": [1.5, 1.5, 1.5] }
+  },
   "overrides": [
     {
       "predicate": {

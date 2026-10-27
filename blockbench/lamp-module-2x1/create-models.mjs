@@ -1,4 +1,5 @@
-// Derives editable Blockbench projects and runtime JSON from the authored 1x1 lamp.
+// Derives editable Blockbench projects and runtime JSON from the v1 1x1 lamp kept in base-v1/.
+// Legacy until the 2x1 gets its own v2.1 model (docs/visual-design-guide.md §9).
 import { randomUUID } from 'node:crypto';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -6,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 
 const root = dirname(fileURLToPath(import.meta.url));
-const oneByOneRoot = join(root, '..', 'lamp-module-1x1');
+const oneByOneRoot = join(root, 'base-v1');
 const namespace = 'aeronautics_fly_by_instruments';
 const exportModelRoot = join(oneByOneRoot, 'export', 'assets', namespace, 'models', 'block');
 const runtimeModelRoot = join(root, '..', '..', 'src', 'main', 'resources', 'assets', namespace, 'models', 'block');
@@ -15,7 +16,7 @@ const stretch = value => Number((8 + (value - 8) * 2).toFixed(4));
 const roles = { housing_opaque: 'housing', lens_tint: 'lens', emitter_intensity_0_15: 'emitter' };
 
 for (const variant of ['off', 'on']) {
-  const projectPath = join(oneByOneRoot, variant === 'off' ? 'lamp_module_1x1.bbmodel' : 'lamp_module_1x1_on.bbmodel');
+  const projectPath = join(oneByOneRoot, variant === 'off' ? 'lamp_module_1x1_v1.bbmodel' : 'lamp_module_1x1_v1_on.bbmodel');
   const project = JSON.parse(readFileSync(projectPath, 'utf8'));
   assert.equal(project.meta.model_format, 'java_block');
   assert.equal(project.elements.length, 3);

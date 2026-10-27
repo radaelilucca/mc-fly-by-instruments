@@ -220,7 +220,7 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
                 double z = module.row() / 3.0 + 0.06;
                 var start = PanelCoordinates.fromPanel(facing, new Vec3(x, 3.0 / 16, z));
                 var end = PanelCoordinates.fromPanel(facing, new Vec3(
-                        (module.column() + module.width()) / 3.0 - 0.06, 5.0 / 16,
+                        (module.column() + module.width()) / 3.0 - 0.06, PanelCoordinates.MODULE_TOP,
                         (module.row() + module.height()) / 3.0 - 0.06));
                 shape = Shapes.or(shape, Shapes.box(Math.min(start.x, end.x), Math.min(start.y, end.y), Math.min(start.z, end.z),
                         Math.max(start.x, end.x), Math.max(start.y, end.y), Math.max(start.z, end.z)));

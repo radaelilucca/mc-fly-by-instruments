@@ -76,14 +76,14 @@ public final class TableInteraction {
             double x0 = module.column() / 3.0 + .06, z0 = module.row() / 3.0 + .06;
             double x1 = (module.column() + module.width()) / 3.0 - .06;
             double z1 = (module.row() + module.height()) / 3.0 - .06;
-            if (p.y > 3.0 / 16 + 1e-7 && p.y <= 5.0 / 16 + 1e-7
+            if (p.y > 3.0 / 16 + 1e-7 && p.y <= PanelCoordinates.MODULE_TOP + 1e-7
                     && p.x >= x0 - 1e-7 && p.x <= x1 + 1e-7
                     && p.z >= z0 - 1e-7 && p.z <= z1 + 1e-7)
                 return new Target(module.column(), module.row(), module, hitFace == facing);
         }
         int column = PanelCoordinates.cell(p.x), row = PanelCoordinates.cell(p.z);
         boolean exposed = hitFace == facing && column >= 0 && row >= 0
-                && p.y >= 3.0 / 16 - 1e-7 && p.y <= 5.0 / 16 + 1e-7;
+                && p.y >= 3.0 / 16 - 1e-7 && p.y <= PanelCoordinates.MODULE_TOP + 1e-7;
         return new Target(column, row, exposed ? table.grid().at(column, row).orElse(null) : null, exposed);
     }
 

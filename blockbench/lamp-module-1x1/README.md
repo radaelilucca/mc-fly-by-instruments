@@ -1,46 +1,66 @@
-# Módulo de luz 1×1 — estudo visual
+# Módulo de lâmpada 1×1 — fonte visual (v2.1, tubo nixie)
 
-Identidade compartilhada: [guia de estilo e paleta](../../docs/visual-design-guide.md).
+Guia obrigatório: [guia visual v2.1](../../docs/visual-design-guide.md), seção 9 (módulos da
+mesa). Referências diretas: nixie tube e lâmpada de sinal de trem (Create).
 
-Modelo e pintura criados pela interface do Blockbench, no formato **Java Block/Item**, compatível com o alvo Minecraft 1.21.1. Sem texto ou comportamento novo.
+Abra `lamp_module_1x1.bbmodel` no Blockbench (Java Block/Item, 1.21.1, *Box UV* desligado,
+resolução 32×32). Modelado com a mesa voltada para cima: apoio em Y = 0, centro em X/Z = 8.
 
-- `lamp_module_1x1.bbmodel`: referência apagada, com texturas incorporadas.
-- `lamp_module_1x1_on.bbmodel`: referência acesa, com texturas incorporadas. O material emissivo do Blockbench serve apenas para a prévia.
-- `export/assets/aeronautics_fly_by_instruments/`: exportação dos modelos JSON e das texturas PNG; os modelos ativos do jogo ficam em `src/main/resources`.
+![Nixie tube do Create (referência), lâmpada apagada e acesa](preview.png)
 
-## Dimensões e materiais
+## Identidade
 
-O conjunto ocupa **3,4 × 3,4 pixels**, com **2 pixels de altura** — próximo da largura e igual à altura do placeholder 1×1. As coordenadas X/Z estão centralizadas em 8. O Y=0 é a face de apoio no painel; o renderer a eleva até a superfície da mesa.
+- **Soquete** opaco de metal escuro, como a base do nixie. O aro de latão fica no topo do
+  soquete e aparece através do vidro.
+- **Tubo de vidro** vermelho translúcido, sem face inferior. Alpha por pixel: miolo claro
+  (0x48) para o filamento aparecer, bordas (0x80) e coluna de reflexo do lado iluminado (0xB0)
+  mais densas, para ler como cilindro.
+- **Filamento** dentro do vidro: malha de metal escuro apagada e xadrez de redstone acesa,
+  como a lâmpada de sinal de trem.
 
-| Parte | Limites Y | Material |
+## Peças
+
+| Elemento | Volume | Textura |
 | --- | --- | --- |
-| `housing_opaque` | 0–0,5 | Base escura, inteiramente opaca nas faces mapeadas, inclusive a inferior. |
-| `lens_tint` | 0,5–2 | Vidro vermelho translúcido uniforme (RGBA 212, 29, 56, 156). |
-| `emitter_intensity_0_15` | 0,7–1,2 | Núcleo interno separado; referência escura apagada e clara acesa. |
+| `socket` | `[6,0,6]–[10,1,10]` | `lamp_socket` |
+| `glass` | `[6,1,6]–[10,4,10]` | `lamp_glass_red` (sem face `down`) |
+| `filament` | `[7,1,7]–[9,3,9]` | `lamp_filament_off` / `lamp_filament_on` (sem face `down`) |
 
-São três cubos, sem meshes, com UV por face e texturas de 16×16. Não há cullface, pois o módulo deverá aparecer sobre a mesa, sem depender de blocos vizinhos. Os exports declaram renderização translúcida; base e núcleo têm texels opacos em suas áreas UV.
+Três cubos, coordenadas inteiras, sem rotação. Carcaça de 4×4×4 (guia, seção 9.2).
 
-## Cores e intensidade futuras
+## Texturas (1 texel = 1 unidade, 16×16)
 
-A lente (`lamp_lens_red`) está separada da base e do núcleo: variantes de cor podem substituir sua textura sem mudar geometria ou UV. O núcleo também pode receber variações visuais independentes. Não há texto pintado.
+- `lamp_socket.png`: lateral 4×1, topo 4×4 (aro de latão), fundo 4×4.
+- `lamp_glass_red.png`: lateral 4×3 e topo 4×4, a única textura translúcida.
+- `lamp_filament_off.png` e `lamp_filament_on.png`: lateral 2×2 e topo 2×2, nas mesmas
+  posições.
 
-As duas referências representam os extremos visuais **apagado (0)** e **aceso (15)**. O renderer do jogo reutiliza esses modelos: separa as faces por textura e aplica um passe emissivo ao núcleo e à lente de cada lâmpada ativa, mantendo a carcaça com iluminação normal. Um override temporário via CC:Tweaked permite avaliar intensidades visuais de 0 a 15 sem gravar sinais ou emitir luz dinâmica no mundo. O módulo 2×1 alongado reutiliza esses mesmos materiais; veja [a fonte Blockbench 2×1](../lamp-module-2x1/README.md) e [emissão visual e teste com CC:Tweaked](../../docs/lamp-emission.md).
+Os nomes das texturas são contrato com `LampModuleRenderer`, que separa as faces pelo
+sprite: soquete no passe opaco; vidro e filamento no passe emissivo quando a lâmpada está
+acesa. Uma cor nova (âmbar de Caution, com os tons claros do latão) troca só o vidro.
 
-## Reexportar e verificar
-
-Para refazer o acabamento uniforme da lente nas duas fontes Blockbench e sincronizar a textura do jogo:
-
-```powershell
-node .\blockbench\lamp-module-1x1\make-lens-uniform.mjs
-```
-
-Depois de salvar outras alterações nos projetos pelo Blockbench, atualize os modelos JSON e as texturas exportadas:
+## Exportação
 
 ```powershell
-node .\blockbench\lamp-module-2x1\create-models.mjs
-node .\blockbench\lamp-module-1x1\export-assets.mjs
+node blockbench/lamp-module-1x1/export-assets.mjs
 ```
 
-O gerador 2×1 usa as fontes 1×1 para atualizar sua variante alongada e os dois modelos JSON ativos. O exportador então valida os cubos, a equivalência geométrica entre estados, os UVs e as texturas PNG incorporadas. Extrai as texturas sem repintá-las e não altera os projetos. Para a referência apagada, usa o primeiro projeto; para a acesa, usa apenas os materiais efetivamente atribuídos no segundo.
+Gera `lamp_module_1x1_off.json`, `lamp_module_1x1_on.json` (só troca o filamento) e os PNGs,
+com `render_type` translúcido. Falha com rotação, coordenada fracionária ou face fora de
+1:1. `create-base-model.mjs` é só o bootstrap: não o rode sobre uma fonte já refinada no
+Blockbench.
 
-Validação visual das fontes realizada no Blockbench. A emissão do jogo vem do renderer, não do material de prévia do `.bbmodel`. Transparência, iluminação e ordenação entre módulos precisam de validação in-game após cada mudança de renderização.
+O modelo de item (`models/item/lamp_module.json`) herda o bloco e amplia a lâmpada na GUI,
+no chão, na moldura e nas mãos.
+
+Mudou a geometria? Rode `LampModuleAssetsTest` e confira `PanelCoordinates.MODULE_TOP`
+(topo do volume de seleção, 4 unidades acima da mesa).
+
+## Pendente
+
+- Refino de pixels no Blockbench: a fonte atual é a do bootstrap.
+- Validação no jogo: emissão de 0 a 15 (`docs/lamp-emission.md`), mesa no chão, parede e
+  teto, transformações de item e shaders. `preview.png` é um render local simplificado, sem o
+  passe emissivo.
+- A lâmpada 2×1 continua v1 e usa as texturas antigas (`lamp_housing`, `lamp_lens_red`,
+  `lamp_emitter_*`), que saem quando ela for redesenhada.

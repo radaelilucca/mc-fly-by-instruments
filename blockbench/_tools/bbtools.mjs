@@ -68,7 +68,8 @@ export function png(img) {
   img.forEach((row, y) => row.forEach((hex, x) => {
     const o = y * (w * 4 + 1) + 1 + x * 4;
     rows[o] = parseInt(hex.slice(1, 3), 16); rows[o + 1] = parseInt(hex.slice(3, 5), 16);
-    rows[o + 2] = parseInt(hex.slice(5, 7), 16); rows[o + 3] = 255;
+    // '#rrggbbaa' = translucent pixel; only glass may use it (guide §9.4).
+    rows[o + 2] = parseInt(hex.slice(5, 7), 16); rows[o + 3] = hex.length === 9 ? parseInt(hex.slice(7, 9), 16) : 255;
   }));
   const header = Buffer.alloc(13);
   header.writeUInt32BE(w, 0); header.writeUInt32BE(h, 4); header[8] = 8; header[9] = 6;
@@ -120,8 +121,9 @@ const AXES = { north: [0, 1], south: [0, 1], east: [2, 1], west: [2, 1], up: [0,
  * Exports a saved .bbmodel to models/block/<model>.json (+ variants) and this mod's PNGs.
  * variants: { suffix: { fromTexture: toTexture } } — e.g. { _powered: { terrain_scanner: 'terrain_scanner_powered' } }.
  * Fails on rotated cuboids, fractional coordinates or any face that is not 1 texel per unit.
+ * renderType: e.g. 'minecraft:translucent' for glass; writeBase: false when only the variants are runtime models.
  */
-export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {} }) {
+export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {}, renderType = null, writeBase = true }) {
   const project = JSON.parse(readFileSync(projectUrl, 'utf8'));
   assert.equal(project.meta.model_format, 'java_block');
   const base = t => t.name.replace(/\.png$/, '');
@@ -160,11 +162,12 @@ export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {} }
     const textures = { particle: map(particle >= 0 ? particle : [...used][0]) };
     for (const i of [...used].sort((a, b) => a - b)) textures[String(i)] = map(i);
     const json = { credit: 'Made with Blockbench for Aeronautics: Fly by Instruments',
-      parent: 'minecraft:block/block', ambientocclusion: true, textures, elements };
+      parent: 'minecraft:block/block', ambientocclusion: true, ...(renderType ? { render_type: renderType } : {}),
+      textures, elements };
     writeFileSync(new URL(`models/block/${model}${suffix}.json`, assetsUrl), `${JSON.stringify(json, null, 2)}\n`);
   };
   for (const target of Object.values(variants)) for (const to of Object.values(target)) indexOf(to);
-  write('', {});
+  if (writeBase) write('', {});
   for (const [suffix, swap] of Object.entries(variants)) write(suffix, swap);
   return { cubes: elements.length, textures: [...used].map(i => ids[i]) };
 }
