@@ -1,7 +1,10 @@
-# Guia visual v2 — linguagem Create / Create Aeronautics
+# Guia visual v2.1 — linguagem Create / Create Aeronautics
 
-> Substitui a direção "aviónica industrial" da v1 (2026-10). A v1 continua no
-> histórico do git. As regras técnicas que seguem válidas estão na seção 11.
+> v2 (2026-10) substituiu a direção "aviónica industrial" da v1, que continua no
+> histórico do git. A **v2.1** (2026-10-27) consolida o que os três sensores
+> entregues (Radar Altimeter, Terrain Scanner e Advanced Terrain Scanner)
+> estabeleceram na prática (seção 8) e define as regras dos módulos da mesa
+> (seção 9).
 > Ferramenta oficial de modelagem e pintura: **Blockbench**.
 >
 > **Leitura obrigatória antes de qualquer pedido de modelagem ou texturização**
@@ -9,21 +12,21 @@
 
 ## 0. Por que mudar
 
-Os modelos atuais são bem acabados, mas parecem de outro mod. Uma análise de
-1.294 modelos de bloco do Create 6.0.10, 335 do Create Aeronautics (Simulated)
-1.3.2 e 77 do Aeronautics 1.3.2, comparados com os nossos, mostra onde está a
-diferença:
+Uma análise de 1.294 modelos de bloco do Create 6.0.10, 335 do Create
+Aeronautics (Simulated) 1.3.2 e 77 do Aeronautics 1.3.2, comparados com os
+nossos modelos v1, mostrou onde estava a diferença. A última coluna é o
+resultado medido dos três sensores v2 (exports em `src/main/resources`).
 
-| Critério | Create / Simulated / Aeronautics | Nossos modelos atuais |
-| --- | --- | --- |
-| Densidade de textura | **1 texel por unidade** em 94–98% das faces (16 px por bloco) | Mista: 2–3 texels/unidade em faces grandes, até 32 texels numa face de 0,5 (textura inteira esticada em toda face) |
-| Coordenadas | Unidades inteiras; menor dimensão típica 2, às vezes 1 | Frações de 0,25/0,5/0,75 em quase todos os modelos |
-| Complexidade | Mediana de 2–5 elementos, p90 8–15 | Sensores e módulos: 13–43 elementos (lâmpada e cabo: 3–6) |
-| Paleta | Simulated reutiliza **cores exatas do Create** (altitude sensor 92%, gimbal 95%, navigation table 90%); os bearings do Aeronautics, 95% | 0–7% (altímetro: 2%) |
-| Origem das texturas | Pintadas à mão; ~29–55% dos modelos trazem `"credit": "Made with Blockbench"` | Geradas por script com funções de ruído e refinadas depois |
-| Temperatura | Quente: latão, madeira, cobre, andesito esverdeado | Fria: prata, azul-petróleo, amarelo de sinalização |
+| Critério | Create / Simulated / Aeronautics | Nossos modelos v1 | Sensores v2 (medido) |
+| --- | --- | --- | --- |
+| Densidade de textura | **1 texel por unidade** em 94–98% das faces | Mista; até 32 texels numa face de 0,5 | 1:1 em todas as faces (o exportador falha se não for) |
+| Coordenadas | Inteiras; menor dimensão típica 2, às vezes 1 | Frações de 0,25/0,5/0,75 | Inteiras, sem rotação |
+| Complexidade | Mediana de 2–5 elementos, p90 8–15 | 13–43 elementos | 3, 4 e 5 cubos |
+| Paleta | Simulated reutiliza cores exatas do Create (90–95%) | 0–7% | **100%** dos pixels na paleta; 9–18 cores por textura |
+| Origem das texturas | Pintadas à mão | Ruído procedural | Mapas de pixel escritos à mão + refino no Blockbench |
+| Temperatura | Quente: latão, madeira, cobre, andesito | Fria: prata, azul-petróleo | Latão, madeiras, andesito, ferro industrial |
 
-O altímetro atual parece um equipamento real de aviação. Um bloco do Create
+O altímetro v1 parecia um equipamento real de aviação. Um bloco do Create
 parece uma **máquina montada com as peças do próprio Create**.
 
 Pranchas de referência (locais, fora do git): `reference/visual/`.
@@ -37,13 +40,15 @@ Pranchas de referência (locais, fora do git): `reference/visual/`.
 1. **Feito de materiais do Create.** Carcaça de andesito, latão ou cobre,
    madeira, ferro industrial. Nada de materiais novos inventados.
 2. **Função mecânica à vista.** Mostrador, lente, ponteiro, hélice ou antena
-   grande o bastante para ler a 5–10 blocos. Esconder a "eletrônica".
+   grande o bastante para ler à distância de uso. Esconder a "eletrônica".
 3. **Robusto e em camadas.** Base, corpo e tampa bem separados por volume e
    material, nunca uma caixa lisa com adesivos.
 4. **Quente e saturado na medida.** Rampas com variação de matiz, contorno
    escuro e luz forte no topo, como as texturas do Create.
 5. **Cor com significado.** Vermelho redstone é estado de saída. Gemas azul
    e vermelha indicam frequência. Pergaminho é leitura. Ver a seção 6.
+6. **Pouco e bem resolvido.** Poucos cubos grandes com textura rica valem mais
+   que muitos cubos pequenos. O detalhe mora no pixel, não na geometria.
 
 ## 2. Contexto de uso (builds da comunidade)
 
@@ -61,24 +66,28 @@ zeppelins, aviões, biplanos, helicópteros).
 - **Helicópteros e builds "modernos":** mais ferro industrial, metal escuro e
   concreto, mas o maquinário continua sendo do Create.
 
-O que isso significa para os sensores:
-- Eles vivem **embutidos no casco**: o altímetro na barriga, o scanner no nariz.
-  São vistos de 3–10 blocos, ao lado de casings do Create.
-- Precisam combinar tanto com madeira quanto com metal. Por isso a carcaça
-  segue as famílias de casing do Create (andesito/latão/cobre).
-- Silhueta e face funcional precisam ler de longe. Detalhe fino some.
+Duas distâncias de leitura:
+
+| Peça | Onde vive | Distância típica | Consequência |
+| --- | --- | --- | --- |
+| Sensores | Embutidos no casco (altímetro na barriga, scanner no nariz), ao lado de casings do Create | 3–10 blocos | Silhueta e face funcional leem de longe; detalhe fino some |
+| Mesa e módulos | Painel do cockpit, de frente para o piloto | 0,5–2 blocos | Cada pixel é visto; a peça é pequena, então cada texel precisa ter função (seção 9) |
+
+Ambos precisam combinar com madeira e com metal. Por isso as carcaças seguem as
+famílias de casing do Create (andesito/latão/cobre/ferro industrial).
 
 ## 3. Geometria (Blockbench)
 
 | Regra | Valor |
 | --- | --- |
-| Grade | Snap de **1 unidade** (16 = 1 bloco). Frações só com motivo forte, como o recuo de 0,5 de uma lente, e nunca para "afinar" uma peça |
+| Grade | Snap de **1 unidade** (16 = 1 bloco). Frações só com motivo forte, registrado no README do bloco, e nunca para "afinar" uma peça |
 | Elemento mínimo | 1 unidade; preferir 2 ou mais em peças visíveis |
-| Elementos por bloco | Simples: 2–8. Instrumento: até ~15. Acima de 20, justificar (Create chega a 25, Simulated a 39) |
+| Elementos por bloco | Sensor ou bloco simples: 2–8 (os sensores v2 usam 3–5). Instrumento: até ~15. Acima de 20, justificar (Create chega a 25, Simulated a 39) |
 | Rotação | Só 22,5° e 45°, e só em peças mecânicas (ponteiro, alavanca, aleta). Carcaça sempre alinhada à grade |
 | Camadas | Base/pé (2–3 de altura) + corpo + tampa ou placa (2 de altura). Corpo costuma recuar 1 unidade em relação à tampa ou base |
 | Peça funcional | Grande e saliente: lente 6–10 unidades, mostrador com moldura, antena com volume. É o item que define a silhueta |
 | Partes móveis | Modeladas como elemento ou modelo separado (como as partials do Simulated: `hand`, `needle`, `fan`), para animar no futuro sem refazer a carcaça |
+| Faces | Sem `cullface` em faces recuadas ou salientes (somem contra o vizinho). Sem faces coplanares sobrepostas nem cascas duplicadas |
 
 ### Vocabulário formal recorrente
 
@@ -93,34 +102,30 @@ O que isso significa para os sensores:
 - **Base de andesito com tábua de madeira:** altitude sensor, physics assembler.
 - **Bocal escalonado:** laser pointer, anéis sucessivos de 1–2 unidades.
 
-## 4. Texturas (Blockbench Paint)
+## 4. Texturas
 
 ### Densidade: 1 texel = 1 unidade, sempre
 
 - Material isolado: PNG **16×16**.
 - Peça com várias faces diferentes: **atlas 32×32** (64×64 só para modelos
-  grandes), em que **cada face ocupa no atlas o tamanho real dela em pixels**.
-  Uma face de 14×11 unidades usa 14×11 px.
+  grandes, com justificativa), em que **cada face ocupa no atlas o tamanho real
+  dela em pixels**. Uma face de 14×11 unidades usa 14×11 px.
 - No Blockbench (formato Java Block): **um espaço de UV único para todas as
-  texturas**, igual à resolução do projeto. O Blockbench 5.2 ignora o UV size de
-  cada textura ao exportar Java e usa a resolução do projeto. Com projeto 32×32,
-  um atlas de 32 px fica 1:1 com Auto UV, mas uma textura de 16 px precisa de UVs
-  dobradas (uma face de 8 unidades usa 16 de UV). Conferir o export com o
-  exportador do bloco, que falha se a densidade não for 1:1. Assim cada face recebe UV na
-  mesma escala da geometria. **Nunca** mapear `[0,0,32,32]` em todas as faces,
-  que é o que os nossos `.bbmodel` atuais fazem. O `.bbmodel` do velocity
-  sensor do Simulated usa a convenção equivalente: UV 16 com atlas 32, de modo
-  que uma face de 16 unidades usa 8 de UV, ou seja, 16 px.
+  texturas**, igual à resolução do projeto (32). O Blockbench 5.2 ignora o UV
+  size de cada textura ao exportar Java e usa a resolução do projeto. Com
+  projeto 32×32, um atlas de 32 px fica 1:1 com Auto UV, mas uma textura de 16
+  px precisa de UVs dobradas (uma face de 8 unidades usa 16 de UV; em script,
+  `px(16, uv)` do `bbtools.mjs`). **Nunca** mapear `[0,0,32,32]` em todas as
+  faces.
 - Conferir com a grade de pixels do Blockbench ligada: os texels de faces
-  vizinhas precisam ter o mesmo tamanho na tela.
+  vizinhas precisam ter o mesmo tamanho na tela. O exportador confere de novo.
 
 ### Pintura
 
-- **Pintar à mão** no modo Paint do Blockbench, com a paleta da seção 5
-  carregada (`blockbench/_palette/create-aeronautics.gpl`, ou `.hex` se a versão
-  do Blockbench não importar `.gpl`; importar pelo menu do painel de cores). Scripts servem
-  para criar a geometria inicial, não para gerar texturas com ruído.
-- **Poucas cores:** 7–20 por 16×16. Cada material usa uma rampa de 5–8 tons.
+- **Paleta fechada:** só as rampas da seção 5 (`blockbench/_palette/create-aeronautics.gpl`,
+  ou `.hex` se a versão do Blockbench não importar `.gpl`). Meta de entrega:
+  ≥ 90% dos pixels; os sensores v2 têm 100%.
+- **Poucas cores:** 7–20 por textura. Cada material usa uma rampa de 5–8 tons.
 - **Luz:** topo e esquerda mais claros, base e direita mais escuras. Aresta
   externa com 1 px do tom mais escuro da rampa; aresta interna da moldura com
   1 px do tom mais claro.
@@ -129,7 +134,11 @@ O que isso significa para os sensores:
   nunca para cinza.
 - **Textura de material:** veio de madeira em linhas de 1 px, tábuas separadas
   por uma linha escura, rebites de 1 px nos cantos das molduras. Nada de ruído
-  aleatório.
+  aleatório. Padrões repetitivos (tábuas, nós) usam uma regra determinística
+  escrita à mão, como em `planks()` do Terrain Scanner.
+- Sem antialiasing, sem gradiente suave, sem texto legível (letras viram ruído
+  a 16 px por bloco). Sem alpha parcial, exceto em lente translúcida declarada
+  (seção 9).
 - **Assets do Create são *All Rights Reserved*** (só o código é MIT). Podemos
   **referenciar** as texturas pelo id, porque elas são carregadas do jar do
   Create em runtime. Não podemos **copiar** PNGs, pixels ou trechos deles para o
@@ -140,14 +149,13 @@ O que isso significa para os sensores:
   Create, referenciar a textura dele no modelo, como o Simulated e o
   Aeronautics fazem: `create:block/andesite_casing`, `create:block/brass_casing`,
   `create:block/industrial_iron_block`, `create:block/axis`. O Create é
-  dependência obrigatória do mod.
-- Sem antialiasing, sem gradiente suave, sem texto legível (letras viram ruído
-  a 16 px por bloco).
+  dependência obrigatória do mod. Exemplo: topo do Radar Altimeter.
 
 ## 5. Paleta (HEX extraídos dos jars)
 
 Use as rampas como estão. Ao estender, interpolar dentro da mesma rampa.
-Arquivo para o Blockbench: `blockbench/_palette/create-aeronautics.gpl`.
+Arquivos: `blockbench/_palette/create-aeronautics.gpl` (Blockbench) e
+`PALETTE` em `blockbench/_tools/bbtools.mjs` (mapas de pixel; ver seção 8.4).
 
 | Material | Rampa (escuro → claro) | Onde aparece |
 | --- | --- | --- |
@@ -157,39 +165,40 @@ Arquivo para o Blockbench: `blockbench/_palette/create-aeronautics.gpl`.
 | Andesito | `#505351` `#60635F` `#686C68` `#707570` `#828784` `#8F9691` `#9AA49D` `#A8B3AB` | andesite casing, altitude sensor (cinza levemente esverdeado) |
 | Cobre | `#904931` `#9A5038` `#A75A40` `#B26247` `#C26B4C` `#C87456` `#D67B5B` `#E3826C` | copper casing, steam vent, potato cannon |
 | Ferro industrial | `#353438` `#3F3E42` `#444444` `#494848` `#4F4F4F` `#595858` `#676161` `#757171` | bearings do Aeronautics, peças pesadas |
-| Metal escuro | `#2B2B2B` `#353535` `#3B3B3C` `#464647` `#4A4A4B` `#525255` | aros, bocais, molduras escuras |
+| Metal escuro | `#2B2B2B` `#353535` `#3B3B3C` `#464647` `#4A4A4B` `#525255` | aros, bocais, molduras escuras, sockets |
 | Pergaminho | `#676562` `#949188` (marcas) + `#D4C2A4` `#E0D2AE` `#EEE4CE` `#F6EDD8` `#F9F2DE` | mostradores (altitude sensor radial/linear) |
 | Redstone desligado | `#460000` `#500101` `#580101` | indicador sem sinal |
 | Redstone ligado | `#970000` `#AE0000` `#CD0000` (+ brilho `#FD0000`) | indicador com sinal |
 | Lente escura | `#13161D` `#171B23` `#20232A` `#282C37` `#333846` `#464C5F` | lente do laser sensor, vidros ópticos |
-| Gema azul | `#5059AB` `#5371C6` | gimbal, receivers (par com a gema vermelha) |
+| Gema azul | `#5059AB` `#5371C6` | gimbal, receivers (par com a gema vermelha); brilho de lente |
 | Lona | `#868480` `#9B9892` `#B6AEA1` `#CEC4B5` `#E4E4DF` `#F1F1F0` | envelopes, velas |
 
-**Sai da paleta:** azul-petróleo de identidade (`#31657E`) e amarelo de
+**Fora da paleta:** azul-petróleo de identidade (`#31657E`) e amarelo de
 sinalização (`#E4A92F`), que não aparecem em nenhuma textura do Create ou do
-Aeronautics. Também sai a prata fria (`#BABDBF` e vizinhas) como cor dominante
-de carcaça: ela existe pontualmente no Create, mas nunca como material principal.
+Aeronautics. Também a prata fria (`#BABDBF` e vizinhas) como cor dominante de
+carcaça: ela existe pontualmente no Create, mas nunca como material principal.
 
 ## 6. Cor com função
 
-| Sinal visual | Significado no Create/Aeronautics | Uso nos nossos sensores |
+| Sinal visual | Significado no Create/Aeronautics | Uso no mod |
 | --- | --- | --- |
-| Faixa ou ponto **vermelho redstone** | Saída de redstone; escuro sem sinal, aceso com sinal (o modelo troca para `block_powered`) | Todos os nossos sensores emitem redstone. O indicador deve acender com potência > 0 (exige estado `powered` no bloco; decidir na implementação) |
-| **Gemas azul + vermelha** lado a lado | Par de frequência do Redstone Link | Opcional, só onde o jogador configura frequências (os sensores aceitam Link) |
+| Faixa ou ponto **vermelho redstone** | Saída de redstone; escuro sem sinal, aceso com sinal (o modelo troca para `block_powered`) | Fendas dos sensores. Acende com potência > 0 |
+| **Gemas azul + vermelha** lado a lado | Par de frequência do Redstone Link | Opcional, só onde o jogador configura frequências |
 | **Pergaminho** com marcas cinza | Leitura/medição | Mostrador de altura ou distância, se houver |
-| **Lente escura** com reflexo | Emissor/receptor óptico | Face de medição (raycast) dos scanners e do altímetro |
-| **Latão** | Tier "smart"/avançado | Variante avançada (Advanced Terrain Scanner) |
+| **Lente escura** com reflexo azul | Emissor/receptor óptico | Face de medição (raycast) dos scanners e do altímetro |
+| **Latão** | Tier "smart"/avançado | Variante avançada; instrumentos de cockpit |
 
-## 7. Famílias de material por tier (proposta)
+## 7. Famílias de material por tier
 
 Segue a lógica do Create: andesito é o básico, latão é o avançado ou "smart",
 cobre é fluidos e vapor, ferro industrial é a parte pesada do Aeronautics.
 
-| Bloco | Família proposta | Referências diretas |
+| Bloco | Família | Referências diretas |
 | --- | --- | --- |
-| Radar Altimeter | **Latão + madeira escura** (decisão de 2026-10-21), lente para baixo | optical sensor, stockpile/threshold switch, content observer, laser pointer |
+| Radar Altimeter | **Latão + madeira escura** (v2 entregue), lente para baixo | optical sensor, stockpile/threshold switch, content observer, laser pointer |
 | Terrain Scanner | **Andesito + madeira média** (v2 entregue), bocal escalonado frontal | andesite casing, laser sensor, laser pointer |
 | Advanced Terrain Scanner | **Latão + ferro industrial** (v2 entregue), barra com três lentes | content observer, smart observer, optical sensor |
+| Mesa modular e módulos | Ver seção 9.3 (proposta) | navigation table, nixie tube, display link, gauges |
 | GPWS Computer (experimental) | Latão + madeira escura | navigation table, stockpile switch |
 | Avionics Cable (experimental) | Decidir no redesign | rope, belts, fluid pipe |
 
@@ -211,88 +220,251 @@ Novos sensores devem escolher combinações que não colidam com estas. Variante
 mesmo bloco (básico e avançado) mudam o tier de material e a peça óptica, e mantêm o
 volume do corpo e os sockets.
 
-## 8. Radar Altimeter (v2 entregue em 2026-10-21)
+## 8. Receita dos sensores v2
 
-Resultado: [README do bloco](../blockbench/radar-altimeter/README.md). Três cubos
-(corpo, aro e lente), atlas 32×32 + lente 16×16 em 1:1, topo com
-`create:block/brass_casing` e variante `powered` pronta (falta o estado no bloco).
-O brief original fica abaixo como registro.
+Esta é a receita que funcionou nos três sensores e o ponto de partida para
+qualquer bloco novo. Fontes: `blockbench/radar-altimeter/`,
+`blockbench/terrain-scanner-basic/`, `blockbench/terrain-scanner-advanced/`.
 
-Requisitos fixos do código:
-- Mede **para baixo**. O centro inferior da antena continua em `(8, 0, 8)`,
-  a origem dos raycasts.
-- Ocupa 0–16. A colisão em `RadarAltimeterBlock` acompanha a nova geometria.
-- Emite redstone pelas faces e via Link.
+### 8.1 Anatomia: corpo + peça funcional
 
-Direção visual (decidido: **linhas e tons dos blocos de latão**):
-- Corpo na família do **optical sensor / stockpile switch**: miolo de madeira
-  escura emoldurado em latão e placa de topo de latão com o motivo concêntrico.
-- Face inferior com a peça funcional grande: lente escura escalonada, como
-  no laser pointer virado para baixo, ou prato de antena em cobre. A lente lê
-  melhor como "raio para baixo".
-- Uma fenda de redstone lateral que acende com sinal.
-- Nada de setas pintadas. A direção vem da lente embaixo e da silhueta.
-- Diferenciar do **altitude sensor** do Simulated, que mede altitude e tem
-  mostrador vertical. O nosso mede distância até o chão, e a leitura é a lente
-  apontada para baixo, não um mostrador.
+- **Um cubo de corpo** com um atlas 32×32. Toda a riqueza de material (moldura,
+  tábuas, rebites, fenda, socket) está pintada no atlas, não modelada.
+- **Dois a quatro cubos de peça funcional** com textura própria (`*_optics` 32×32
+  ou `*_lens` 16×16), salientes 1–2 unidades em relação ao corpo. Ex.: aro + lente
+  (altímetro); anel + ponta + lente (scanner); barra + três lentes (advanced).
+- O corpo recua para dar espaço à peça funcional, que fica rente ao limite do
+  bloco: o scanner tem corpo em `z 4–16` e bocal em `z 0–4`; o altímetro tem corpo
+  em `y 2–16`, aro em `y 1–2` e lente em `y 0–1`.
+- **Grupos** no Blockbench: `body` e o conjunto funcional (`nozzle`,
+  `lens_assembly`), com origem no centro da face funcional.
 
-## 9. Fluxo no Blockbench
+### 8.2 Orientação e contratos com o código
 
-1. **Novo projeto:** *Java Block/Item*, nome = id do bloco, resolução 16 (ou
-   32 se for atlas), *Box UV* desligado.
+- Fonte com a frente em **NORTH** (z = 0). O blockstate gira o modelo; a fonte
+  nunca embute rotação.
+- A peça funcional fica centrada na **origem do raycast**: `(8, 8, 0)` para a
+  frente, `(8, 0, 8)` para baixo. Os testes conferem isso.
+- **Nomes de cubo são contrato** com testes e código (`forward_antenna`,
+  `downward_antenna`, `body`). Renomear exige atualizar os testes.
+- Sockets de cabo usam o mesmo volume de corpo entre variantes, para que
+  `housingSocket`/`cableSocket` não mudem.
+- Colisão e outline (`SHAPE`, `NORTH_SHAPE`) acompanham a geometria em todas as
+  orientações, inclusive no teto.
+
+### 8.3 Motivos de pixel padronizados
+
+Reutilize estes desenhos antes de inventar outros:
+
+| Motivo | Desenho | Onde |
+| --- | --- | --- |
+| Moldura de casing | Canto = tom mais escuro; borda externa de 1 px no 2º tom; bisel interno claro no topo/esquerda e escuro na base/direita | Todas as faces de corpo |
+| Tábuas | Tábua de 3 px + junta de 1 px no tom escuro; nó determinístico esparso | Miolo de madeira (scanner, altímetro) |
+| Rebite | 1 px claro a 2 px do canto da moldura | Frente do scanner, fundo do altímetro |
+| Fenda de redstone | Moldura escura 4×8 (vertical) ou 8×4 (horizontal) com miolo 2×6 de redstone; aceso usa `R/T/U` com brilho alternado, apagado `r/s/t` | Laterais que emitem |
+| Socket de dados | Anel 4×4 de metal escuro, centro mais escuro | Traseira, onde o cabo encaixa |
+| Lente | Borda no tom médio da lente; reflexo claro em cima à esquerda; 1 px de brilho azul (`#5371C6`) | Toda peça óptica |
+| Placa concêntrica | Retângulos concêntricos de latão alternando claro/escuro | Tampa do advanced |
+| Bocal escalonado | Cada degrau 2 unidades mais estreito e 1 à frente; anel médio, ponta clara, lente escura | Frente do scanner |
+
+### 8.4 Pipeline (script de bootstrap → Blockbench → exportador → testes)
+
+1. **Bootstrap** (`blockbench/<bloco>/create-base-model.mjs`): escreve o `.bbmodel`
+   inicial com os helpers de `blockbench/_tools/bbtools.mjs`. As texturas são
+   **mapas de caracteres escritos à mão**, um caractere por pixel, com as chaves de
+   `PALETTE` (seção 5); `checkMap` valida as dimensões de cada face e `blit` monta o
+   atlas. Ruído procedural é proibido. O bootstrap roda **uma vez**: rodá-lo de novo
+   sobrescreve o refino feito no Blockbench.
+2. **Refino no Blockbench:** silhueta, contraste e pixels finais, com a paleta `.gpl`
+   carregada e a grade de pixels ligada. Salvar com texturas incorporadas.
+3. **Export** (`blockbench/<bloco>/export-assets.mjs`): chama `exportBlockModel` do
+   `bbtools.mjs`, que grava o JSON do bloco, as variantes (`_powered`) e os PNGs do
+   nosso namespace. Falha com cubo rotacionado, coordenada fracionária, face fora de
+   1:1 ou textura não incorporada. Não exportar pelo menu do Blockbench.
+4. **Testes de assets** (`src/test/.../*AssetsTest.java`, regras comuns em
+   `SensorModelChecks`): densidade 1:1, coordenadas inteiras, PNG 16/32 opaco,
+   `powered` só troca o atlas, colisão segue o modelo, face funcional no lugar certo.
+5. **Item:** o modelo de item herda o de bloco e só ajusta `display` quando a face
+   funcional não aparece no inventário (o altímetro mostra a lente de baixo).
+
+### 8.5 Variante `powered`
+
+- Um segundo atlas idêntico, em que **só os pixels da fenda mudam**. Mesmos
+  elementos, mesmas UVs, mesma lista de texturas; o teste
+  `assertPoweredOnlySwapsAtlas` garante isso.
+- Uma variante acende todas as fendas juntas. Acender por canal exigiria um estado
+  por canal no bloco; só fazer se o jogo precisar.
+
+### 8.6 README por bloco
+
+Cada `blockbench/<bloco>/README.md` segue o mesmo esqueleto:
+
+1. Título com versão e família de material; link para este guia e referências diretas.
+2. **Identidade:** material, peça funcional, redstone, traseira, tampa (as pistas da
+   seção 7).
+3. **Peças:** tabela `elemento | volume | material`.
+4. **Texturas:** cada PNG com tamanho e regiões do atlas.
+5. **Exportação:** comando do exportador e aviso sobre o bootstrap.
+6. **Mudou a geometria?** classes de colisão/sockets e testes a rodar.
+7. **Pendente:** o que não foi verificado ou falta ligar no código.
+
+## 9. Mesa modular e módulos (v2.1)
+
+Os módulos da mesa ainda são v1 (lâmpadas, buzzer, FMS). Esta seção define como
+redesenhá-los na linguagem v2. As propostas abaixo foram aprovadas em 2026-10-27.
+
+### 9.1 Escala e grade
+
+Fatos do código (`ModularTableRenderer`, `PanelCoordinates`):
+
+- A base tem 3 unidades de espessura. A face exposta tem **3×3 células de 16/3
+  unidades** (≈ 5,33).
+- O módulo é renderizado **em escala de mundo**: 1 unidade do modelo = 1/16 de
+  bloco. O renderer leva o ponto `(8, 0, 8)` do modelo ao centro do footprint, na
+  superfície da mesa, e gira para mesas de parede/teto.
+
+Regras:
+
+- **Mesma densidade do resto do mod:** 1 texel = 1 unidade. Não modelar o módulo em
+  escala maior para o renderer encolher: os pixels ficariam menores que os da mesa e
+  dos blocos vizinhos.
+- Modelar com a mesa voltada para cima, **apoio em Y = 0** e centro em **X/Z = 8**.
+  Não embutir offsets nem a espessura da mesa.
+- Coordenadas inteiras. Para ficar centrado em 8, a largura e a profundidade de
+  cada peça visível do conjunto são **pares**.
+- Como a célula não é inteira, os texels do módulo não se alinham com os da base.
+  É esperado; não tentar compensar.
+
+### 9.2 Footprint, altura e orçamento
+
+Tamanho máximo da carcaça por número de células, com folga mínima de 1 unidade
+entre módulos vizinhos:
+
+| Células no eixo | Espaço da célula | Carcaça | Volume (eixo) |
+| --- | --- | --- | --- |
+| 1 | 5,33 | **4** | 6–10 |
+| 2 | 10,67 | **10** | 3–13 |
+| 3 | 16 | **14** | 1–15 |
+
+| Footprint | Carcaça (X × Z) | Exemplos |
+| --- | --- | --- |
+| 1×1 | 4×4 | lâmpada, buzzer |
+| 2×1 | 10×4 | lâmpada longa |
+| 2×3 | 10×14 | FMS |
+
+- **Altura:** 2–4 unidades acima da mesa. Até 6 só para peça funcional que precisa
+  ser vista de lado (alavanca, knob). Base/aro de 1 unidade + corpo/face.
+- **Elementos:** 1×1 com 2–5 cubos; 2×1 até 8; módulo de tela (2×3) até ~15.
+- **Texturas:** um atlas 16×16 por módulo pequeno, 32×32 para o de tela. Materiais
+  compartilhados entre módulos (aro, carcaça) vivem numa textura comum, para que as
+  variantes troquem só a peça funcional.
+- **Orientação:** Z baixo é o topo do painel (longe do piloto), como no FMS: a tela
+  ocupa as linhas de cima e o teclado, a de baixo. Módulos 2×1 são modelados no eixo
+  X; o renderer gira para 1×2.
+
+### 9.3 Família de material
+
+Segue a navigation table do Simulated e os instrumentos de latão:
+
+| Peça | Material | Motivo |
+| --- | --- | --- |
+| Base da mesa | Moldura de latão + tampo de madeira escura (motivo de casing) | Mesma família do altímetro e do GPWS; lê como "painel de instrumentos" |
+| Carcaça dos módulos | Metal escuro com aro de latão de 1 px | Contrasta com o tampo de madeira, sem competir com a peça funcional |
+| Peça funcional | Lente, mostrador de pergaminho, tecla ou grade de buzzer | Cor com função (seção 6) |
+
+### 9.4 Peças funcionais dos módulos
+
+- **Lâmpada:** inspirada no **nixie tube** do Create (`create:block/nixie_tube`) e
+  na lâmpada de sinal de trem (`create:block/signal_glow`): soquete opaco, tubo de
+  vidro translúcido sem face inferior e um filamento visível através do vidro. O
+  vidro tem alpha baixo e uniforme, com as laterais mais claras e o miolo mais
+  fundo, para ler como cilindro. O filamento é uma malha: cinza de metal escuro
+  quando apagado, xadrez de redstone quando aceso. Vidro, soquete e filamento são
+  texturas separadas (o renderer classifica as faces pelo nome do sprite); aceso e
+  apagado mantêm a geometria; a emissão pertence à lâmpada, não à mesa
+  (`docs/lamp-emission.md`). O vidro é a **única** peça que pode ser translúcida.
+- **Cores de alerta:** Warning = rampa de redstone. Caution = âmbar feito com os
+  tons claros do latão (`#E4B763`–`#FFEB8C`), porque o amarelo de sinalização saiu
+  da paleta.
+- **Buzzer:** grade de furos pintada (pixels escuros alternados) numa tampa de metal
+  escuro. As 16 facetas a 22,5° do v1 saem: uma carcaça quadrada de 4×4 com tampa
+  em degrau lê como "alto-falante do Create" sem rotação.
+- **Tela (FMS):** área de lente escura 1:1 dentro de moldura de latão; teclas como
+  cubos de 2×2 ou pintadas na tampa, nunca texto.
+- **Legibilidade de perto:** a 1 bloco, um módulo 1×1 ocupa poucos texels por face.
+  Cada pixel precisa de função: contorno, aro, lente, reflexo. Nada de textura de
+  material em peça de 4 unidades além do contorno.
+
+### 9.5 Estado dos módulos v1 frente à v2.1
+
+| Módulo | Divergências a corrigir no redesign |
+| --- | --- |
+| Lâmpada 1×1 | **v2.1 em 2026-10-27** (tubo nixie, 3 cubos, 4×4×4); faltam refino no Blockbench e validação no jogo: [README](../blockbench/lamp-module-1x1/README.md) |
+| Lâmpada 2×1 | 3,4 de profundidade e 2 de altura, com frações (0,5; 0,7; 1,2); é esticamento da 1×1 v1, o que dobra a largura dos texels |
+| Buzzer 1×1 | ~2,85 de diâmetro, 16 facetas rotacionadas, atlas 64×64, preto piano fora da paleta |
+| FMS 2×3 | 43 cubos, frações, atlas 64×64, prata fria e azul dessaturado fora da paleta |
+| Base da mesa | Placeholder de ferro |
+
+O 2×1 deixa de ser um esticamento: é um modelo próprio com a mesma linguagem e
+texturas compartilhadas.
+
+## 10. Fluxo de entrega
+
+1. **Novo projeto:** *Java Block/Item*, nome = id do bloco, resolução 32×32,
+   *Box UV* desligado. Na prática, gerado pelo bootstrap (seção 8.4).
 2. **Referência lado a lado:** importar no mesmo workspace o JSON do modelo
    análogo do Create ou do Simulated, extraído do jar, para comparar escala e
    densidade. Não exportar a referência.
-3. **Geometria:** snap de 1 unidade e camadas (seção 3), sem textura. Validar
-   a silhueta em cinza.
-4. **Texturas:** criar o PNG ou atlas, *UV Size* = tamanho do PNG e Auto UV.
-   Pintar com a paleta `.gpl`. Reaproveitar `create:block/...` onde couber.
-5. **Variantes:** `block` e `block_powered` só trocam a textura do indicador,
-   nunca a geometria.
-6. **Exportar:** *File → Export → Java Block/Item Model* para
-   `src/main/resources/.../models/block/`. Os PNGs vão para `textures/block/`.
-   Manter o `.bbmodel`, com texturas incorporadas, em `blockbench/<bloco>/`.
-7. **Comparar no jogo:** colocar o bloco entre casings de andesito/latão e num
-   casco de madeira, de dia e de noite, com e sem shader.
+3. **Geometria:** snap de 1 unidade e camadas (seção 3 ou 9), sem textura.
+   Validar a silhueta em cinza.
+4. **Texturas:** mapas de pixel com a paleta; refino no Blockbench Paint.
+   Reaproveitar `create:block/...` onde couber.
+5. **Variantes:** `block` e `block_powered` (ou aceso/apagado) só trocam
+   textura, nunca geometria.
+6. **Exportar** com o `export-assets.mjs` do bloco; manter o `.bbmodel`, com
+   texturas incorporadas, em `blockbench/<bloco>/`.
+7. **Testes** de assets e de colisão; README do bloco (seção 8.6).
+8. **Comparar no jogo:** colocar o bloco entre casings de andesito/latão e num
+   casco de madeira, de dia e de noite, com e sem shader. Módulos: na mesa, a 1
+   bloco, em mesa de chão, parede e teto.
 
 ### Checklist de entrega
 
-- [ ] Densidade 1:1 em todas as faces (pixel grid uniforme)
+- [ ] Densidade 1:1 em todas as faces (pixel grid uniforme; exportador verde)
 - [ ] Coordenadas inteiras (ou fração justificada no README do bloco)
-- [ ] Elementos dentro do orçamento da seção 3
+- [ ] Elementos dentro do orçamento (seção 3 para blocos, 9.2 para módulos)
 - [ ] ≥ 90% dos pixels com cores da paleta (seção 5) ou texturas do Create
-- [ ] Silhueta em camadas e peça funcional legível a 8 blocos
+- [ ] Motivos da seção 8.3 reutilizados onde couberem
+- [ ] Silhueta em camadas; peça funcional legível na distância de uso (seção 2)
 - [ ] Face funcional coerente com a direção real do código
-- [ ] Indicador de redstone escuro/aceso, se houver
+- [ ] Indicador de redstone escuro/aceso, se houver; variante só troca textura
 - [ ] Ao lado de casings do Create, parece da mesma família
-- [ ] `.bbmodel` atualizado, exportação e testes de assets verdes
+- [ ] Colisão/outline e testes de assets atualizados e verdes
+- [ ] `.bbmodel` e README do bloco atualizados; o que não foi verificado no
+      jogo está em "Pendente"
 
-## 10. Fontes
+## 11. Regras técnicas gerais
 
-- Jars locais: `create-1.21.1-6.0.10.jar` e
-  `create-aeronautics-bundled-1.21.1-1.3.2.jar` (aeronautics, simulated,
-  offroad).
-- [Galeria do Create Aeronautics no Modrinth](https://modrinth.com/mod/create-aeronautics/gallery)
-- [Create Aeronautics no CurseForge](https://www.curseforge.com/minecraft/mc-mods/create-aeronautics)
-- [Busca "aeronautics" no createmod.com](https://createmod.com/search?q=aeronautics),
-  mais as buscas airship, zeppelin, aeronautics plane, aeronautics helicopter e biplane.
-- [Create Aeronautics (Simulated) no createmod.com](https://createmod.com/de/mods/simulated)
+Valem independentemente da estética:
 
-## 11. Regras técnicas mantidas da v1
-
-Estas continuam valendo, independentemente da estética:
-
-- **Módulos da mesa:** modelar com a mesa voltada para cima, centro em
-  X/Z = 8 e apoio em Y = 0. O renderer posiciona e rotaciona; não embutir
-  offsets no modelo.
-- **Lâmpadas:** lente, base e núcleo são materiais separados. Aceso e apagado
-  mantêm a mesma geometria. A emissão pertence à lâmpada, não à mesa.
 - **Face funcional inequívoca** e coerente com a direção do código, inclusive
   em sublevels rotacionados.
 - **Sem dependência de shader:** a leitura é sem shader. Testar também com
   shaders (os glitches das lâmpadas com Complementary seguem em aberto, ver
   LÂMPADA-01).
-- Sem faces coplanares sobrepostas e sem cascas duplicadas. Colisão acompanha
-  a geometria relevante.
+- Colisão acompanha a geometria relevante.
 - O `.bbmodel` é a fonte. O JSON/PNG em `src/main/resources` é o asset de
   runtime e precisa ficar coerente com ele.
+
+## 12. Fontes
+
+- Jars locais: `create-1.21.1-6.0.10.jar` e
+  `create-aeronautics-bundled-1.21.1-1.3.2.jar` (aeronautics, simulated,
+  offroad), em `../sable-horses/run/mods/`.
+- [Galeria do Create Aeronautics no Modrinth](https://modrinth.com/mod/create-aeronautics/gallery)
+- [Create Aeronautics no CurseForge](https://www.curseforge.com/minecraft/mc-mods/create-aeronautics)
+- [Busca "aeronautics" no createmod.com](https://createmod.com/search?q=aeronautics),
+  mais as buscas airship, zeppelin, aeronautics plane, aeronautics helicopter e biplane.
+- [Create Aeronautics (Simulated) no createmod.com](https://createmod.com/de/mods/simulated)
+- Registro do brief original do Radar Altimeter v2: histórico do git deste arquivo
+  (commit `529f835`).

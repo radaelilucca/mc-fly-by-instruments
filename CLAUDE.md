@@ -8,8 +8,9 @@ Addon NeoForge 1.21.1 para Create Aeronautics. Documentação técnica em
 Sempre que o pedido envolver **modelar, texturizar, redesenhar ou ajustar o
 modelo** de qualquer bloco, item ou módulo do mod:
 
-1. **Leia antes `docs/visual-design-guide.md`** (guia visual v2: linguagem
-   Create / Create Aeronautics) e siga o checklist de entrega da seção 9.
+1. **Leia antes `docs/visual-design-guide.md`** (guia visual v2.1: linguagem
+   Create / Create Aeronautics) e siga o checklist de entrega da seção 10.
+   Partir da receita dos sensores (seção 8); módulos da mesa seguem a seção 9.
 2. **Use o Blockbench.** A fonte é o `.bbmodel` em `blockbench/<bloco>/`,
    com texturas incorporadas. JSON e PNG em `src/main/resources` são export.
 3. Consulte as referências locais antes de desenhar:
