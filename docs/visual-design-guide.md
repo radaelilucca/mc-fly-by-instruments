@@ -400,13 +400,13 @@ Segue a navigation table do Simulated e os instrumentos de latão:
 | Módulo | Divergências a corrigir no redesign |
 | --- | --- |
 | Lâmpada 1×1 | **v2.1 em 2026-10-27** (tubo nixie, 3 cubos, 4×4×4); faltam refino no Blockbench e validação no jogo: [README](../blockbench/lamp-module-1x1/README.md) |
-| Lâmpada 2×1 | 3,4 de profundidade e 2 de altura, com frações (0,5; 0,7; 1,2); é esticamento da 1×1 v1, o que dobra a largura dos texels |
+| Lâmpada 2×1 | **v2.1 em 2026-10-27** (tubo nixie horizontal, 3 cubos, 10×4×4, texturas da 1×1); faltam refino no Blockbench e validação no jogo: [README](../blockbench/lamp-module-2x1/README.md) |
 | Buzzer 1×1 | ~2,85 de diâmetro, 16 facetas rotacionadas, atlas 64×64, preto piano fora da paleta |
 | FMS 2×3 | 43 cubos, frações, atlas 64×64, prata fria e azul dessaturado fora da paleta |
 | Base da mesa | Placeholder de ferro |
 
-O 2×1 deixa de ser um esticamento: é um modelo próprio com a mesma linguagem e
-texturas compartilhadas.
+Variantes de tamanho de um módulo (como a lâmpada 2×1) são modelos próprios, nunca
+esticamentos: mesma linguagem, mesmas texturas, com regiões novas para as faces longas.
 
 ## 10. Fluxo de entrega
 

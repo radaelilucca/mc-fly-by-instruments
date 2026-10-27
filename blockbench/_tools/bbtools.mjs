@@ -2,7 +2,7 @@
 // Pixel art is authored as character maps whose keys come from PALETTE (guide §5 ramps);
 // never procedural noise. Create textures are referenced by id only (All Rights Reserved).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { deflateSync } from 'node:zlib';
+import { deflateSync, inflateSync } from 'node:zlib';
 import { randomUUID } from 'node:crypto';
 import assert from 'node:assert/strict';
 
@@ -115,6 +115,31 @@ export function writeProject(url, { name, elements, groups, textures }) {
   return project;
 }
 
+// Decodes an 8-bit RGB/RGBA PNG (what Blockbench and png() write) into 'r,g,b,a' strings per pixel.
+export function pixels(bytes) {
+  let i = 8, width, height, type; const idat = [];
+  while (i < bytes.length) {
+    const n = bytes.readUInt32BE(i), kind = bytes.toString('ascii', i + 4, i + 8), data = bytes.subarray(i + 8, i + 8 + n);
+    if (kind === 'IHDR') { width = data.readUInt32BE(0); height = data.readUInt32BE(4); type = data[9]; assert.equal(data[8], 8); }
+    if (kind === 'IDAT') idat.push(data);
+    i += 12 + n;
+  }
+  const bpp = { 2: 3, 6: 4 }[type]; assert.ok(bpp, `PNG colour type ${type}`);
+  const raw = inflateSync(Buffer.concat(idat)), stride = width * bpp, out = [];
+  let prev = Buffer.alloc(stride);
+  for (let y = 0; y < height; y++) {
+    const filter = raw[y * (stride + 1)], line = Buffer.from(raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1)));
+    for (let x = 0; x < stride; x++) {
+      const a = x >= bpp ? line[x - bpp] : 0, b = prev[x], c = x >= bpp ? prev[x - bpp] : 0;
+      const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+      line[x] += [0, a, b, (a + b) >> 1, pa <= pb && pa <= pc ? a : pb <= pc ? b : c][filter];
+    }
+    for (let x = 0; x < width; x++) out.push([...line.subarray(x * bpp, x * bpp + 3), bpp === 4 ? line[x * bpp + 3] : 255].join());
+    prev = line;
+  }
+  return out;
+}
+
 // --- Export -----------------------------------------------------------------------------
 const AXES = { north: [0, 1], south: [0, 1], east: [2, 1], west: [2, 1], up: [0, 2], down: [0, 2] };
 /**
@@ -122,8 +147,10 @@ const AXES = { north: [0, 1], south: [0, 1], east: [2, 1], west: [2, 1], up: [0,
  * variants: { suffix: { fromTexture: toTexture } } — e.g. { _powered: { terrain_scanner: 'terrain_scanner_powered' } }.
  * Fails on rotated cuboids, fractional coordinates or any face that is not 1 texel per unit.
  * renderType: e.g. 'minecraft:translucent' for glass; writeBase: false when only the variants are runtime models.
+ * textures: 'write' (this source owns its PNGs) or 'verify' (PNGs owned by another source must match pixel for pixel).
  */
-export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {}, renderType = null, writeBase = true }) {
+export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {}, renderType = null, writeBase = true,
+                                   textures: textureMode = 'write' }) {
   const project = JSON.parse(readFileSync(projectUrl, 'utf8'));
   assert.equal(project.meta.model_format, 'java_block');
   const base = t => t.name.replace(/\.png$/, '');
@@ -133,8 +160,13 @@ export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {}, 
     if ((t.namespace || NS) !== NS) continue;
     assert.ok(t.source?.startsWith('data:image/png;base64,'), `${t.name} must be embedded`);
     const target = new URL(`textures/block/${base(t)}.png`, assetsUrl);
+    const bytes = Buffer.from(t.source.split(',')[1], 'base64');
+    if (textureMode === 'verify') {
+      assert.deepEqual(pixels(bytes), pixels(readFileSync(target)), `${t.name} differs from the exported texture`);
+      continue;
+    }
     mkdirSync(new URL('./', target), { recursive: true });
-    writeFileSync(target, Buffer.from(t.source.split(',')[1], 'base64'));
+    writeFileSync(target, bytes);
   }
   const used = new Set();
   const elements = project.elements.map(c => {

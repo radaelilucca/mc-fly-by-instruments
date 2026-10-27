@@ -14,10 +14,13 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Lamp module 1x1 v2.1: guide §9 (table modules) and the nixie-style glass/filament split. */
+/** Lamp modules 1x1 and 2x1 v2.1: guide §9 (table modules) and the nixie-style glass/filament split. */
 class LampModuleAssetsTest {
     private static final String ROOT = "/assets/aeronautics_fly_by_instruments/";
     private static final String NS = "aeronautics_fly_by_instruments:block/";
+    /** Model name -> carcass bounds {minX, maxX, minZ, maxZ} (guide §9.2: 4 per cell, 10 for two). */
+    private static final Map<String, int[]> FOOTPRINTS = Map.of(
+            "lamp_module_1x1", new int[]{6, 10, 6, 10}, "lamp_module_2x1", new int[]{3, 13, 6, 10});
     private static final Map<String, int[]> FACE_AXES = Map.of(
             "north", new int[]{0, 1}, "south", new int[]{0, 1}, "east", new int[]{2, 1},
             "west", new int[]{2, 1}, "up", new int[]{0, 2}, "down", new int[]{0, 2});
@@ -43,8 +46,10 @@ class LampModuleAssetsTest {
     }
 
     @Test
-    void fitsOneCellOnTheGuideGridWithOneTexelPerUnit() throws Exception {
-        for (var name : new String[]{"lamp_module_1x1_off", "lamp_module_1x1_on"}) {
+    void fitsItsFootprintOnTheGuideGridWithOneTexelPerUnit() throws Exception {
+        for (var footprint : FOOTPRINTS.entrySet()) for (var state : new String[]{"_off", "_on"}) {
+            var name = footprint.getKey() + state;
+            int[] bounds = footprint.getValue();
             var model = model(name);
             assertEquals("minecraft:translucent", model.get("render_type").getAsString());
             var textures = model.getAsJsonObject("textures");
@@ -76,8 +81,8 @@ class LampModuleAssetsTest {
                             name + " " + cube.get("name") + "." + face.getKey() + ": 1 texel per unit");
                 }
             }
-            assertEquals(6, minX); assertEquals(10, maxX);
-            assertEquals(6, minZ); assertEquals(10, maxZ);
+            assertEquals(bounds[0], minX, name); assertEquals(bounds[1], maxX, name);
+            assertEquals(bounds[2], minZ, name); assertEquals(bounds[3], maxZ, name);
             assertEquals(0, minY, "Rests on the table surface");
             assertEquals(4, maxY, "Guide §9.2: 2-4 units tall");
             assertTrue(maxY / 16 <= PanelCoordinates.MODULE_TOP - 3.0 / 16 + 1e-9, "Selection volume covers the lamp");
@@ -86,8 +91,10 @@ class LampModuleAssetsTest {
 
     @Test
     void nixieTubeLayersAreSeparateTexturesAndOnlyTheFilamentSwaps() throws Exception {
-        var off = model("lamp_module_1x1_off");
-        var on = model("lamp_module_1x1_on");
+        for (var lamp : FOOTPRINTS.keySet()) assertNixieLayers(model(lamp + "_off"), model(lamp + "_on"));
+    }
+
+    private static void assertNixieLayers(JsonObject off, JsonObject on) {
         assertEquals(off.get("elements"), on.get("elements"), "Lit and unlit keep the geometry");
         Map<String, String> textures = new HashMap<>();
         for (var element : off.getAsJsonArray("elements")) {

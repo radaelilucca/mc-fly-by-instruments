@@ -85,7 +85,8 @@ estiver inteiramente dentro do grid e todas as células estiverem livres.
 Uma operação de remoção sobre qualquer célula coberta retira o módulo inteiro.
 
 O módulo `lamp` ocupa 1×1. O `lamp_2x1` ocupa 2×1 por padrão e alterna para 1×2
-com o scroll; a variante alonga a mesma geometria e gira junto com o footprint.
+com o scroll; seu modelo é um tubo horizontal com as mesmas texturas da 1×1 e gira
+junto com o footprint.
 Ambos os footprints são persistidos e expostos pelas dimensões do módulo na API.
 O `buzzer` ocupa sempre 1×1 e segue as mesmas regras de ocupação e remoção.
 O `fms` ocupa 2 células de largura × 3 de altura (2×3), preenchendo toda a altura

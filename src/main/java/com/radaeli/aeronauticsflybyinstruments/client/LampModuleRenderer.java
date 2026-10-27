@@ -27,10 +27,9 @@ import java.util.Set;
 /** Reuses the authored models, keeping the opaque housing out of the emissive pass. */
 final class LampModuleRenderer {
     static final RenderType EMISSIVE = RenderType.entityTranslucentEmissive(TextureAtlas.LOCATION_BLOCKS, false);
-    // v2.1 1x1 (glass + filament) and the legacy v1 2x1 (lens + emitter) until it is redesigned.
-    private static final Set<ResourceLocation> LENS = Set.of(texture("lamp_glass_red"), texture("lamp_lens_red"));
-    private static final Set<ResourceLocation> EMITTER = Set.of(texture("lamp_filament_on"), texture("lamp_filament_off"),
-            texture("lamp_emitter_on"), texture("lamp_emitter_off"));
+    // Shared by the 1x1 and 2x1 models: glass tube (lens) and filament (emitter).
+    private static final Set<ResourceLocation> LENS = Set.of(texture("lamp_glass_red"));
+    private static final Set<ResourceLocation> EMITTER = Set.of(texture("lamp_filament_on"), texture("lamp_filament_off"));
 
     private final ItemStack offStack;
     private final ItemStack onStack;

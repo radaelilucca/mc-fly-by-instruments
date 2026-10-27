@@ -1,214 +1,201 @@
 {
-  "credit": "Created in Blockbench for Aeronautics: Fly by Instruments",
+  "credit": "Made with Blockbench for Aeronautics: Fly by Instruments",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
   "render_type": "minecraft:translucent",
   "textures": {
-    "particle": "aeronautics_fly_by_instruments:block/lamp_housing",
-    "housing": "aeronautics_fly_by_instruments:block/lamp_housing",
-    "lens": "aeronautics_fly_by_instruments:block/lamp_lens_red",
-    "emitter": "aeronautics_fly_by_instruments:block/lamp_emitter_off"
+    "0": "aeronautics_fly_by_instruments:block/lamp_socket",
+    "1": "aeronautics_fly_by_instruments:block/lamp_glass_red",
+    "2": "aeronautics_fly_by_instruments:block/lamp_filament_off",
+    "particle": "aeronautics_fly_by_instruments:block/lamp_socket"
   },
   "elements": [
     {
+      "name": "socket",
       "from": [
-        4.6,
+        3,
         0,
-        6.3
+        6
       ],
       "to": [
-        11.4,
-        0.5,
-        9.7
+        13,
+        1,
+        10
       ],
       "faces": {
         "north": {
           "uv": [
-            0.25,
-            0.25,
-            0.75,
-            0.75
+            0,
+            4,
+            10,
+            5
           ],
-          "texture": "#housing"
-        },
-        "east": {
-          "uv": [
-            1.25,
-            0.25,
-            1.75,
-            0.75
-          ],
-          "texture": "#housing"
+          "texture": "#0"
         },
         "south": {
           "uv": [
-            2.25,
-            0.25,
-            2.75,
-            0.75
+            0,
+            4,
+            10,
+            5
           ],
-          "texture": "#housing"
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            4,
+            1
+          ],
+          "texture": "#0"
         },
         "west": {
           "uv": [
-            3.25,
-            0.25,
-            3.75,
-            0.75
+            0,
+            0,
+            4,
+            1
           ],
-          "texture": "#housing"
+          "texture": "#0"
         },
         "up": {
           "uv": [
-            4.25,
-            0.25,
-            4.75,
-            0.75
+            0,
+            6,
+            10,
+            10
           ],
-          "texture": "#housing"
+          "texture": "#0"
         },
         "down": {
           "uv": [
-            5.25,
-            0.25,
-            5.75,
-            0.75
+            0,
+            10,
+            10,
+            14
           ],
-          "texture": "#housing"
+          "texture": "#0"
         }
       }
     },
     {
+      "name": "glass",
       "from": [
-        4.6,
-        0.5,
-        6.3
+        3,
+        1,
+        6
       ],
       "to": [
-        11.4,
-        2,
-        9.7
+        13,
+        4,
+        10
       ],
       "faces": {
         "north": {
           "uv": [
-            3,
             0,
-            6,
-            2
+            4,
+            10,
+            7
           ],
-          "texture": "#lens"
-        },
-        "east": {
-          "uv": [
-            3,
-            2,
-            6,
-            4
-          ],
-          "texture": "#lens"
+          "texture": "#1"
         },
         "south": {
           "uv": [
-            3,
+            0,
             4,
-            6,
-            6
+            10,
+            7
           ],
-          "texture": "#lens"
+          "texture": "#1"
         },
-        "west": {
-          "uv": [
-            0,
-            6,
-            3,
-            8
-          ],
-          "texture": "#lens"
-        },
-        "up": {
+        "east": {
           "uv": [
             0,
             0,
-            3,
+            4,
             3
           ],
-          "texture": "#lens"
+          "texture": "#1"
         },
-        "down": {
+        "west": {
           "uv": [
             0,
-            3,
-            3,
-            6
+            0,
+            4,
+            3
           ],
-          "texture": "#lens"
+          "texture": "#1"
+        },
+        "up": {
+          "uv": [
+            0,
+            8,
+            10,
+            12
+          ],
+          "texture": "#1"
         }
       }
     },
     {
+      "name": "filament",
       "from": [
-        5.6,
-        0.7,
-        6.8
+        4,
+        1,
+        7
       ],
       "to": [
-        10.4,
-        1.2,
-        9.2
+        12,
+        3,
+        9
       ],
       "faces": {
         "north": {
           "uv": [
-            0.25,
-            0.25,
-            0.75,
-            0.75
+            0,
+            2,
+            8,
+            4
           ],
-          "texture": "#emitter"
-        },
-        "east": {
-          "uv": [
-            1.25,
-            0.25,
-            1.75,
-            0.75
-          ],
-          "texture": "#emitter"
+          "texture": "#2"
         },
         "south": {
           "uv": [
-            2.25,
-            0.25,
-            2.75,
-            0.75
+            0,
+            2,
+            8,
+            4
           ],
-          "texture": "#emitter"
+          "texture": "#2"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#2"
         },
         "west": {
           "uv": [
-            3.25,
-            0.25,
-            3.75,
-            0.75
+            0,
+            0,
+            2,
+            2
           ],
-          "texture": "#emitter"
+          "texture": "#2"
         },
         "up": {
           "uv": [
-            4.25,
-            0.25,
-            4.75,
-            0.75
+            0,
+            4,
+            8,
+            6
           ],
-          "texture": "#emitter"
-        },
-        "down": {
-          "uv": [
-            5.25,
-            0.25,
-            5.75,
-            0.75
-          ],
-          "texture": "#emitter"
+          "texture": "#2"
         }
       }
     }

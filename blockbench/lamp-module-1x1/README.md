@@ -35,6 +35,10 @@ Três cubos, coordenadas inteiras, sem rotação. Carcaça de 4×4×4 (guia, se�
 - `lamp_filament_off.png` e `lamp_filament_on.png`: lateral 2×2 e topo 2×2, nas mesmas
   posições.
 
+As mesmas texturas servem à [lâmpada 2×1](../lamp-module-2x1/README.md), com regiões extras
+para as faces longas. Os mapas de pixel das duas ficam em `lamp-textures.mjs`, e esta fonte é
+a dona dos PNGs: a 2×1 só confere se a cópia dela é igual.
+
 Os nomes das texturas são contrato com `LampModuleRenderer`, que separa as faces pelo
 sprite: soquete no passe opaco; vidro e filamento no passe emissivo quando a lâmpada está
 acesa. Uma cor nova (âmbar de Caution, com os tons claros do latão) troca só o vidro.
@@ -62,5 +66,3 @@ Mudou a geometria? Rode `LampModuleAssetsTest` e confira `PanelCoordinates.MODUL
 - Validação no jogo: emissão de 0 a 15 (`docs/lamp-emission.md`), mesa no chão, parede e
   teto, transformações de item e shaders. `preview.png` é um render local simplificado, sem o
   passe emissivo.
-- A lâmpada 2×1 continua v1 e usa as texturas antigas (`lamp_housing`, `lamp_lens_red`,
-  `lamp_emitter_*`), que saem quando ela for redesenhada.
