@@ -112,7 +112,10 @@ end
 ```
 
 Full API reference: [Radar Altimeter](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/radar-altimeter.md) ·
-[Terrain Scanners](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/terrain-scanner.md).
+[Terrain Scanners](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/terrain-scanner.md) ·
+[CC:Tweaked API and Lua examples](https://mods.radaeli.dev/en/mods/flight-safety-instruments/technical/cc-tweaked).
+
+Browse the [player guide](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/) for setup help and the [technical documentation](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) for sensor, network, FMS, Modular Table and GPWS references.
 
 ---
 
@@ -141,20 +144,7 @@ Longer ranges and shorter intervals cost more server time on big fleets.
 
 ---
 
-<p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/whats_next.png" alt="WHAT'S NEXT?" width="326"></p>
-
-Sensors are only the beginning. These are planned for future releases:
-
-- **Modular Instrument Table:** a cockpit panel with a 3×3 grid to install modules into.
-- **Lamp Modules** (1×1 and 2×1): warning lights for the panel.
-- **Buzzer Module:** audio alerts with adjustable volume.
-- **FMS Module and Navigator:** store waypoints and a navigation target.
-- **Avionics Cable and Network Bridge:** connect instruments into one data network and query it from CC:Tweaked.
-- **GPWS Computer:** a ground proximity warning system that turns sensor readings into "TERRAIN" and "PULL UP" alerts.
-
-You may already spot some of these in the creative tab marked **(Experimental)**. They
-have no recipes, are still being built and may change or break between versions, so
-please don't rely on them in a survival world yet.
+The **Modular Table**, lamp and buzzer modules, **FMS**, **Avionics Cable Network**, **Network Bridge** and **GPWS Computer** are available as **Experimental** content without recipes. Their behavior may change between versions. See the [technical guides](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) before using these blocks in a world you rely on.
 
 ---
 
@@ -173,4 +163,4 @@ to this page is appreciated.
 
 ---
 
-*Developing or contributing? See the [development guide](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/development.md) and the [technical documentation](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/README.md). What changed in each version: [CHANGELOG](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/CHANGELOG.md).*
+*Getting started: [player guide](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/). Developer references: [CC:Tweaked API and examples](https://mods.radaeli.dev/en/mods/flight-safety-instruments/technical/cc-tweaked) · [sensor behavior](https://mods.radaeli.dev/en/mods/flight-safety-instruments/technical/sensors) · [all technical guides](https://mods.radaeli.dev/en/mods/flight-safety-instruments/). Development setup: [source guide](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/development.md). What changed in each version: [CHANGELOG](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/CHANGELOG.md).*
