@@ -100,7 +100,8 @@ o módulo ou quebrar a mesa, tudo é gravado no item `fms_module` e acompanha o
 módulo até sua próxima instalação.
 
 Seu modelo (v2.1) tem carcaça de ferro industrial, tela escura numa moldura
-de latão na parte de cima e, embaixo, dois knobs de latão e duas teclas. A tela ainda é decorativa e opaca.
+de latão na parte de cima e, embaixo, dois knobs de latão e duas teclas. Com um waypoint selecionado, a tela mostra uma bússola que gira com a proa e marca o waypoint;
+sem destino, fica escura.
 Fonte editável: [Blockbench FMS 2×3](../blockbench/fms-module-2x3/README.md).
 
 ## Mesas unidas (painel)

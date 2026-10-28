@@ -30,6 +30,9 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
     private final LampModuleRenderer lamps2x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE_2X1.get());
     private final ItemStack buzzerStack = new ItemStack(ModBlocks.BUZZER_MODULE.get());
     private final ItemStack fmsStack = new ItemStack(ModBlocks.FMS_MODULE.get());
+    /** Per table and FMS origin cell: when the lock was first drawn, for the compass boot-in. */
+    private final java.util.Map<ModularTableBlockEntity, java.util.Map<Integer, Double>> compassLocks =
+            new java.util.WeakHashMap<>();
 
     public ModularTableRenderer(BlockEntityRendererProvider.Context context) {
         blocks = context.getBlockRenderDispatcher();
@@ -53,7 +56,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
             } else if (module.type().equals("buzzer")) {
                 renderBuzzer(table, module, poses, buffers, light, overlay);
             } else if (module.type().equals("fms")) {
-                renderFms(table, module, poses, buffers, light, overlay);
+                renderFms(table, module, partialTick, poses, buffers, light, overlay);
             } else {
                 // Keep a fallback for future module types without authored renderers.
                 var lampState = Blocks.REDSTONE_LAMP.defaultBlockState()
@@ -143,8 +146,8 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
         poses.popPose();
     }
 
-    private void renderFms(ModularTableBlockEntity table, PanelGrid.Module module, PoseStack poses,
-                           MultiBufferSource buffers, int light, int overlay) {
+    private void renderFms(ModularTableBlockEntity table, PanelGrid.Module module, float partialTick,
+                           PoseStack poses, MultiBufferSource buffers, int light, int overlay) {
         poses.pushPose();
         var offset = PanelCoordinates.modelOffset(module);
         poses.translate(offset.x, offset.y, offset.z);
@@ -158,6 +161,47 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
         var model = items.getModel(fmsStack, table.getLevel(), null, 0);
         items.renderModelLists(model, fmsStack, light, overlay, poses,
                 buffers.getBuffer(Sheets.solidBlockSheet()));
+        poses.popPose();
+        renderFmsCompass(table, module, partialTick, poses, buffers);
+    }
+
+    /** Compass rose on the lens while a waypoint is locked (FmsCompass). */
+    private void renderFmsCompass(ModularTableBlockEntity table, PanelGrid.Module module, float partialTick,
+                                  PoseStack poses, MultiBufferSource buffers) {
+        var cells = compassLocks.computeIfAbsent(table, ignored -> new java.util.HashMap<>());
+        int cell = module.row() * PanelGrid.SIZE + module.column();
+        var level = table.getLevel();
+        var waypoint = level == null ? null : table.fmsTarget(module.column(), module.row());
+        if (waypoint == null) {
+            cells.remove(cell);
+            return;
+        }
+        double seconds = (level.getGameTime() + partialTick) / 20.0;
+        double lockedAt = cells.computeIfAbsent(cell, ignored -> seconds);
+
+        // World heading and position of the screen, through the contraption's interpolated pose.
+        var facing = table.getBlockState().getValue(ModularTableBaseBlock.FACING);
+        var center = new Vec3((module.column() + module.width() / 2.0) / PanelGrid.SIZE, SURFACE,
+                (module.row() + module.height() / 2.0) / PanelGrid.SIZE);
+        Vec3 local = PanelCoordinates.fromPanel(facing, center);
+        Vec3 up = PanelCoordinates.fromPanel(facing, center.add(0, 0, -1)).subtract(local);
+        Vec3 normal = PanelCoordinates.fromPanel(facing, center.add(0, 1, 0)).subtract(local);
+        Vec3 position = Vec3.atLowerCornerOf(table.getBlockPos()).add(local);
+        if (dev.ryanhcode.sable.Sable.HELPER.getContaining(table) instanceof dev.ryanhcode.sable.sublevel.SubLevel subLevel) {
+            var pose = subLevel instanceof dev.ryanhcode.sable.sublevel.ClientSubLevel client
+                    ? client.renderPose(partialTick) : subLevel.logicalPose();
+            up = pose.transformNormal(up);
+            normal = pose.transformNormal(normal);
+            position = pose.transformPosition(position);
+        }
+        double bearing = waypoint.dimension().equals(level.dimension().location().toString())
+                ? FmsCompass.bearing(position.x, position.z, waypoint.x(), waypoint.z()) : Double.NaN;
+
+        poses.pushPose();
+        var offset = PanelCoordinates.modelOffset(module);
+        poses.translate(offset.x, offset.y, offset.z);
+        FmsCompassRenderer.render(poses, buffers, module.height() / 3.0f, FmsCompass.heading(up, normal), bearing,
+                FmsCompass.intro(seconds - lockedAt));
         poses.popPose();
     }
 

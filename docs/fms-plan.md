@@ -85,8 +85,9 @@ O FMS usa o modelo v2.1: carcaça de ferro industrial, tela de lente escura
 sem conteúdo rebaixada numa moldura de latão na parte de cima, e dois knobs
 de latão e duas teclas embaixo. Fonte e exportação:
 [Blockbench FMS 2×3](../blockbench/fms-module-2x3/README.md).
-O FMS Compass ainda usa a textura vanilla de bússola. O display funcional
-continua reservado para uma etapa posterior.
+O FMS Compass ainda usa a textura vanilla de bússola. Com um waypoint
+selecionado, a tela mostra uma bússola que gira com a proa do FMS (ou da
+contraption) e marca o rumo do waypoint com um dot de latão (só visual); o display funcional continua reservado para uma etapa posterior.
 
 ## Testes e aceite
 

@@ -401,6 +401,13 @@ tem arremate nas pontas, para emendar sem costura. Referência de implementaçã
   em degrau lê como "alto-falante do Create" sem rotação.
 - **Tela (FMS):** área de lente escura 1:1 dentro de moldura de latão; teclas como
   cubos de 2×2 ou pintadas na tampa, nunca texto.
+- **Conteúdo animado de tela** (exceção aprovada em 2026-10-28): o que a tela *exibe* não é
+  textura, é um display aceso. Pode sair da paleta e da grade de pixels: traços vetoriais
+  finos, desenhados pelo renderer em tempo real, sem iluminação do mundo, sobre a lente
+  apagada em preto. Grafia e marcas em branco (`#F2F2EA`); latão (`#E4B763`) só para o
+  marcador que importa. Texto só com a fonte do Minecraft. Tamanhos fixos em unidades do
+  modelo, proporcionais à lente. Primeiro uso: bússola do FMS
+  ([README](../blockbench/fms-module-2x3/README.md)).
 - **Legibilidade de perto:** a 1 bloco, um módulo 1×1 ocupa poucos texels por face.
   Cada pixel precisa de função: contorno, aro, lente, reflexo. Nada de textura de
   material em peça de 4 unidades além do contorno.

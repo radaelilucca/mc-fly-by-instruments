@@ -18,8 +18,36 @@ moldura e nos knobs. Sem teclado, sem teclas de seleção de linha, sem texto.
 **Relevo de 1 unidade:** todo detalhe (tela, knobs, teclas) sobe exatamente 1 acima da
 carcaça. A tela e a moldura são um único cubo; a moldura é pintada no topo dele.
 
-A tela é uma superfície opaca, sem conteúdo nem emissão, reservada para uma implementação
-posterior.
+## Bússola da tela
+
+Com um waypoint selecionado (travado), a lente fica preta e mostra uma **rosa de bússola** no
+estilo de um indicador de proa (HSI). Sem destino, a lente volta à textura normal.
+
+![Bússola: proa 0°, 30° e 278°, com o waypoint em 40°, 40° e 300°](compass-preview.png)
+
+- **Rosa de 360°:** marca curta a cada 10° e marca longa e grossa nos **8 pontos** (N, NE,
+  E, SE, S, SW, W, NW). Só os cardeais têm letra (N, E, S, W); os colaterais ficam só com a
+  marca. Letras e marcas em branco (`#F2F2EA`); as letras giram com a rosa, com o topo para
+  fora, como num HSI.
+- **Letras como geometria:** glifos 5×7 no estilo da fonte do Minecraft, desenhados como quads
+  no mesmo passe das marcas. A fonte do jogo usa outro pipeline de texto, que brigava em
+  profundidade com a lente conforme o ângulo da câmera e com shaders.
+- **Proa:** a rosa gira para que a proa do FMS fique sob o índice fixo no topo. A proa é a
+  direção do topo da tela no plano horizontal; em mesa de parede (topo da tela vertical), é a
+  direção para dentro do painel. Dentro de uma contraption do Sable, usa a pose interpolada de
+  render (`ClientSubLevel.renderPose(partialTick)`), então gira junto e sem tremer.
+- **Triângulo central:** contorno branco, fixo, apontando para o índice: é o próprio FMS.
+- **Waypoint:** dot de latão (`#E4B763`), centrado na faixa das marcas curtas, no
+  rumo do FMS até o waypoint. Some se o waypoint estiver em outra dimensão.
+- **Escala:** tudo em unidades do modelo, fixo em relação à lente de 6×6: raio 2,45, índice
+  0,32, marcas de grau 0,16 e dos pontos 0,49, letras de 0,5 com centro a 1,5, triângulo 0,72
+  de altura, dot de 0,34 de diâmetro. Nada depende da distância nem da resolução.
+- **Performance:** a geometria das marcas é calculada uma vez (`FmsCompass`); por quadro só
+  entram senos da proa e cerca de 130 quads (marcas, letras, dot, triângulo), sem alocação. A entrada dura 0,5 s (a rosa
+  cresce de 85% a 100% e acende).
+- Desenhado pelo `ModularTableRenderer` (`FmsCompassRenderer`), sem luz do mundo. Testes em
+  `FmsCompassTest` (marcas, rumo, proa no chão, teto, paredes e com a contraption girada).
+- Exceção à paleta e à grade de pixels registrada no guia (seção 9.4): é conteúdo de display.
 
 ## Peças
 
@@ -61,4 +89,6 @@ O modelo de item (`models/item/fms_module.json`) herda o de bloco. Mudou a geome
 - Validação no jogo: mesa no chão, parede e teto, saves legados 2×2 (o renderer achata a
   profundidade), transformações de item e shaders. `preview.png` é um render local
   simplificado (sem AO nem iluminação do jogo).
-- Conteúdo da tela.
+- Bússola: validação no jogo (sentido de giro numa contraption, mesa de parede e teto, nitidez
+  das letras a 1–2 blocos, saves 2×2 onde a lente achata, shaders). `compass-preview.png` é
+  uma emulação local, não um print do jogo.

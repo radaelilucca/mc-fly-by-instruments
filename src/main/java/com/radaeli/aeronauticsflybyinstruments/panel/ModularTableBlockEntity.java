@@ -376,6 +376,12 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
         return true;
     }
 
+    /** Destination selected on the FMS at this origin cell (synced to clients), or null; no copy. */
+    public FmsWaypoint fmsTarget(int column, int row) {
+        FmsModuleData data = fmsModules.get(cellKey(column, row));
+        return data == null ? null : data.selectedWaypoint().orElse(null);
+    }
+
     private FmsModuleData mutableFmsAt(int column, int row) {
         var module = grid.at(column, row).filter(found -> found.type().equals("fms"));
         if (module.isEmpty() || level == null) return null;
