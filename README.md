@@ -16,6 +16,10 @@ Every sensor works **on a moving ship** as well as on the ground. It turns and t
 your ship, never mistakes your own hull for an obstacle, and spots terrain, buildings
 and other ships alike.
 
+Want a real cockpit? The **experimental avionics suite** adds an **Avionics Computer** that
+turns your sensors into a ground proximity warning system, a **Modular Table** for warning
+lamps, buzzers and a flight management system, and **wires** to tie it all together.
+
 <p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/what_can_it_do.png" alt="WHAT CAN IT DO?" width="375"></p>
 
 Three sensor blocks, each with a different job and each recognizable at a glance.
@@ -59,6 +63,50 @@ on everything in front of the ship.
 - Left and right only wake up once the view is wide enough to see them.
 - Crafted by upgrading a regular Terrain Scanner.
 
+### The avionics suite (Experimental)
+
+These blocks are in the creative tab **without recipes**, and they may still change between
+versions. Try them, but don't rely on them in a world you care about yet.
+
+<p align="center" style="text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/renders/avionics-computer.png" alt="Avionics Computer" width="300"></p>
+
+#### Avionics Computer
+
+**A ground proximity warning system for your ship.** Connect it to your sensors and it
+watches them all, then warns you before you fly into trouble.
+
+- Warns about **terrain ahead**, **pull up**, a **fast descent**, **losing height** after
+  takeoff, flying **too low** and **banking too steeply**.
+- **Set it up once, then it just works:** no arming, no thresholds to tune. Pick a
+  sensitivity and switch off the functions you don't want.
+- A small screen on the front blinks amber or red with the alert. Press its button for a
+  self-test.
+
+<p align="center" style="text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/renders/modular-table.png" alt="Modular Table with modules" width="300"></p>
+
+#### Modular Table
+
+**Your cockpit panel.** A brass-and-wood slab with a 3 × 3 grid where you install modules.
+
+- **Warning lamps** (1×1 and 2×1, red or amber) and a **buzzer** show the computer's
+  alerts. Click a lit lamp to silence the alarm, like a Master Warning.
+- The **FMS** module stores waypoints and shows a compass to the selected one. Link an
+  **FMS Compass** to it and an Aeronautics Navigation Table follows your route.
+- Tables placed side by side join into one big panel. A table mounted straight on the
+  Avionics Computer is connected to it with no wire at all.
+
+<p align="center" style="text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/renders/avionics-wire.png" alt="Avionics Wire between an Avionics Computer and a Terrain Scanner" width="400"></p>
+
+#### Avionics Wire
+
+**Real wires, not blocks.** Mount brass **Wire Connectors** on your devices and iron
+**Wire Supports** along the hull, then run a black wire through them.
+
+- The wire hangs with a gentle sag and bends neatly through each support.
+- A ghost wire shows you the path, the length and the cost before you click.
+- Press **V** for the **Wiring View**: every wire shows through the hull, coloured by
+  whether its network is working.
+
 ---
 
 <p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/how-do-i-use-it.png" alt="HOW DO I USE IT?" width="371"></p>
@@ -81,6 +129,17 @@ on everything in front of the ship.
 > **Heads up:** on the Advanced Scanner, once one channel uses Redstone Link, the whole
 > sensor switches to Link. Give every channel you want to use a frequency pair.
 
+**Setting up the avionics suite:**
+
+1. Place an **Avionics Computer** and connect it to a Radar Altimeter (required) and any
+   Terrain Scanners with Avionics Wire.
+2. Open each Terrain Scanner and set **Looks at** to the side of the ship it watches.
+3. Mount a **Modular Table** and install lamps and a buzzer. They show the computer's
+   alerts right away.
+
+> **Heads up:** the computer never guesses which way a scanner faces. A Terrain Scanner
+> without a **Looks at** side does not count as looking ahead.
+
 **Sensors can't see into unloaded chunks.** A beam that reaches one simply doesn't count,
 so very long ranges near the edge of the loaded world may read less than you expect.
 
@@ -96,6 +155,8 @@ connect it with a wired modem, and read the raw data:
 | `radar_altimeter` | `getReading()`: status and altitude in blocks | `radar_altimeter_reading_changed` |
 | `terrain_scanner` | `getScan()`: every contact, with distance and direction | `terrain_scanner_scan_changed` |
 | `terrain_scanner_advanced` | Same as above, plus `getConfiguration()` and `setOpeningAngle(degrees)` | Same as above, plus `terrain_scanner_configuration_changed` |
+| `avionics_computer` *(Experimental)* | `getStatus()`, `getSensors()`, `getAlerts()`, plus sensitivity, inhibit and self-test | `avionics_alert_changed`, `avionics_status_changed`, `avionics_sensors_changed` |
+| `modular_table` *(Experimental)* | Installed modules, lamp and buzzer indications, FMS waypoints | `modular_table_changed`, `modular_table_alert_outputs_changed` |
 
 All three also expose their redstone setup: `getOutputs()`, `getOutputConfiguration()`,
 `setOutputRange(channel, min, max)` and `setLinkFrequencies(channel, first, second)`.
@@ -113,9 +174,9 @@ end
 
 Full API reference: [Radar Altimeter](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/radar-altimeter.md) ·
 [Terrain Scanners](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/terrain-scanner.md) ·
-[CC:Tweaked API and Lua examples](https://mods.radaeli.dev/en/mods/flight-safety-instruments/technical/cc-tweaked).
+[Computer Craft API and Lua examples](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/computer-craft).
 
-Browse the [player guide](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/) for setup help and the [technical documentation](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) for sensor, network, FMS, Modular Table and GPWS references.
+Browse the [online guide](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) for the sensors, the [Avionics Computer](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/avionics-computer), the [Modular Table](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/modular-table) and the [Avionics Wire](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/avionics-network).
 
 ---
 
@@ -131,6 +192,16 @@ Yes. These server config options apply to every sensor in the world:
 
 Longer ranges and shorter intervals cost more server time on big fleets.
 
+For the experimental avionics suite:
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `maxAvionicsNetworkBlocks` | 4096 | Largest avionics network, in connectors and devices |
+| `wireMaxSpan` | 24 | Longest wire span between two points, in blocks |
+| `wireMaxPoints` | 32 | Points per wire, ends included |
+| `wireBlocksPerItem` | 8 | Blocks of wire made by one Avionics Wire item |
+| `lampLightLevel` | 5 | Light given off by a lit table lamp (0 turns it off) |
+
 ---
 
 <p align="center" style="background-color: #F4ECD0; text-align: center;"><img src="https://raw.githubusercontent.com/radaelilucca/mc-fly-by-instruments/main/docs/gallery/section-titles/requirements.png" alt="REQUIREMENTS" width="355"></p>
@@ -144,7 +215,7 @@ Longer ranges and shorter intervals cost more server time on big fleets.
 
 ---
 
-The **Modular Table**, lamp and buzzer modules, **FMS**, **Avionics Cable Network**, **Network Bridge** and **Avionics Computer** are available as **Experimental** content without recipes. Their behavior may change between versions. See the [technical guides](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) before using these blocks in a world you rely on.
+The **Avionics Computer**, **Modular Table** and its modules, **FMS** and **Avionics Wire** are **Experimental** content without recipes. Their behavior may change between versions. See the [online guide](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) before using these blocks in a world you rely on.
 
 ---
 
@@ -163,4 +234,4 @@ to this page is appreciated.
 
 ---
 
-*Getting started: [player guide](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/). Developer references: [CC:Tweaked API and examples](https://mods.radaeli.dev/en/mods/flight-safety-instruments/technical/cc-tweaked) · [sensor behavior](https://mods.radaeli.dev/en/mods/flight-safety-instruments/technical/sensors) · [all technical guides](https://mods.radaeli.dev/en/mods/flight-safety-instruments/). Development setup: [source guide](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/development.md). What changed in each version: [CHANGELOG](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/CHANGELOG.md).*
+*Getting started: [player guide](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/). References: [Computer Craft API and examples](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/computer-craft) · [sensors](https://mods.radaeli.dev/en/mods/flight-safety-instruments/player/sensors) · [all guides](https://mods.radaeli.dev/en/mods/flight-safety-instruments/). Development setup: [source guide](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/docs/development.md). What changed in each version: [CHANGELOG](https://github.com/radaelilucca/mc-fly-by-instruments/blob/main/CHANGELOG.md).*
