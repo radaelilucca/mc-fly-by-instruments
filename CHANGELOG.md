@@ -5,6 +5,37 @@ All notable changes to Aeronautics: Fly by Instruments are documented in this fi
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-28
+
+An experimental avionics suite: a ground proximity warning computer, a cockpit panel and physical wires.
+
+### Added
+
+- Added the Avionics Computer, an experimental ground proximity warning system that reads your sensors and warns about terrain ahead, pull up, sink rate, altitude loss, flying too low and steep banks.
+- Added a status screen to the Avionics Computer with sensor roles, a sensitivity setting, per-function inhibit and a self-test button.
+- Added the experimental Avionics Wire, with brass Wire Connectors and iron Wire Supports, that hangs between devices to link them.
+- Added the Wiring View, toggled with V, which shows every wire through blocks coloured by network state.
+- Added cutting a single wire with a Create Wrench in the Wiring View.
+- Added a "Looks at" setting to Terrain Scanners to tell the Avionics Computer which side of the ship they watch.
+- Added joined Modular Tables: tables side by side form one panel, and modules can span several tables.
+- Added docking: a Modular Table mounted on an Avionics Computer joins its network without any wire.
+- Added lamp indications (GPWS warning, caution, INOP or a single function), amber lamps, and silencing the alarm by clicking a lit lamp.
+- Added a heading compass to the FMS screen that marks the selected waypoint.
+- Added block light from lit table lamps.
+
+### Changed
+
+- Changed the sensor screen to a new layout where changes apply immediately, with a new Redstone Link frequency picker.
+- Changed the look of the experimental Modular Table, lamps, FMS and avionics blocks to match the Create style.
+- Changed the Modular Table Base to 4 pixels thick, so modules sit 1 pixel higher.
+- Changed the required R-UI Lib version to 0.8.0 or newer.
+
+### Removed
+
+- Removed the GPWS Computer, which now loads as the Avionics Computer and keeps only its sensitivity.
+- Removed GPWS profiles, modes and custom alert rules.
+- Removed the `gpws` CC:Tweaked peripheral; programs must use `avionics_computer`.
+
 ## [0.1.0] - 2026-10-25
 
 First release, focused on flight sensors for Create Aeronautics.
