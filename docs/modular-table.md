@@ -99,8 +99,8 @@ da mesa e podendo começar em uma das duas colunas. Ele mantém UUID, waypoints 
 o módulo ou quebrar a mesa, tudo é gravado no item `fms_module` e acompanha o
 módulo até sua próxima instalação.
 
-Seu modelo tem carcaça grafite, aro prateado, tela preta nos dois terços
-superiores e teclado compacto abaixo. A tela ainda é decorativa e opaca.
+Seu modelo (v2.1) tem carcaça de ferro industrial, tela escura numa moldura
+de latão na parte de cima e, embaixo, dois knobs de latão e duas teclas. A tela ainda é decorativa e opaca.
 Fonte editável: [Blockbench FMS 2×3](../blockbench/fms-module-2x3/README.md).
 
 ## Mesas unidas (painel)

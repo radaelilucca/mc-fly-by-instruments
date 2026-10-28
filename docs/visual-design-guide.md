@@ -273,7 +273,9 @@ Reutilize estes desenhos antes de inventar outros:
    inicial com os helpers de `blockbench/_tools/bbtools.mjs`. As texturas são
    **mapas de caracteres escritos à mão**, um caractere por pixel, com as chaves de
    `PALETTE` (seção 5); `checkMap` valida as dimensões de cada face e `blit` monta o
-   atlas. Ruído procedural é proibido. O bootstrap roda **uma vez**: rodá-lo de novo
+   atlas. Todo cubo lista as **seis faces**; as escondidas vão como `texture: null` (o
+   `cube()` do `bbtools` preenche). O Blockbench 5.2 falha ao abrir um `.bbmodel` com face
+   faltando e mostra o projeto pela metade; o exportador recusa a fonte nesse caso. Ruído procedural é proibido. O bootstrap roda **uma vez**: rodá-lo de novo
    sobrescreve o refino feito no Blockbench.
 2. **Refino no Blockbench:** silhueta, contraste e pixels finais, com a paleta `.gpl`
    carregada e a grade de pixels ligada. Salvar com texturas incorporadas.
@@ -352,7 +354,8 @@ entre módulos vizinhos:
 | 2×1 | 10×4 | lâmpada longa |
 | 2×3 | 10×14 | FMS |
 
-- **Altura:** 2–4 unidades acima da mesa. Até 6 só para peça funcional que precisa
+- **Altura:** 2–4 unidades acima da mesa. Em módulo grande (FMS), detalhes sobre a carcaça
+  sobem só 1 unidade: relevos de 2 ou mais ficaram estranhos no jogo. Até 6 só para peça funcional que precisa
   ser vista de lado (alavanca, knob). Base/aro de 1 unidade + corpo/face.
 - **Elementos:** 1×1 com 2–5 cubos; 2×1 até 8; módulo de tela (2×3) até ~15.
 - **Texturas:** um atlas 16×16 por módulo pequeno, 32×32 para o de tela. Materiais
@@ -369,7 +372,7 @@ Segue a navigation table do Simulated e os instrumentos de latão:
 | Peça | Material | Motivo |
 | --- | --- | --- |
 | Base da mesa | Moldura de latão + tampo de madeira escura (motivo de casing) | Mesma família do altímetro e do GPWS; lê como "painel de instrumentos" |
-| Carcaça dos módulos | Metal escuro com aro de latão de 1 px | Contrasta com o tampo de madeira, sem competir com a peça funcional |
+| Carcaça dos módulos | Metal escuro com aro de latão de 1 px (o FMS usa ferro industrial: é o módulo grande da mesa) | Contrasta com o tampo de madeira, sem competir com a peça funcional |
 | Peça funcional | Lente, mostrador de pergaminho, tecla ou grade de buzzer | Cor com função (seção 6) |
 
 **Blocos que formam superfície contínua** (a base da mesa, e qualquer bloco futuro que se
@@ -409,7 +412,7 @@ tem arremate nas pontas, para emendar sem costura. Referência de implementaçã
 | Lâmpada 1×1 | **v2.1 em 2026-10-27** (tubo nixie, 3 cubos, 4×4×4); faltam refino no Blockbench e validação no jogo: [README](../blockbench/lamp-module-1x1/README.md) |
 | Lâmpada 2×1 | **v2.1 em 2026-10-27** (tubo nixie horizontal, 3 cubos, 10×4×4, texturas da 1×1); faltam refino no Blockbench e validação no jogo: [README](../blockbench/lamp-module-2x1/README.md) |
 | Buzzer 1×1 | ~2,85 de diâmetro, 16 facetas rotacionadas, atlas 64×64, preto piano fora da paleta |
-| FMS 2×3 | 43 cubos, frações, atlas 64×64, prata fria e azul dessaturado fora da paleta |
+| FMS 2×3 | **v2.1 em 2026-10-28** (carcaça de ferro industrial, tela em moldura de latão, 2 knobs de latão e 2 teclas, relevo de 1 unidade; 6 cubos, 10×3×14); faltam refino no Blockbench e validação no jogo: [README](../blockbench/fms-module-2x3/README.md) |
 | Base da mesa | **v2.1 em 2026-10-27** (latão + madeira escura, tampo rente, texturas conectadas); faltam refino no Blockbench e validação no jogo: [README](../blockbench/modular-table-base/README.md) |
 
 Variantes de tamanho de um módulo (como a lâmpada 2×1) são modelos próprios, nunca

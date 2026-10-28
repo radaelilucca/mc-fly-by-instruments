@@ -89,11 +89,15 @@ export function texture(name, size, { namespace = NS, source = null, relativePat
   };
 }
 export const face = (uv, tex) => ({ uv, texture: tex });
+// Blockbench 5.2 fails to open a .bbmodel whose cube lacks any of the six faces: faces that are
+// not given are written as disabled (texture null), which Blockbench neither renders nor exports.
+export const SIDES = ['north', 'east', 'south', 'west', 'up', 'down'];
+const allFaces = faces => Object.fromEntries(SIDES.map(side => [side, faces[side] ?? face([0, 0, 0, 0], null)]));
 export function cube(name, from, to, faces, color = 0) {
   return {
     name, box_uv: false, render_order: 'default', rescale: false, locked: false, shade: true,
     light_emission: 0, export: true, scope: 0, allow_mirror_modeling: true, from, to, autouv: 0, color,
-    origin: [8, 8, 8], faces, type: 'cube', uuid: randomUUID(),
+    origin: [8, 8, 8], faces: allFaces(faces), type: 'cube', uuid: randomUUID(),
   };
 }
 export function group(name, origin, children, color = 0) {
@@ -171,6 +175,7 @@ export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {}, 
   const used = new Set();
   const elements = project.elements.map(c => {
     assert.equal(c.type, 'cube');
+    assert.ok(SIDES.every(side => side in c.faces), `${c.name}: all six faces listed (Blockbench cannot open it otherwise)`);
     assert.ok(!c.rotation?.some(v => v !== 0), `${c.name}: cuboids stay unrotated`);
     for (const v of [...c.from, ...c.to]) assert.ok(Number.isInteger(v), `${c.name}: integer coordinates`);
     const size = [0, 1, 2].map(i => c.to[i] - c.from[i]);

@@ -81,9 +81,9 @@ a UI/API do FMS não despacha alertas ao GPWS.
 
 ## Aparência nesta entrega
 
-O FMS usa modelo e textura próprios, com carcaça grafite, aro prateado,
-teclas em relevo e display preto sem conteúdo. A região de display ocupa os
-dois terços superiores; o teclado ocupa o terço inferior. Fonte e exportação:
+O FMS usa o modelo v2.1: carcaça de ferro industrial, tela de lente escura
+sem conteúdo rebaixada numa moldura de latão na parte de cima, e dois knobs
+de latão e duas teclas embaixo. Fonte e exportação:
 [Blockbench FMS 2×3](../blockbench/fms-module-2x3/README.md).
 O FMS Compass ainda usa a textura vanilla de bússola. O display funcional
 continua reservado para uma etapa posterior.

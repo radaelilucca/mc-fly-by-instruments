@@ -1,115 +1,72 @@
-// Bootstrap only. Preserve subsequent Blockbench edits with export-assets.mjs.
-import { writeFileSync } from 'node:fs';
-import { deflateSync } from 'node:zlib';
-import { randomUUID } from 'node:crypto';
+// Bootstrap of the v2.1 FMS module 2x3. Writes fms_module_2x3.bbmodel.
+// Simple Create-style console: industrial iron housing (create:block/industrial_iron_block), a dark
+// lens screen in a brass frame, two brass knobs and two industrial-iron keys (guide §9.4).
+// Every detail stands 1 unit above the housing: relief is kept to a single pixel.
+// Modelled with the table facing up: rests on Y 0, centred on X/Z 8, 10 x 14 footprint (guide §9.2).
+// Low Z is the top of the panel (screen); the controls sit on the pilot side.
+// Refine in Blockbench afterwards; do NOT rerun over a refined source.
+import { texture, face, cube, group, writeProject, px, canvas, blit, checkMap } from '../_tools/bbtools.mjs';
 
-const size = 64;
-const pixels = Buffer.alloc(size * size * 4);
-function rect(x, y, width, height, rgb) {
-  for (let py = y; py < y + height; py++) for (let px = x; px < x + width; px++) {
-    pixels.set([...rgb, 255], (py * size + px) * 4);
-  }
-}
-rect(0, 0, 64, 64, [24, 29, 32]);
-// Atlas islands: faceplate, blank screen, keycaps, screws and side/underside.
-rect(0, 0, 20, 30, [52, 59, 69]);
-rect(0, 0, 20, 1, [93, 101, 108]);
-rect(0, 1, 1, 28, [76, 83, 92]);
-rect(19, 1, 1, 29, [36, 42, 49]);
-rect(1, 29, 18, 1, [36, 42, 49]);
-rect(24, 0, 16, 24, [8, 12, 15]);
-rect(24, 0, 16, 1, [18, 23, 27]);
-rect(24, 1, 1, 22, [15, 20, 24]);
-rect(25, 2, 14, 1, [11, 16, 20]);
-rect(44, 0, 8, 8, [157, 161, 163]);
-rect(44, 0, 8, 1, [209, 213, 215]);
-rect(44, 1, 1, 7, [186, 189, 191]);
-rect(51, 1, 1, 7, [106, 112, 116]);
-rect(45, 7, 6, 1, [106, 112, 116]);
-rect(44, 10, 4, 4, [27, 32, 36]);
-rect(44, 10, 4, 1, [78, 84, 89]);
-rect(45, 11, 2, 1, [167, 175, 176]);
-rect(50, 10, 6, 4, [27, 32, 36]);
-rect(50, 10, 6, 1, [73, 79, 86]);
-rect(52, 11, 2, 1, [151, 160, 163]);
-rect(44, 18, 4, 4, [129, 135, 138]);
-rect(45, 18, 2, 4, [57, 63, 68]);
-rect(44, 19, 4, 2, [57, 63, 68]);
-rect(50, 18, 4, 4, [30, 58, 73]);
-rect(50, 18, 4, 1, [79, 116, 134]);
-rect(51, 19, 2, 1, [160, 185, 190]);
-rect(24, 28, 20, 20, [29, 34, 39]);
-rect(0, 34, 20, 6, [45, 51, 60]);
-rect(0, 34, 20, 1, [78, 87, 95]);
-rect(0, 39, 20, 1, [24, 29, 32]);
-rect(44, 26, 16, 6, [109, 118, 124]);
-rect(44, 26, 16, 1, [186, 191, 194]);
-rect(44, 31, 16, 1, [77, 85, 93]);
-
-function crc32(bytes) {
-  let crc = 0xffffffff;
-  for (const byte of bytes) { crc ^= byte; for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0); }
-  return (crc ^ 0xffffffff) >>> 0;
-}
-function chunk(type, bytes) {
-  const data = Buffer.concat([Buffer.from(type), bytes]), count = Buffer.alloc(4), crc = Buffer.alloc(4);
-  count.writeUInt32BE(bytes.length); crc.writeUInt32BE(crc32(data));
-  return Buffer.concat([count, data, crc]);
-}
-const rows = Buffer.alloc(size * (size * 4 + 1));
-for (let y = 0; y < size; y++) pixels.copy(rows, y * (size * 4 + 1) + 1, y * size * 4, (y + 1) * size * 4);
-const header = Buffer.alloc(13); header.writeUInt32BE(size, 0); header.writeUInt32BE(size, 4); header[8] = 8; header[9] = 6;
-const png = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
-const elements = [], outliner = [];
-const islands = { panel: [0, 0, 20, 30], screen: [24, 0, 40, 24], metal: [44, 0, 52, 8],
-  key: [44, 10, 48, 14], function: [50, 10, 56, 14], screw: [44, 18, 48, 22], blue: [50, 18, 54, 22],
-  bottom: [24, 28, 44, 48], side: [0, 34, 20, 40], bezel: [44, 26, 60, 32] };
-function group(name, build) {
-  const start = elements.length; build();
-  outliner.push({ name, uuid: randomUUID(), origin: [8, 0, 8], children: elements.slice(start).map(e => e.uuid) });
-}
-function cube(name, from, to, material, top = material) {
-  elements.push({ name, type: 'cube', uuid: randomUUID(), from, to, origin: [8, 0, 8],
-    rotation: [0, 0, 0], box_uv: false, autouv: 0, rescale: false, shade: true,
-    faces: Object.fromEntries(['north', 'east', 'south', 'west', 'up', 'down'].map(side => [side,
-      { uv: islands[side === 'up' ? top : side === 'down' ? 'bottom' : material], texture: 0 }])) });
-}
-group('housing_and_mount', () => {
-  cube('solid_mounting_body', [3.25, 0, .75], [12.75, 1.8, 15.25], 'side', 'panel');
-  cube('graphite_faceplate', [3.5, 1.8, 1], [12.5, 2.05, 15], 'side', 'panel');
-});
-group('display_upper_two_thirds', () => {
-  cube('blank_display_reserved', [4.5, 2.05, 1.65], [11.5, 2.12, 9.85], 'screen');
-  cube('bezel_top', [4.5, 2.05, 1], [11.5, 2.35, 1.65], 'bezel', 'metal');
-  cube('bezel_bottom', [4.5, 2.05, 9.85], [11.5, 2.35, 10.5], 'bezel', 'metal');
-  cube('bezel_left', [3.5, 2.05, 1], [4.5, 2.35, 10.5], 'bezel', 'metal');
-  cube('bezel_right', [11.5, 2.05, 1], [12.5, 2.35, 10.5], 'bezel', 'metal');
-});
-group('line_select_keys', () => {
-  for (const x of [3.67, 11.67]) for (let row = 0; row < 4; row++) {
-    const z = 2.6 + row * 1.9;
-    cube(`line_select_${x < 8 ? 'left' : 'right'}_${row + 1}`, [x, 2.35, z], [x + .66, 2.55, z + .62], 'key');
-  }
-});
-group('compact_keypad_lower_third', () => {
-  for (let row = 0; row < 4; row++) for (let col = 0; col < 6; col++) {
-    const x = 3.95 + col * 1.37, z = 10.95 + row * .95;
-    cube(`key_${row + 1}_${col + 1}`, [x, 2.05, z], [x + 1.05, 2.3, z + .65], 'key',
-      row === 0 ? 'function' : row === 3 && col >= 4 ? 'blue' : 'key');
-  }
-});
-group('corner_fasteners', () => {
-  for (const x of [3.65, 11.95]) for (const z of [1.2, 14.4]) {
-    cube(`fastener_${x}_${z}`, [x, z < 8 ? 2.35 : 2.05, z], [x + .4, z < 8 ? 2.45 : 2.15, z + .4], 'screw');
-  }
-});
-const project = {
-  meta: { format_version: '4.10', model_format: 'java_block', box_uv: false },
-  name: 'fms_module_2x3', java_block_version: '1.9', ambientocclusion: true, visible_box: [1, 1, 0],
-  resolution: { width: 64, height: 64 }, elements, outliner,
-  textures: [{ name: 'fms_module', namespace: 'aeronautics_fly_by_instruments', folder: 'block', id: '0',
-    uuid: randomUUID(), width: 64, height: 64, uv_width: 64, uv_height: 64, particle: true, internal: true,
-    saved: false, source: `data:image/png;base64,${png.toString('base64')}` }]
+// --- Atlas (32 x 32, pixels = model units) ---------------------------------------------------
+const MAPS = {
+  // Brass frame lit top-left, shaded bottom-right, around a dark lens with a blue glint.
+  // The lens is reserved for screen content later.
+  screenTop: ['87777776', '7VQOOON4', '7QYNNML4', '7ONNMLL4', '7ONMMLL4', '7NMLLLL4', '7MLLLLL4', '64444443'],
+  screenLit: ['46666664'],
+  screenShaded: ['35555553'],
+  // Brass knobs: a dark notch on the cap points like a dial.
+  knobSide: ['64'],
+  knobTopLeft: ['83', '65'],
+  knobTopRight: ['38', '56'],
+  // Keys: light industrial-iron caps with a dark rim, so they read against the housing.
+  keyTop: ['Wv'],
+  keySide: ['on'],
+  keyEnd: ['n'],
 };
-writeFileSync(new URL('fms_module_2x3.bbmodel', import.meta.url), JSON.stringify(project));
-console.log(`Prepared ${elements.length} editable cubes, centered at X/Z=8 with mounting face Y=0.`);
+export const UV = {
+  screenTop: [0, 0, 8, 8], screenLit: [0, 8, 8, 9], screenShaded: [0, 9, 8, 10],
+  knobSide: [8, 0, 10, 1], knobTopLeft: [8, 2, 10, 4], knobTopRight: [10, 2, 12, 4],
+  keyTop: [8, 5, 10, 6], keySide: [8, 6, 10, 7], keyEnd: [10, 5, 11, 6],
+};
+function atlas() {
+  const img = canvas(32, 32, 'w');
+  for (const [name, map] of Object.entries(MAPS)) {
+    const [u0, v0, u1, v1] = UV[name];
+    blit(img, checkMap(name, map, u1 - u0, v1 - v0), u0, v0);
+  }
+  return img;
+}
+
+// Create's assets are All Rights Reserved: reference them by id, never embed their pixels in this
+// repo. For the Blockbench preview, keep a local copy in reference/create-textures/ (gitignored).
+const textures = [
+  texture('fms_module', 32, { source: atlas() }),                                     // 0
+  texture('industrial_iron_block', 16, { namespace: 'create', particle: true,
+    relativePath: '../../reference/create-textures/industrial_iron_block.png' }),      // 1
+];
+const A = name => face(UV[name], 0);
+const iron = region => face(px(16, region), 1);
+
+const elements = [
+  // Crops of the Create texture keep its dark rim on the housing edges.
+  cube('housing', [3, 0, 1], [13, 2, 15], {
+    north: iron([3, 14, 13, 16]), south: iron([3, 14, 13, 16]), east: iron([1, 14, 15, 16]),
+    west: iron([1, 14, 15, 16]), up: iron([3, 1, 13, 15]), down: iron([3, 1, 13, 15]),
+  }, 0),
+  cube('screen', [4, 2, 2], [12, 3, 10], { up: A('screenTop'), north: A('screenLit'),
+    west: A('screenLit'), south: A('screenShaded'), east: A('screenShaded') }, 3),
+  ...[['knob_left', 4, 'knobTopLeft'], ['knob_right', 10, 'knobTopRight']].map(([name, x, top]) =>
+    cube(name, [x, 2, 12], [x + 2, 3, 14], { north: A('knobSide'), south: A('knobSide'),
+      east: A('knobSide'), west: A('knobSide'), up: A(top) }, 3)),
+  ...[['key_upper', 11], ['key_lower', 13]].map(([name, z]) =>
+    cube(name, [7, 2, z], [9, 3, z + 1], { north: A('keySide'), south: A('keySide'),
+      east: A('keyEnd'), west: A('keyEnd'), up: A('keyTop') }, 1)),
+];
+const groups = [
+  group('housing', [8, 0, 8], elements.slice(0, 1)),
+  group('display', [8, 2, 6], elements.slice(1, 2), 3),
+  group('controls', [8, 2, 12], elements.slice(2), 1),
+];
+writeProject(new URL('fms_module_2x3.bbmodel', import.meta.url),
+  { name: 'fms_module_2x3', elements, groups, textures });
+console.log(`Wrote fms_module_2x3.bbmodel: ${elements.length} cubes, ${textures.length} textures.`);
