@@ -1,6 +1,6 @@
 # Mesa modular — montagem e interações
 
-A base mantém espessura de 3/16 de bloco, com moldura de latão e tampo de
+A base mantém espessura de 4/16 de bloco, com moldura de latão e tampo de
 madeira escura. Mesas vizinhas no mesmo plano e na mesma face formam um painel
 contínuo: a moldura contorna o conjunto (texturas conectadas, veja a
 [fonte visual da base](../blockbench/modular-table-base/README.md)).
@@ -49,6 +49,10 @@ Sua fonte
 editável está em [Blockbench: buzzer 1×1](../blockbench/buzzer-module-1x1/README.md).
 
 ## Montagem
+
+A mesa vai em qualquer face sólida. Também pode ir em qualquer face do Avionics
+Computer, inclusive nas laterais recuadas: aí fica **acoplada** e entra na rede
+do computador sem cabo nem fio ([rede](avionics-network.md)).
 
 Todas as operações físicas, o preview e a rotação usam **somente a mão principal**.
 A secundária não instala nem remove módulos, mesmo quando a principal está vazia.

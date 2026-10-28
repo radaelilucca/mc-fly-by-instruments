@@ -15,8 +15,10 @@ gira para chão, parede e teto.
 - **Tampo** de tábuas horizontais de madeira escura (3 px + junta de 1 px, emendas alternadas).
 - **Moldura** de latão de 2 px: contorno no 2º tom, bisel claro em cima/esquerda e mais escuro
   embaixo/direita (o motivo de casing dos scanners).
-- **Lateral** em faixa de latão de 3 px com rebites a cada 8 px, sem arremate nas pontas.
-- **Tampo rente**, sem moldura em relevo: os módulos apoiam em Y = 3 e as células da borda
+- **Lateral** em faixa de latão de 4 px com rebites a cada 8 px, sem arremate nas pontas.
+- **4 px de espessura** (`PanelCoordinates.SURFACE`): o corpo de 4 px do Wire Connector encaixa
+  na borda.
+- **Tampo rente**, sem moldura em relevo: os módulos apoiam em Y = 4 e as células da borda
   ficam sobre a moldura, então um aro saliente atravessaria a carcaça deles.
 
 ## Texturas conectadas
@@ -37,7 +39,7 @@ cada um com `TableConnections.tile`; as laterais voltadas para outra mesa somem.
 função só do pixel, por isso quartos de texturas diferentes emendam sem costura. Nenhum estado
 de bloco novo: a conexão é lida dos vizinhos na montagem do chunk.
 
-- `modular_table_side.png`: faixa da lateral nas linhas 0–2 (16×3); o resto repete a faixa.
+- `modular_table_side.png`: faixa da lateral nas linhas 0–3 (16×4); o resto repete a faixa.
 - O fundo usa `modular_table_top_wood` e é cortado contra o suporte (`cullface: down`).
 
 Os nomes das texturas são contrato com `ModularTableModels` e `ModularTableAssetsTest`.

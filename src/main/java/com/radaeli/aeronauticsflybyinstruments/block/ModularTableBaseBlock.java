@@ -53,13 +53,13 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
     private static final ResourceLocation CREATE_WRENCH_ID =
             ResourceLocation.fromNamespaceAndPath("create", "wrench");
 
-    // Match the Create Copycat Panel's 3-pixel thickness, without material copying.
-    private static final VoxelShape UP = box(0, 0, 0, 16, 3, 16);
-    private static final VoxelShape DOWN = box(0, 13, 0, 16, 16, 16);
-    private static final VoxelShape NORTH = box(0, 0, 13, 16, 16, 16);
-    private static final VoxelShape SOUTH = box(0, 0, 0, 16, 16, 3);
-    private static final VoxelShape WEST = box(13, 0, 0, 16, 16, 16);
-    private static final VoxelShape EAST = box(0, 0, 0, 3, 16, 16);
+    // 4 px (PanelCoordinates.SURFACE): a wire connector's body fits the edge.
+    private static final VoxelShape UP = box(0, 0, 0, 16, 4, 16);
+    private static final VoxelShape DOWN = box(0, 12, 0, 16, 16, 16);
+    private static final VoxelShape NORTH = box(0, 0, 12, 16, 16, 16);
+    private static final VoxelShape SOUTH = box(0, 0, 0, 16, 16, 4);
+    private static final VoxelShape WEST = box(12, 0, 0, 16, 16, 16);
+    private static final VoxelShape EAST = box(0, 0, 0, 4, 16, 16);
 
     public ModularTableBaseBlock(Properties properties) {
         super(properties);
@@ -84,8 +84,15 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
     @Override
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction facing = state.getValue(FACING);
-        BlockPos supportPos = pos.relative(facing.getOpposite());
-        return level.getBlockState(supportPos).isFaceSturdy(level, supportPos, facing);
+        BlockPos supportPos = support(state, pos);
+        BlockState support = level.getBlockState(supportPos);
+        // Any face of the Avionics Computer, recessed sides included: the table docks to it (one network device).
+        return support.is(ModBlocks.AVIONICS_COMPUTER.get()) || support.isFaceSturdy(level, supportPos, facing);
+    }
+
+    /** The block the table is mounted on. */
+    public static BlockPos support(BlockState state, BlockPos pos) {
+        return pos.relative(state.getValue(FACING).getOpposite());
     }
 
     public static boolean isCreateWrench(ItemStack stack) {
@@ -247,7 +254,7 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
                 var module = placed.module();
                 double x = Math.max(0, placed.column() / 3.0 + 0.06);
                 double z = Math.max(0, placed.row() / 3.0 + 0.06);
-                var start = PanelCoordinates.fromPanel(facing, new Vec3(x, 3.0 / 16, z));
+                var start = PanelCoordinates.fromPanel(facing, new Vec3(x, PanelCoordinates.SURFACE, z));
                 var end = PanelCoordinates.fromPanel(facing, new Vec3(
                         Math.min(1, (placed.column() + module.width()) / 3.0 - 0.06), PanelCoordinates.MODULE_TOP,
                         Math.min(1, (placed.row() + module.height()) / 3.0 - 0.06)));

@@ -19,6 +19,15 @@ public final class ModConfig {
     public static final ModConfigSpec.IntValue LAMP_LIGHT_LEVEL = BUILDER
             .comment("Block light emitted by a modular table with a fully lit lamp; 0 disables it.")
             .defineInRange("lampLightLevel", 5, 0, 15);
+    public static final ModConfigSpec.IntValue WIRE_MAX_SPAN = BUILDER
+            .comment("Longest Avionics Wire span between two consecutive connectors/supports, in blocks.")
+            .defineInRange("wireMaxSpan", 24, 2, 64);
+    public static final ModConfigSpec.IntValue WIRE_MAX_POINTS = BUILDER
+            .comment("Most connectors and supports a single Avionics Wire may pass through, ends included.")
+            .defineInRange("wireMaxPoints", 32, 2, 128);
+    public static final ModConfigSpec.IntValue WIRE_BLOCKS_PER_ITEM = BUILDER
+            .comment("Blocks of wire made from one Avionics Wire item (costs round up).")
+            .defineInRange("wireBlocksPerItem", 8, 1, 64);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private ModConfig() {}

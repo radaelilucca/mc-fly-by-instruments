@@ -10,6 +10,7 @@
 - [Avionics Cable Network: topologia e API CC:Tweaked](avionics-network.md)
 - [FMS: plano, waypoints, Navigator e canais](fms-plan.md)
 - [Avionics Cable: modelo Blockbench e encaixe adaptativo nos sensores](avionics-cable-visuals.md)
+- [Avionics Wire: fios físicos, conectores, suportes e Wiring View](avionics-wire.md) ([plano](avionics-wire-plan.md))
 - [Radar Altimeter: amostragem, leituras e API CC:Tweaked](radar-altimeter.md)
 - [Terrain Scanner: varreduras, cobertura e API CC:Tweaked](terrain-scanner.md)
 - [Avionics Computer: sensores, função GPWS e API CC:Tweaked](avionics-computer.md)

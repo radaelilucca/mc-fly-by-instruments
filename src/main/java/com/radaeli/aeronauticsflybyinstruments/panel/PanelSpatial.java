@@ -17,7 +17,7 @@ public final class PanelSpatial {
         double emitterHeight = module.type().equals("buzzer") ? 1.9 / 16.0 : 0;
         Vec3 panel = PanelCoordinates.fromPanel(table.getBlockState().getValue(ModularTableBaseBlock.FACING),
                 new Vec3((module.column() + module.width() / 2.0) / PanelGrid.SIZE,
-                        3.0 / 16.0 + emitterHeight, (module.row() + module.height() / 2.0) / PanelGrid.SIZE));
+                        PanelCoordinates.SURFACE + emitterHeight, (module.row() + module.height() / 2.0) / PanelGrid.SIZE));
         return toWorld(table, Vec3.atLowerCornerOf(table.getBlockPos()).add(panel.x, panel.y, panel.z));
     }
 

@@ -85,7 +85,7 @@ class LampModuleAssetsTest {
             assertEquals(bounds[2], minZ, name); assertEquals(bounds[3], maxZ, name);
             assertEquals(0, minY, "Rests on the table surface");
             assertEquals(4, maxY, "Guide §9.2: 2-4 units tall");
-            assertTrue(maxY / 16 <= PanelCoordinates.MODULE_TOP - 3.0 / 16 + 1e-9, "Selection volume covers the lamp");
+            assertTrue(maxY / 16 <= PanelCoordinates.MODULE_TOP - PanelCoordinates.SURFACE + 1e-9, "Selection volume covers the lamp");
         }
     }
 

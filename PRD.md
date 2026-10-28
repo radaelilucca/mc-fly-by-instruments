@@ -194,6 +194,8 @@ Requisitos:
 
 O cabo acompanhará a contraption dentro do sublevel. A topologia física deverá ser significativa para a construção, sem exigir configuração manual de frequências.
 
+**Atualização (2026-10-28):** o Avionics Wire soma um segundo meio físico, sem substituir o cabo: fios pretos entre Wire Connectors (latão) apoiados em Wire Supports (ferro industrial), com o modo Wiring View. A rede é a mesma; ver [docs/avionics-wire.md](docs/avionics-wire.md).
+
 ### 4.6 Network Bridge
 
 A Network Bridge será o gateway CC:Tweaked para consultar a topologia completa alcançável pela rede de Avionics Cable. Cada instrumento e componente continuará expondo sua própria peripheral independente; a bridge não substitui nem representa os métodos/eventos locais desses dispositivos.

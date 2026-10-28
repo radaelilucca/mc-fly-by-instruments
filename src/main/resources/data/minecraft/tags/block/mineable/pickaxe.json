@@ -1,4 +1,8 @@
 {
   "replace": false,
-  "values": ["aeronautics_fly_by_instruments:modular_table_base"]
+  "values": [
+    "aeronautics_fly_by_instruments:modular_table_base",
+    "aeronautics_fly_by_instruments:wire_connector",
+    "aeronautics_fly_by_instruments:wire_support"
+  ]
 }

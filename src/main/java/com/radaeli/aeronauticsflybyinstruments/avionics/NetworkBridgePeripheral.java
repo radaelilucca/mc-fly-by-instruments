@@ -81,7 +81,7 @@ public final class NetworkBridgePeripheral implements IPeripheral {
         return Map.of("status", snapshot.status().name().toLowerCase(java.util.Locale.ROOT),
                 "connected", snapshot.status() == NetworkStatus.CONNECTED,
                 "complete", snapshot.complete(), "cableCount", snapshot.cableCount(),
-                "endpointCount", snapshot.endpointCount());
+                "endpointCount", snapshot.endpointCount(), "wireCount", snapshot.wireCount());
     }
 
     private static Map<String, Object> describeDevice(NetworkDevice device) {

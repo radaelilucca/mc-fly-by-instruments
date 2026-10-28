@@ -6,13 +6,15 @@ import net.minecraft.world.phys.Vec3;
 public final class PanelCoordinates {
     private PanelCoordinates() {}
 
-    /** Top of the module selection volume: table surface (3 px) plus the tallest module (4 px). */
-    public static final double MODULE_TOP = 7.0 / 16;
+    /** Table thickness: modules rest on it. 4 px, so a wire connector's body fits the table edge. */
+    public static final double SURFACE = 4.0 / 16;
+    /** Top of the module selection volume: table surface plus the tallest module (4 px). */
+    public static final double MODULE_TOP = SURFACE + 4.0 / 16;
 
     /** Translation for a raw model centered at X/Z=8 pixels, with its mounting base at Y=0. */
     public static Vec3 modelOffset(PanelGrid.Module module) {
         return new Vec3((module.column() + module.width() / 2.0) / PanelGrid.SIZE - 0.5,
-                3.0 / 16, (module.row() + module.height() / 2.0) / PanelGrid.SIZE - 0.5);
+                SURFACE, (module.row() + module.height() / 2.0) / PanelGrid.SIZE - 0.5);
     }
 
     /** Convert block-local coordinates into a panel whose exposed face points up. */

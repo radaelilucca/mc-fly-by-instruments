@@ -172,6 +172,7 @@ Arquivos: `blockbench/_palette/create-aeronautics.gpl` (Blockbench) e
 | Lente escura | `#13161D` `#171B23` `#20232A` `#282C37` `#333846` `#464C5F` | lente do laser sensor, vidros ópticos |
 | Gema azul | `#5059AB` `#5371C6` | gimbal, receivers (par com a gema vermelha); brilho de lente |
 | Lona | `#868480` `#9B9892` `#B6AEA1` `#CEC4B5` `#E4E4DF` `#F1F1F0` | envelopes, velas |
+| Fio isolado | `#141416` `#1B1B1E` `#232326` (+ `#2B2B2B` do metal escuro) | **só** o fio do Avionics Wire (aprovada em 2026-10-28) |
 
 **Fora da paleta:** azul-petróleo de identidade (`#31657E`) e amarelo de
 sinalização (`#E4A92F`), que não aparecem em nenhuma textura do Create ou do
@@ -201,6 +202,7 @@ cobre é fluidos e vapor, ferro industrial é a parte pesada do Aeronautics.
 | Mesa modular e módulos | Ver seção 9.3 (base v2.1 em 2026-10-27) | navigation table, nixie tube, display link, gauges |
 | Avionics Computer (experimental, ex-GPWS Computer) | **Ferro industrial + latão, sem madeira** (v2.1 em 2026-10-28): ferro dominante, latão no acabamento, tela frontal com um estado por textura | navigation table, stockpile switch, industrial iron (Aeronautics) |
 | Avionics Cable (experimental) | **Ferro industrial**, latão só na luva do conector (base v2.1 em 2026-10-27) | rope, belts, fluid pipe |
+| Avionics Wire (experimental) | Fio **preto** (rampa Fio isolado), **Wire Connector em latão** (ponto de dados), **Wire Support em ferro industrial** (braçadeira: o fio passa por dentro). Nós podem ter uma haste de até 2 px abaixo de Y = 0, dentro do bloco hospedeiro, para encostar em blocos com recuo. Base de 2026-10-28 | rope connector do Simulated, luva do Avionics Cable, bearings do Aeronautics |
 
 ### Diferenciação entre os sensores
 
@@ -319,7 +321,7 @@ redesenhá-los na linguagem v2. As propostas abaixo foram aprovadas em 2026-10-2
 
 Fatos do código (`ModularTableRenderer`, `PanelCoordinates`):
 
-- A base tem 3 unidades de espessura. A face exposta tem **3×3 células de 16/3
+- A base tem 4 unidades de espessura (`PanelCoordinates.SURFACE`; o corpo de 4 px do Wire Connector encaixa na borda). A face exposta tem **3×3 células de 16/3
   unidades** (≈ 5,33).
 - O módulo é renderizado **em escala de mundo**: 1 unidade do modelo = 1/16 de
   bloco. O renderer leva o ponto `(8, 0, 8)` do modelo ao centro do footprint, na

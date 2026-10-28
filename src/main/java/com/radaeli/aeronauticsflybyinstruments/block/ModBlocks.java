@@ -22,6 +22,12 @@ import com.radaeli.aeronauticsflybyinstruments.sensor.TerrainScannerBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsComputerBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.block.AvionicsComputerBlock;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.core.component.DataComponentType;
+import com.radaeli.aeronauticsflybyinstruments.wire.AvionicsWireItem;
+import com.radaeli.aeronauticsflybyinstruments.wire.WireConnectorBlock;
+import com.radaeli.aeronauticsflybyinstruments.wire.WireNodeBlockEntity;
+import com.radaeli.aeronauticsflybyinstruments.wire.WireRouteInProgress;
+import com.radaeli.aeronauticsflybyinstruments.wire.WireSupportBlock;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -36,6 +42,8 @@ public final class ModBlocks {
             DeferredRegister.createItems(AeronauticsFlyByInstruments.MOD_ID);
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
             DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, AeronauticsFlyByInstruments.MOD_ID);
+    public static final DeferredRegister.DataComponents DATA_COMPONENTS =
+            DeferredRegister.createDataComponents(Registries.DATA_COMPONENT_TYPE, AeronauticsFlyByInstruments.MOD_ID);
 
     public static final DeferredBlock<ModularTableBaseBlock> MODULAR_TABLE_BASE =
             BLOCKS.register("modular_table_base", () -> new ModularTableBaseBlock(
@@ -92,6 +100,25 @@ public final class ModBlocks {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AvionicsComputerBlockEntity>> AVIONICS_COMPUTER_ENTITY =
             BLOCK_ENTITIES.register("avionics_computer", () -> BlockEntityType.Builder.of(
                     AvionicsComputerBlockEntity::new, AVIONICS_COMPUTER.get()).build(null));
+    // Avionics Wire: physical wires between brass connectors, resting on industrial iron supports.
+    public static final DeferredBlock<WireConnectorBlock> WIRE_CONNECTOR =
+            BLOCKS.register("wire_connector", () -> new WireConnectorBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.CHAIN).sound(SoundType.COPPER).strength(0.8f)
+                            .noOcclusion()));
+    public static final DeferredItem<BlockItem> WIRE_CONNECTOR_ITEM = ITEMS.registerSimpleBlockItem(WIRE_CONNECTOR);
+    public static final DeferredBlock<WireSupportBlock> WIRE_SUPPORT =
+            BLOCKS.register("wire_support", () -> new WireSupportBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.CHAIN).sound(SoundType.NETHERITE_BLOCK).strength(0.8f)
+                            .noOcclusion()));
+    public static final DeferredItem<BlockItem> WIRE_SUPPORT_ITEM = ITEMS.registerSimpleBlockItem(WIRE_SUPPORT);
+    public static final DeferredItem<AvionicsWireItem> AVIONICS_WIRE =
+            ITEMS.register("avionics_wire", () -> new AvionicsWireItem(new Item.Properties()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WireNodeBlockEntity>> WIRE_NODE_ENTITY =
+            BLOCK_ENTITIES.register("wire_node", () -> BlockEntityType.Builder.of(
+                    WireNodeBlockEntity::new, WIRE_CONNECTOR.get(), WIRE_SUPPORT.get()).build(null));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<WireRouteInProgress>> WIRE_ROUTE =
+            DATA_COMPONENTS.registerComponentType("wire_route", builder -> builder
+                    .persistent(WireRouteInProgress.CODEC).networkSynchronized(WireRouteInProgress.STREAM_CODEC));
     /** Worlds saved with the old GPWS Computer (renamed 2026-10-28) load it as the Avionics Computer. */
     public static void registerAliases() {
         var old = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(AeronauticsFlyByInstruments.MOD_ID,

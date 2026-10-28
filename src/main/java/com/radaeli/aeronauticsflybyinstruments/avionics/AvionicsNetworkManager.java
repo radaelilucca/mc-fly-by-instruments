@@ -1,8 +1,12 @@
 package com.radaeli.aeronauticsflybyinstruments.avionics;
 
 import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
+import com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock;
 import com.radaeli.aeronauticsflybyinstruments.config.ModConfig;
+import com.radaeli.aeronauticsflybyinstruments.wire.WireNodeBlock;
+import com.radaeli.aeronauticsflybyinstruments.wire.WireNodeBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +19,7 @@ import java.util.List;
 /** Event-invalidated, per-level topology cache. World traversal only occurs on query or dirty events. */
 public final class AvionicsNetworkManager {
     private static final Map<Level, Map<BlockPos, NetworkSnapshot>> CACHE = new WeakHashMap<>();
+    private static final Map<Level, Map<BlockPos, NetworkSnapshot>> CONNECTOR_CACHE = new WeakHashMap<>();
     private static final Map<Level, Set<NetworkBridgePeripheral>> ATTACHED_PERIPHERALS = new WeakHashMap<>();
     private static final Set<Level> DIRTY_LEVELS = new HashSet<>();
 
@@ -26,6 +31,17 @@ public final class AvionicsNetworkManager {
         synchronized (CACHE) {
             return CACHE.computeIfAbsent(level, ignored -> new HashMap<>()).computeIfAbsent(origin,
                     ignored -> NetworkDiscovery.discover(origin, new LevelAccess(level), ModConfig.MAX_AVIONICS_NETWORK_BLOCKS.get()));
+        }
+    }
+
+    /** Network of a wire connector, for the Wiring View. Cached and invalidated like {@link #snapshot}. */
+    public static NetworkSnapshot connectorSnapshot(Level level, BlockPos connector) {
+        if (level == null || level.isClientSide) return NetworkSnapshot.disconnected();
+        BlockPos origin = connector.immutable();
+        synchronized (CACHE) {
+            return CONNECTOR_CACHE.computeIfAbsent(level, ignored -> new HashMap<>()).computeIfAbsent(origin,
+                    ignored -> NetworkDiscovery.discoverFromConnector(origin, new LevelAccess(level),
+                            ModConfig.MAX_AVIONICS_NETWORK_BLOCKS.get()));
         }
     }
 
@@ -74,7 +90,10 @@ public final class AvionicsNetworkManager {
     }
 
     public static void clearLevel(Level level) {
-        synchronized (CACHE) { CACHE.remove(level); }
+        synchronized (CACHE) {
+            CACHE.remove(level);
+            CONNECTOR_CACHE.remove(level);
+        }
         synchronized (ATTACHED_PERIPHERALS) { ATTACHED_PERIPHERALS.remove(level); }
         synchronized (DIRTY_LEVELS) { DIRTY_LEVELS.remove(level); }
     }
@@ -89,6 +108,7 @@ public final class AvionicsNetworkManager {
         for (Level level : dirty) {
             synchronized (CACHE) {
                 CACHE.remove(level);
+                CONNECTOR_CACHE.remove(level);
             }
             Set<NetworkBridgePeripheral> peripherals;
             synchronized (ATTACHED_PERIPHERALS) {
@@ -102,6 +122,30 @@ public final class AvionicsNetworkManager {
         @Override public boolean isLoaded(BlockPos pos) { return level.hasChunkAt(pos); }
         @Override public boolean isCable(BlockPos pos) {
             return isLoaded(pos) && level.getBlockState(pos).is(ModBlocks.AVIONICS_CABLE.get());
+        }
+        @Override public WireConnectorView wireConnector(BlockPos pos) {
+            if (!isLoaded(pos) || !(level.getBlockEntity(pos) instanceof WireNodeBlockEntity node) || !node.isConnector()) {
+                return null;
+            }
+            return new WireConnectorView(WireNodeBlock.host(node.getBlockState(), pos), node.farEnds());
+        }
+        @Override public List<BlockPos> docked(BlockPos pos) {
+            var state = level.getBlockState(pos);
+            if (state.getBlock() instanceof ModularTableBaseBlock) {
+                BlockPos support = ModularTableBaseBlock.support(state, pos);
+                return isLoaded(support) && level.getBlockState(support).is(ModBlocks.AVIONICS_COMPUTER.get())
+                        ? List.of(support) : List.of();
+            }
+            if (!state.is(ModBlocks.AVIONICS_COMPUTER.get())) return List.of();
+            var tables = new ArrayList<BlockPos>();
+            for (Direction direction : Direction.values()) {
+                BlockPos neighbor = pos.relative(direction);
+                if (!isLoaded(neighbor)) continue;
+                var table = level.getBlockState(neighbor);
+                if (table.getBlock() instanceof ModularTableBaseBlock
+                        && ModularTableBaseBlock.support(table, neighbor).equals(pos)) tables.add(neighbor);
+            }
+            return tables;
         }
         @Override public String endpointType(BlockPos pos) {
             if (!isLoaded(pos)) return null;

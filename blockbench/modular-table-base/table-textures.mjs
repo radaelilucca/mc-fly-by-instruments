@@ -57,13 +57,13 @@ export const TILES = {
 };
 for (const [name, map] of Object.entries(TILES)) checkMap(name, map, 16, 16);
 
-// Side band (16 x 3 used, rows 0-2): lit lip, brass body with rivets every 8 px, dark foot.
+// Side band (16 x 4 used, rows 0-3): lit lip, brass body with rivets every 8 px, dark foot.
 // No end caps, so the band runs on unbroken along a row of tables.
-const BAND = ['6666666666666666', '4448444444484444', '2222222222222222'];
-export const SIDE_UV = [0, 0, 16, 3];
+const BAND = ['6666666666666666', '4448444444484444', '4444444444444444', '2222222222222222'];
+export const SIDE_UV = [0, 0, 16, 4];
 export const side = () => {
   const img = canvas(16, 16, '4');
-  for (let y = 0; y < 16; y += 3) blit(img, BAND.slice(0, Math.min(3, 16 - y)), 0, y);
+  for (let y = 0; y < 16; y += 4) blit(img, BAND, 0, y);
   return img;
 };
 export const image = map => { const img = canvas(16, 16, 'a'); blit(img, map, 0, 0); return img; };

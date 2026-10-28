@@ -1,0 +1,56 @@
+{
+  "variants": {
+    "facing=up,slim=false": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector"
+    },
+    "facing=up,slim=true": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector_slim"
+    },
+    "facing=down,slim=false": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector",
+      "x": 180
+    },
+    "facing=down,slim=true": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector_slim",
+      "x": 180
+    },
+    "facing=north,slim=false": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector",
+      "x": 90
+    },
+    "facing=north,slim=true": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector_slim",
+      "x": 90
+    },
+    "facing=south,slim=false": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,slim=true": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector_slim",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west,slim=false": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,slim=true": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector_slim",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,slim=false": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,slim=true": {
+      "model": "aeronautics_fly_by_instruments:block/wire_connector_slim",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

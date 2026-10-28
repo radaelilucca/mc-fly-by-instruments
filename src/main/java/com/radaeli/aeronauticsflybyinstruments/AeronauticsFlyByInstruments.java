@@ -41,6 +41,7 @@ public final class AeronauticsFlyByInstruments {
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlocks.ITEMS.register(modEventBus);
         ModBlocks.BLOCK_ENTITIES.register(modEventBus);
+        ModBlocks.DATA_COMPONENTS.register(modEventBus);
         ModBlocks.registerAliases();
         ModCreativeTabs.TABS.register(modEventBus);
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.SERVER, ModConfig.SPEC);
@@ -49,6 +50,7 @@ public final class AeronauticsFlyByInstruments {
         modEventBus.addListener(AvionicsComputerNetwork::registerPayloads);
         modEventBus.addListener(SensorOutputNetwork::registerPayloads);
         modEventBus.addListener(FmsNetwork::registerPayloads);
+        modEventBus.addListener(com.radaeli.aeronauticsflybyinstruments.network.WireNetwork::registerPayloads);
         modEventBus.addListener(this::registerCapabilities);
         NeoForge.EVENT_BUS.addListener(PanelNetwork::onPlayerLoggedIn);
         NeoForge.EVENT_BUS.addListener(com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction::onRightClick);
@@ -56,6 +58,7 @@ public final class AeronauticsFlyByInstruments {
             PanelClient.register(modEventBus);
             FmsClient.register(modEventBus);
             AvionicsCableModels.register(modEventBus);
+            com.radaeli.aeronauticsflybyinstruments.client.WireClient.register(modEventBus);
             ModularTableModels.register(modEventBus);
             NeoForge.EVENT_BUS.addListener(PanelInputHandler::onMouseScroll);
             if (!FMLEnvironment.production) {

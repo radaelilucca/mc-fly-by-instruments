@@ -95,3 +95,8 @@ Columns: 8
 206 196 181	Lona (envelope) 4
 228 228 223	Lona (envelope) 5
 241 241 240	Lona (envelope) 6
+# Fio isolado (so o Avionics Wire)
+ 20  20  22	Fio isolado 1
+ 27  27  30	Fio isolado 2
+ 35  35  38	Fio isolado 3
+ 43  43  43	Fio isolado 4

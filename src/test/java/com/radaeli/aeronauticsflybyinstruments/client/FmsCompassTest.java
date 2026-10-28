@@ -85,7 +85,7 @@ class FmsCompassTest {
 
     /** Same derivation as ModularTableRenderer, without a contraption. */
     private static double heading(Direction facing) {
-        Vec3 center = new Vec3(0.5, 3.0 / 16, 0.5);
+        Vec3 center = new Vec3(0.5, PanelCoordinates.SURFACE, 0.5);
         Vec3 local = PanelCoordinates.fromPanel(facing, center);
         Vec3 up = PanelCoordinates.fromPanel(facing, center.add(0, 0, -1)).subtract(local);
         Vec3 normal = PanelCoordinates.fromPanel(facing, center.add(0, 1, 0)).subtract(local);

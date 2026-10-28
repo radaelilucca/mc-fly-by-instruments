@@ -1,5 +1,6 @@
 package com.radaeli.aeronauticsflybyinstruments.block;
 
+import com.radaeli.aeronauticsflybyinstruments.panel.PanelCoordinates;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.EmptyBlockGetter;
@@ -51,9 +52,9 @@ class ModularTableBaseBlockTest {
             var collision = state.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO,
                     CollisionContext.empty());
             var axis = facing.getAxis();
-            double expectedMin = facing.getAxisDirection() == Direction.AxisDirection.POSITIVE ? 0 : 13.0 / 16;
+            double expectedMin = facing.getAxisDirection() == Direction.AxisDirection.POSITIVE ? 0 : 1 - PanelCoordinates.SURFACE;
             assertEquals(expectedMin, outline.min(axis), 0.000001, facing.toString());
-            assertEquals(expectedMin + 3.0 / 16, outline.max(axis), 0.000001, facing.toString());
+            assertEquals(expectedMin + PanelCoordinates.SURFACE, outline.max(axis), 0.000001, facing.toString());
             assertEquals(outline.bounds(), collision.bounds(), facing.toString());
             for (Direction.Axis otherAxis : Direction.Axis.values()) {
                 if (otherAxis != axis) {

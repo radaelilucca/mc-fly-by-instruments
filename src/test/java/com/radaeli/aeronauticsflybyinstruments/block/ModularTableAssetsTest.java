@@ -50,7 +50,7 @@ class ModularTableAssetsTest {
         assertEquals(1, elements.size());
         var cube = elements.get(0).getAsJsonObject();
         assertEquals("[0,0,0]", cube.get("from").toString());
-        assertEquals("[16,3,16]", cube.get("to").toString(), "Same 3/16 slab as ModularTableBaseBlock.UP");
+        assertEquals("[16,4,16]", cube.get("to").toString(), "Same 4/16 slab as ModularTableBaseBlock.UP");
         var textures = model.getAsJsonObject("textures");
         Map<String, String> faceTexture = new HashMap<>();
         for (var face : cube.getAsJsonObject("faces").entrySet()) {
@@ -62,7 +62,7 @@ class ModularTableAssetsTest {
             double height = uv.get(3).getAsDouble() - uv.get(1).getAsDouble();
             boolean flat = face.getKey().equals("up") || face.getKey().equals("down");
             assertEquals(16, width, face.getKey());
-            assertEquals(flat ? 16 : 3, height, face.getKey() + ": 1 texel per unit");
+            assertEquals(flat ? 16 : 4, height, face.getKey() + ": 1 texel per unit");
             assertEquals(face.getKey().equals("down"), json.has("cullface"), "Only the bottom culls, against the support");
         }
         // The client model finds the top and the sides by these sprites.

@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.item.ItemStack;
 
 public final class ModularTableRenderer implements BlockEntityRenderer<ModularTableBlockEntity> {
-    private static final double SURFACE = 3.0 / 16;
+    private static final double SURFACE = PanelCoordinates.SURFACE;
     private static final double CELL = 1.0 / PanelGrid.SIZE;
     private final BlockRenderDispatcher blocks;
     private final LampModuleRenderer lamps1x1 = new LampModuleRenderer(ModBlocks.LAMP_MODULE.get());

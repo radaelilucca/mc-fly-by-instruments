@@ -1,0 +1,182 @@
+{
+  "credit": "Made with Blockbench for Aeronautics: Fly by Instruments",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "textures": {
+    "0": "aeronautics_fly_by_instruments:block/wire_connector",
+    "particle": "aeronautics_fly_by_instruments:block/wire_connector"
+  },
+  "elements": [
+    {
+      "name": "body",
+      "from": [
+        6,
+        1,
+        6
+      ],
+      "to": [
+        10,
+        3,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6,
+            4,
+            10,
+            6
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            6,
+            0,
+            10,
+            4
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "gland",
+      "from": [
+        7,
+        3,
+        7
+      ],
+      "to": [
+        9,
+        4,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            10,
+            2,
+            12,
+            3
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            10,
+            2,
+            12,
+            3
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            10,
+            2,
+            12,
+            3
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            10,
+            2,
+            12,
+            3
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            10,
+            0,
+            12,
+            2
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "stem",
+      "from": [
+        6,
+        0,
+        6
+      ],
+      "to": [
+        10,
+        1,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            0,
+            16,
+            1
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            12,
+            0,
+            16,
+            1
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            12,
+            0,
+            16,
+            1
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12,
+            0,
+            16,
+            1
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

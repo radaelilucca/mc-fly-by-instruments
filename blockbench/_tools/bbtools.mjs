@@ -23,6 +23,8 @@ export const PALETTE = {
   A: '#505351', B: '#60635F', C: '#707570', D: '#828784', E: '#9AA49D', F: '#A8B3AB',
   // industrial iron
   n: '#353438', o: '#3F3E42', p: '#4F4F4F', q: '#595858', v: '#676161', W: '#757171',
+  // insulated wire (Avionics Wire only), dark -> light; continues into dark metal w
+  0: '#141416', 9: '#1B1B1E', u: '#232326',
   // dark metal
   w: '#2B2B2B', x: '#353535', y: '#3B3B3C', z: '#464647',
   // redstone off / on

@@ -2,9 +2,16 @@
 
 Avionics Cable carries data only. Place segments next to each other to create
 lines and branches; any compatible avionics endpoint touching one of the six
-faces joins the same network. There are no ports, frequencies, junction blocks,
+faces joins the same network. The [Avionics Wire](avionics-wire.md) carries the
+same network over hanging wires between connectors; a connector mounted on a
+cable block joins both. There are no ports, frequencies, junction blocks,
 or wireless links. The Modular Table Base, Network Bridge, flight sensors and the
 [Avionics Computer](avionics-computer.md) are endpoints.
+
+A Modular Table Base mounted directly on any face of an Avionics Computer (on top
+or on a side) is **docked**: the two act as one device on the network, with no
+cable or wire between them. Reaching either reaches both, and the cables and
+connectors on both blocks link them to the rest of the network.
 
 The cable uses a compact center hub and arms toward adjacent cable or endpoint
 blocks. It has its own graphite/brass Blockbench model and textures, with
@@ -20,7 +27,7 @@ The `avionics_network_bridge` peripheral provides:
 
 | Method | Return |
 | --- | --- |
-| `getNetworkStatus()` | `{status, connected, complete, cableCount, endpointCount}` |
+| `getNetworkStatus()` | `{status, connected, complete, cableCount, endpointCount, wireCount}` |
 | `getConnectedDevices()` | List of `{type, x, y, z}` relative to the bridge |
 
 Possible statuses are `disconnected`, `connected`, `incomplete`, and

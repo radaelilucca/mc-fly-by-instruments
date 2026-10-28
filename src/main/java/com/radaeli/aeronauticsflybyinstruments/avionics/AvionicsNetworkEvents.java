@@ -47,11 +47,15 @@ public final class AvionicsNetworkEvents {
 
     @SubscribeEvent
     public static void onLevelUnloaded(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof Level level) AvionicsNetworkManager.clearLevel(level);
+        if (event.getLevel() instanceof Level level) {
+            AvionicsNetworkManager.clearLevel(level);
+            com.radaeli.aeronauticsflybyinstruments.wire.WireMaintenance.clearLevel(level);
+        }
     }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        for (var level : event.getServer().getAllLevels()) com.radaeli.aeronauticsflybyinstruments.wire.WireMaintenance.tick(level);
         AvionicsNetworkManager.flushDirty();
     }
 }

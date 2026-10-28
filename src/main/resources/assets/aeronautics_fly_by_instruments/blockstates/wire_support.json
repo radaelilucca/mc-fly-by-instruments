@@ -1,0 +1,30 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "aeronautics_fly_by_instruments:block/wire_support"
+    },
+    "facing=down": {
+      "model": "aeronautics_fly_by_instruments:block/wire_support",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "aeronautics_fly_by_instruments:block/wire_support",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "aeronautics_fly_by_instruments:block/wire_support",
+      "x": 90,
+      "y": 180
+    },
+    "facing=west": {
+      "model": "aeronautics_fly_by_instruments:block/wire_support",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east": {
+      "model": "aeronautics_fly_by_instruments:block/wire_support",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

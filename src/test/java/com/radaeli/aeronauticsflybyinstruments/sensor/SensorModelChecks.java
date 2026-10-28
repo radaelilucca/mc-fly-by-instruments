@@ -83,6 +83,11 @@ public final class SensorModelChecks {
 
     /** Guide v2: unrotated integer cuboids in 0..16, own textures opaque 16/32 px, 1 texel per unit. */
     public static void assertGuideRules(String name) throws Exception {
+        assertGuideRules(name, 0);
+    }
+
+    /** As above, but cuboids may reach {@code intoHost} units below Y = 0, into the block a node is mounted on. */
+    public static void assertGuideRules(String name, int intoHost) throws Exception {
         var model = model(name);
         var textures = model.getAsJsonObject("textures");
         for (var entry : textures.entrySet()) {
@@ -107,7 +112,8 @@ public final class SensorModelChecks {
             var from = vector(cube.getAsJsonArray("from"));
             var to = vector(cube.getAsJsonArray("to"));
             for (int axis = 0; axis < 3; axis++) {
-                assertTrue(from[axis] >= 0 && to[axis] <= 16 && from[axis] < to[axis]);
+                assertTrue(from[axis] >= (axis == 1 ? -intoHost : 0) && to[axis] <= 16 && from[axis] < to[axis],
+                        name + ": inside the block");
                 assertEquals(Math.rint(from[axis]), from[axis], name + ": integer coordinates");
                 assertEquals(Math.rint(to[axis]), to[axis], name + ": integer coordinates");
             }
