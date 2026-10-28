@@ -70,6 +70,14 @@ class ModularTableBaseBlockTest {
     }
 
     @Test
+    void blockLightComesFromTheLightProperty() {
+        assertEquals(0, block.defaultBlockState().getLightEmission());
+        for (int light = 0; light <= 15; light++) {
+            assertEquals(light, block.defaultBlockState().setValue(ModularTableBaseBlock.LIGHT, light).getLightEmission());
+        }
+    }
+
+    @Test
     void structureRotationPreservesMountingDirection() {
         for (Direction facing : Direction.values()) {
             var state = block.defaultBlockState().setValue(ModularTableBaseBlock.FACING, facing);

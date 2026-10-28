@@ -148,6 +148,25 @@ class ModularTableBlockEntityTest {
     }
 
     @Test
+    void tableLightFollowsTheBrightestLampScaledToTheCeiling() {
+        var table = table();
+        assertEquals(0, table.brightestLampIntensity());
+        assertTrue(table.placeBuzzer(2, 2));
+        assertTrue(table.placeLamp(0, 0));
+        assertTrue(table.placeLamp2x1(1, 0, false));
+        assertEquals(0, table.brightestLampIntensity(), "Unlit lamps and buzzers emit nothing");
+        assertTrue(table.setLampTestIntensity(0, 0, 7));
+        assertTrue(table.setLampTestIntensity(1, 0, 4));
+        assertEquals(7, table.brightestLampIntensity());
+
+        assertEquals(7, ModularTableBlockEntity.emittedLight(7, 15));
+        assertEquals(10, ModularTableBlockEntity.emittedLight(15, 10));
+        assertEquals(5, ModularTableBlockEntity.emittedLight(7, 10));
+        assertEquals(0, ModularTableBlockEntity.emittedLight(15, 0), "A zero ceiling disables the light");
+        assertEquals(0, ModularTableBlockEntity.emittedLight(0, 15));
+    }
+
+    @Test
     void corruptedDuplicateOutOfBoundsAndUnknownModulesAreIgnored() {
         var data = new CompoundTag();
         var modules = new ListTag();

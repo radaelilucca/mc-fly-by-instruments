@@ -1,10 +1,14 @@
 # Mesa modular — montagem e interações
 
-A base mantém espessura de 3/16 de bloco e textura placeholder de ferro.
+A base mantém espessura de 3/16 de bloco, com moldura de latão e tampo de
+madeira escura. Mesas vizinhas no mesmo plano e na mesma face formam um painel
+contínuo: a moldura contorna o conjunto (texturas conectadas, veja a
+[fonte visual da base](../blockbench/modular-table-base/README.md)).
 Sua face exposta é dividida em 3 colunas × 3 linhas: cada célula tem
 16/3 pixels de largura e profundidade. Ela pode ser montada em qualquer face
 sólida, inclusive no teto do cockpit. As lâmpadas 1×1 e 2×1 têm modelos próprios
-com carcaça opaca, vidro vermelho translúcido e emissão visual por módulo. Veja
+com carcaça opaca, vidro vermelho translúcido e emissão visual por módulo. A
+mesa emite luz de bloco conforme a lâmpada mais forte acesa. Veja
 [emissão e teste dos módulos](lamp-emission.md). Módulos novos são associados
 ao `gpws.any`, com severidade mínima Caution. Ao clicar com a mão vazia em uma
 lâmpada ou buzzer, abre a configuração individual; ao clicar numa célula vazia,
@@ -81,7 +85,8 @@ salvar/reabrir o mundo preserva sua ocupação.
 As coordenadas internas são zero-based. Um módulo é descrito por tipo, coluna
 e linha de origem e footprint retangular (largura × altura). Todas as células
 do footprint pertencem ao mesmo módulo. A inserção só ocorre se o retângulo
-estiver inteiramente dentro do grid e todas as células estiverem livres.
+estiver inteiramente dentro do grid do painel (uma mesa sozinha ou várias unidas,
+veja abaixo) e todas as células estiverem livres.
 Uma operação de remoção sobre qualquer célula coberta retira o módulo inteiro.
 
 O módulo `lamp` ocupa 1×1. O `lamp_2x1` ocupa 2×1 por padrão e alterna para 1×2
@@ -97,6 +102,34 @@ módulo até sua próxima instalação.
 Seu modelo tem carcaça grafite, aro prateado, tela preta nos dois terços
 superiores e teclado compacto abaixo. A tela ainda é decorativa e opaca.
 Fonte editável: [Blockbench FMS 2×3](../blockbench/fms-module-2x3/README.md).
+
+## Mesas unidas (painel)
+
+Mesas lado a lado no mesmo plano e montadas na mesma face (todas no chão, todas
+na mesma parede ou no teto) formam um **painel**: um grid único com o total das
+células das mesas unidas. Vizinhas só na diagonal não se unem. O limite é de 256
+mesas por painel (`TablePanel.MAX_TABLES`).
+
+- **Colocação:** a célula clicada é o canto de cima à esquerda do módulo, que pode
+  atravessar a borda para a mesa seguinte (à direita ou abaixo no referencial do
+  painel), por exemplo uma lâmpada 2×1 sobre duas mesas ou um FMS 2×3 sobre quatro.
+  Todas as células precisam estar sobre mesas unidas e livres.
+- **Interface:** clicar em qualquer mesa abre o mesmo painel geral, listando os
+  módulos de todas as mesas com coordenadas do painel (contadas a partir da mesa de
+  cima à esquerda). Teste, mudo e setup básico valem para o painel inteiro.
+- **GPWS:** um cabo da rede aviônica em qualquer mesa alimenta os módulos de todas.
+  A mesa líder do painel faz a leitura e distribui; o mudo cai junto em todas quando
+  surge um alerta novo.
+- **Armazenamento:** cada módulo continua salvo na mesa que tem a sua célula de
+  origem. Unir ou separar mesas não move dados, e mundos antigos carregam como antes.
+- **Quebra:** ao quebrar uma mesa, caem os módulos dela e os das mesas vizinhas que
+  passavam por ela; os outros continuam no lugar. O painel restante se reorganiza
+  sozinho. Se uma mesa sumir sem passar pela quebra normal (comando, por exemplo), a
+  dona do módulo o derruba no tick seguinte. Mesas em chunk ainda não carregado
+  nunca contam como ausentes.
+- **CC:Tweaked:** cada mesa continua sendo um peripheral com o próprio grid 3×3
+  (módulos ancorados nela). `setMuted`, `testPanel`, `applyBasicSetup` e
+  `setTestSignal` agem sobre o painel inteiro.
 
 ## CC:Tweaked
 
@@ -144,7 +177,7 @@ ultrapasse a borda retorna `false`. `canFit` só consulta: não instala módulos
 Instalação e remoção são físicas. Métodos executam na thread principal.
 
 Os métodos de intensidade funcionam com lâmpadas 1×1 e 2×1 e são apenas para teste visual: não alteram sinais,
-thresholds ou dados persistidos da mesa e não emitem luz dinâmica no mundo.
+thresholds ou dados persistidos da mesa. A luz de bloco da mesa acompanha o nível de teste.
 O programa [lamp-emission-test.lua](examples/lamp-emission-test.lua) percorre
 cada lâmpada instalada nos níveis 0 a 15, com meio segundo por nível.
 

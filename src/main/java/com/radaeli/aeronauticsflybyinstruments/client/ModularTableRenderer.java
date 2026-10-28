@@ -7,6 +7,8 @@ import com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelCoordinates;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
+import com.radaeli.aeronauticsflybyinstruments.panel.TablePanel;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
@@ -31,6 +33,12 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
 
     public ModularTableRenderer(BlockEntityRendererProvider.Context context) {
         blocks = context.getBlockRenderDispatcher();
+    }
+
+    /** Modules may run up to one table past this one, so do not cull them with the block. */
+    @Override
+    public AABB getRenderBoundingBox(ModularTableBlockEntity table) {
+        return new AABB(table.getBlockPos()).inflate(1);
     }
 
     @Override
@@ -60,10 +68,13 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
         var player = minecraft.player;
         var held = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.heldModule(player).orElse(null);
         boolean removing = player != null && ModularTableBaseBlock.isCreateWrench(player.getMainHandItem());
+        // Every table of the hovered panel draws its share of the grid; the hovered one adds the outline.
         if (minecraft.screen == null && (held != null || removing) && minecraft.hitResult instanceof BlockHitResult hit
-                && hit.getBlockPos().equals(table.getBlockPos())
+                && table.getLevel() != null
+                && table.getLevel().getBlockEntity(hit.getBlockPos()) instanceof ModularTableBlockEntity hovered
+                && (hovered == table || TablePanel.of(hovered) == TablePanel.of(table))
                 && (hit.getDirection() == facing || removing && com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction
-                .target(table, hit.getDirection(), hit.getLocation()).module() != null)) {
+                .target(hovered, hit.getDirection(), hit.getLocation()).module() != null)) {
             for (int i = 0; i <= PanelGrid.SIZE; i++) {
                 double line = Math.min(1 - 0.012, Math.max(0, i * CELL - 0.006));
                 cube(poses, buffers, Blocks.GRAY_CONCRETE.defaultBlockState(),
@@ -75,24 +86,24 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
                     hit.getDirection(), hit.getLocation());
             int column = target.column();
             int row = target.row();
-            if (column >= 0 && row >= 0) {
+            if (hovered == table && column >= 0 && row >= 0) {
                 int width = held == null ? 1 : held.width();
                 int height = held == null ? 1 : held.height();
                 int outlineColumn = column;
                 int outlineRow = row;
                 boolean valid = false;
                 if (removing) {
-                    var module = table.grid().at(column, row);
+                    var module = TablePanel.localAt(table, column, row);
                     if (module.isPresent()) {
                         var installed = module.get();
                         outlineColumn = installed.column();
                         outlineRow = installed.row();
-                        width = installed.width();
-                        height = installed.height();
+                        width = installed.module().width();
+                        height = installed.module().height();
                         valid = true;
                     }
                 } else {
-                    valid = table.grid().canFit(column, row, width, height);
+                    valid = TablePanel.canFit(table, column, row, width, height);
                 }
                 if (held != null || valid) {
                     var color = (valid ? Blocks.LIME_CONCRETE : Blocks.RED_CONCRETE).defaultBlockState();
@@ -152,8 +163,7 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
 
     private void outline(PoseStack poses, MultiBufferSource buffers, BlockState color,
                         int column, int row, int width, int height, int light, int overlay) {
-        width = Math.min(width, PanelGrid.SIZE - column);
-        height = Math.min(height, PanelGrid.SIZE - row);
+        // Not clipped: a footprint may run on over the joined tables.
         double x = column * CELL + 0.012;
         double z = row * CELL + 0.012;
         double w = width * CELL - 0.024;

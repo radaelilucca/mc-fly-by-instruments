@@ -24,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelCoordinates;
+import com.radaeli.aeronauticsflybyinstruments.panel.TablePanel;
 import com.radaeli.aeronauticsflybyinstruments.network.FmsNetwork;
 import com.radaeli.aeronauticsflybyinstruments.network.PanelNetwork;
 import com.radaeli.aeronauticsflybyinstruments.item.BuzzerModuleItem;
@@ -37,6 +38,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -46,6 +48,8 @@ import net.minecraft.world.phys.shapes.Shapes;
 public final class ModularTableBaseBlock extends Block implements EntityBlock, AvionicsWrenchable {
     public static final MapCodec<ModularTableBaseBlock> CODEC = simpleCodec(ModularTableBaseBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    /** Block light from the brightest lit lamp; shaders light the surroundings from it. */
+    public static final IntegerProperty LIGHT = IntegerProperty.create("light", 0, 15);
     private static final ResourceLocation CREATE_WRENCH_ID =
             ResourceLocation.fromNamespaceAndPath("create", "wrench");
 
@@ -59,7 +63,7 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
 
     public ModularTableBaseBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.UP));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.UP).setValue(LIGHT, 0));
     }
 
     @Override
@@ -69,7 +73,7 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, LIGHT);
     }
 
     @Override
@@ -118,15 +122,19 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
         var target = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.target(table,
                 hit.getDirection(), hit.getLocation());
         if (!target.interactive()) return net.minecraft.world.InteractionResult.PASS;
-        var module = java.util.Optional.ofNullable(player.isShiftKeyDown() ? null : target.module());
+        // The module may belong to a joined table: the FMS opens on its owner, the panel on the whole surface.
+        var placed = java.util.Optional.ofNullable(player.isShiftKeyDown() ? null : target.module());
+        var module = placed.map(TablePanel.Placed::module);
         if (module.isPresent() && module.get().type().equals("fms")
                 && !level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            FmsNetwork.open(serverPlayer, pos, module.get().column(), module.get().row(), table);
+            var owner = placed.get().owner();
+            FmsNetwork.open(serverPlayer, owner.getBlockPos(), module.get().column(), module.get().row(), owner);
         }
         boolean controlPanel = module.isEmpty() || module.filter(value -> value.type().equals("lamp")
                 || value.type().equals("lamp_2x1") || value.type().equals("buzzer")).isPresent();
         if (controlPanel && !level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            PanelNetwork.open(serverPlayer, table, module.orElse(null));
+            PanelNetwork.open(serverPlayer, table, placed.map(found -> TablePanel.of(table).toPanel(table, found))
+                    .orElse(null));
         }
         return module.filter(value -> value.type().equals("fms")).isPresent() || controlPanel
                 ? net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide)
@@ -152,10 +160,10 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
         }
         var target = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction.target(table,
                 hit.getDirection(), hit.getLocation());
-        int column = target.column(), row = target.row();
-        if (target.module() == null) return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        var placed = target.module();
+        if (placed == null) return ItemInteractionResult.sidedSuccess(level.isClientSide);
         if (!level.isClientSide) {
-            var moduleStack = table.removeModuleStack(column, row);
+            var moduleStack = placed.owner().removeModuleStack(placed.module().column(), placed.module().row());
             if (moduleStack.isEmpty()) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             var inventory = new net.neoforged.neoforge.items.wrapper.PlayerMainInvWrapper(player.getInventory());
             var remainder = net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(inventory, moduleStack, false);
@@ -196,6 +204,12 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide
                 && level.getBlockEntity(pos) instanceof ModularTableBlockEntity table) {
+            // Modules running in from the joined tables before this one lose part of their support too.
+            for (var placed : TablePanel.covering(table)) {
+                if (placed.owner() == table) continue;
+                var stack = placed.owner().removeModuleStack(placed.module().column(), placed.module().row());
+                if (!stack.isEmpty()) popResource(level, pos, stack);
+            }
             for (var stack : table.drainModuleStacks()) {
                 popResource(level, pos, stack);
             }
@@ -215,13 +229,15 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
             case EAST -> EAST;
         };
         if (level.getBlockEntity(pos) instanceof ModularTableBlockEntity table) {
-            for (var module : table.grid().modules()) {
-                double x = module.column() / 3.0 + 0.06;
-                double z = module.row() / 3.0 + 0.06;
+            // Each table outlines its share of the modules over it, clipped at its own edges.
+            for (var placed : TablePanel.covering(table)) {
+                var module = placed.module();
+                double x = Math.max(0, placed.column() / 3.0 + 0.06);
+                double z = Math.max(0, placed.row() / 3.0 + 0.06);
                 var start = PanelCoordinates.fromPanel(facing, new Vec3(x, 3.0 / 16, z));
                 var end = PanelCoordinates.fromPanel(facing, new Vec3(
-                        (module.column() + module.width()) / 3.0 - 0.06, PanelCoordinates.MODULE_TOP,
-                        (module.row() + module.height()) / 3.0 - 0.06));
+                        Math.min(1, (placed.column() + module.width()) / 3.0 - 0.06), PanelCoordinates.MODULE_TOP,
+                        Math.min(1, (placed.row() + module.height()) / 3.0 - 0.06)));
                 shape = Shapes.or(shape, Shapes.box(Math.min(start.x, end.x), Math.min(start.y, end.y), Math.min(start.z, end.z),
                         Math.max(start.x, end.x), Math.max(start.y, end.y), Math.max(start.z, end.z)));
             }

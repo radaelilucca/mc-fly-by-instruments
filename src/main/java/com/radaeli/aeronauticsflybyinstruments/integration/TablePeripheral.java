@@ -1,5 +1,6 @@
 package com.radaeli.aeronauticsflybyinstruments.integration;
 
+import com.radaeli.aeronauticsflybyinstruments.panel.TablePanel;
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
 import com.radaeli.aeronauticsflybyinstruments.fms.FmsModuleData;
@@ -74,7 +75,7 @@ public final class TablePeripheral implements IPeripheral {
     public boolean setTestSignal(String channel, double value) throws LuaException {
         if (channel == null || channel.isBlank() || channel.length() > 64) throw new LuaException("Channel must contain 1 to 64 characters");
         if (!Double.isFinite(value)) throw new LuaException("Signal must be finite");
-        return table.setTestSignal(channel, value);
+        return TablePanel.of(table).setTestSignal(channel, value);
     }
 
     @LuaFunction(mainThread = true)
@@ -150,13 +151,13 @@ public final class TablePeripheral implements IPeripheral {
     }
 
     @LuaFunction(mainThread = true)
-    public int applyBasicSetup() { return table.applyBasicSetup(); }
+    public int applyBasicSetup() { return TablePanel.of(table).applyBasicSetup(); }
 
     @LuaFunction(mainThread = true)
-    public boolean testPanel() { table.testPanel(); return true; }
+    public boolean testPanel() { TablePanel.of(table).testPanel(); return true; }
 
     @LuaFunction(mainThread = true)
-    public boolean setMuted(boolean muted) { table.setMuted(muted); return true; }
+    public boolean setMuted(boolean muted) { TablePanel.of(table).setMuted(muted); return true; }
 
     @LuaFunction(mainThread = true)
     public List<Map<String, Object>> getFmsWaypoints(int column, int row) throws LuaException {

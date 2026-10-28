@@ -12,7 +12,13 @@ Copie o arquivo para um computador CC:Tweaked conectado à mesa e execute:
 lamp-emission-test left
 ```
 
-`left` pode ser substituído pelo lado ou nome do peripheral. O argumento pode ser omitido para selecionar a primeira mesa encontrada. Para ver a emissão visual com clareza, observe a mesa em uma área escura. Este teste não emite luz nos blocos ao redor; luz dinâmica no mundo está fora do escopo.
+`left` pode ser substituído pelo lado ou nome do peripheral. O argumento pode ser omitido para selecionar a primeira mesa encontrada. Para ver a emissão visual com clareza, observe a mesa em uma área escura.
+
+## Luz no ambiente
+
+A mesa também emite luz de bloco do vanilla, que ilumina os blocos ao redor com ou sem shaders. O nível vem da lâmpada mais forte da mesa: `intensidade × lampLightLevel / 15`, arredondado. `lampLightLevel` fica na config do servidor do mod (padrão 5, um terço da tocha; `0` desliga). O override de teste também altera essa luz.
+
+Como é luz de bloco comum, todo shaderpack a usa sem precisar de suporte específico. A cor, porém, depende do pack: a luz do vanilla não tem cor, e cada shader tinge os blocos que conhece pela própria tabela de IDs. Para a mesa, isso costuma resultar em luz branca ou quente, não vermelha.
 
 ## Aceite visual
 
@@ -20,5 +26,6 @@ lamp-emission-test left
 2. Execute o programa e confirme a progressão visual em cada lâmpada, de apagada até a intensidade máxima.
 3. Verifique que somente a lâmpada sob teste muda e que as outras permanecem no estado de seus sinais.
 4. Confirme que, ao terminar/interromper, cada lâmpada volta ao estado normal do respectivo sinal e threshold.
+5. Com F3, confirme que o nível de luz ao lado da mesa acompanha a lâmpada mais forte e volta a 0 quando todas apagam.
 
 A compilação verifica a integração. Aparência, transparência e progressão precisam ser observadas dentro do jogo.

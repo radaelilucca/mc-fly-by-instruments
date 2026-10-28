@@ -31,7 +31,7 @@ class TableInteractionTest {
                 var hit=Vec3.atLowerCornerOf(table.getBlockPos()).add(PanelCoordinates.fromPanel(facing,
                         new Vec3((col+.5)/3,5.0/16,(row+.5)/3)));
                 var target=TableInteraction.target(table,facing,hit);
-                assertEquals(module,target.module(),facing+" "+kind);
+                assertEquals(module,target.module().module(),facing+" "+kind);
                 assertEquals(0,target.column()); assertEquals(0,target.row());
             }
         }

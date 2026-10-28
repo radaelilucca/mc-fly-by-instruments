@@ -1,6 +1,7 @@
 package com.radaeli.aeronauticsflybyinstruments.item;
 
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
+import com.radaeli.aeronauticsflybyinstruments.panel.TablePanel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
@@ -27,15 +28,11 @@ public final class LampModuleItem extends Item {
             return InteractionResult.FAIL;
         int column = target.column();
         int row = target.row();
-        if (!table.grid().canFit(column, row, width, height)) return InteractionResult.FAIL;
+        // The clicked cell is the top-left one; the footprint may run on into the joined tables.
+        if (!TablePanel.canFit(table, column, row, width, height)) return InteractionResult.FAIL;
         if (!level.isClientSide) {
-            boolean placed = switch (type) {
-                case "lamp" -> table.placeLamp(column, row);
-                case "lamp_2x1" -> table.placeLamp2x1(column, row, height > width);
-                case "buzzer" -> table.placeBuzzer(column, row);
-                case "fms" -> table.placeFmsModule(column, row, FmsModuleItem.load(context.getItemInHand()));
-                default -> false;
-            };
+            boolean placed = table.placeSpanning(type, column, row, width, height,
+                    type.equals("fms") ? FmsModuleItem.load(context.getItemInHand()) : null);
             if (!placed) return InteractionResult.FAIL;
             context.getItemInHand().consume(1, context.getPlayer());
             context.getPlayer().getInventory().setChanged();

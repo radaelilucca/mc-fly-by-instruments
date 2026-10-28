@@ -2,6 +2,7 @@ package com.radaeli.aeronauticsflybyinstruments.network;
 
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import com.radaeli.aeronauticsflybyinstruments.panel.PanelGrid;
+import com.radaeli.aeronauticsflybyinstruments.panel.TablePanel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
@@ -60,29 +61,32 @@ public final class PanelNetwork {
         return clientVertical;
     }
 
-    public static void open(ServerPlayer player, ModularTableBlockEntity table, PanelGrid.Module module) {
+    /**
+     * Opens the panel of every table joined to {@code table}. {@code placed} (panel frame) selects one
+     * module; its column/row are what the screen sends back, resolved again by {@link #handle}.
+     */
+    public static void open(ServerPlayer player, ModularTableBlockEntity table, TablePanel.Placed placed) {
         if (!canReach(player, table)) return;
-        boolean general = module == null;
+        boolean general = placed == null;
+        var module = general ? null : placed.module();
         String channel = general ? "gpws.any" : module.outputSource().equals("test")
                 ? module.channel() : module.alertChannel();
         String source = general ? "gpws" : module.outputSource();
         int severity = general ? 2 : module.minimumSeverity();
         int volume = general ? 100 : module.buzzerVolume();
-        int active = (int) table.grid().modules().stream().filter(m -> ModularTableBlockEntity.isLampModule(m)
-                || m.type().equals("buzzer")).filter(table::isModuleActive).count();
-        int total = (int) table.grid().modules().stream().filter(m -> ModularTableBlockEntity.isLampModule(m)
-                || m.type().equals("buzzer") || m.type().equals("fms")).count();
+        var listed = TablePanel.of(table).modules().stream().filter(m -> ModularTableBlockEntity.isLampModule(m.module())
+                || m.module().type().equals("buzzer") || m.module().type().equals("fms")).toList();
+        int active = (int) listed.stream().filter(m -> m.owner().isModuleActive(m.module())).count();
         var status = general ? table.alertStatusId() : "";
-        String summary = general ? table.grid().modules().stream().filter(m -> ModularTableBlockEntity.isLampModule(m)
-                || m.type().equals("buzzer") || m.type().equals("fms")).map(m -> m.type() + "," + m.column() + "," + m.row() + ","
-                + table.isModuleActive(m)).collect(java.util.stream.Collectors.joining(";")) : "";
+        String summary = general ? listed.stream().map(m -> m.module().type() + "," + m.column() + "," + m.row() + ","
+                + m.owner().isModuleActive(m.module())).collect(java.util.stream.Collectors.joining(";")) : "";
         PacketDistributor.sendToPlayer(player, new PanelScreenPayload(table.getBlockPos(),
-                general ? -1 : module.column(), general ? -1 : module.row(),
+                general ? -1 : placed.column(), general ? -1 : placed.row(),
                 general ? "" : module.type(), source, channel, severity, volume,
                 general ? "test" : module.channel(), general ? 0.5 : module.threshold(), status,
-                table.muted(), general ? total : 1,
-                general ? active : table.isModuleActive(module) ? 1 : 0, summary,
-                general ? table.interactionToken() : table.moduleToken(module.column(), module.row())));
+                table.muted(), general ? listed.size() : 1,
+                general ? active : placed.owner().isModuleActive(module) ? 1 : 0, summary,
+                general ? table.interactionToken() : placed.owner().moduleToken(module.column(), module.row())));
     }
 
     private static boolean canReach(ServerPlayer player, ModularTableBlockEntity table) {
@@ -90,14 +94,21 @@ public final class PanelNetwork {
     }
 
     private static void handle(PanelActionPayload p, ServerPlayer player) {
-        if (p.column() < -1 || p.column() >= PanelGrid.SIZE || p.row() < -1 || p.row() >= PanelGrid.SIZE
+        int limit = PanelGrid.SIZE * TablePanel.MAX_TABLES;
+        if (p.column() < -1 || p.column() >= limit || p.row() < -1 || p.row() >= limit
                 || (p.column() == -1) != (p.row() == -1)
                 || !player.level().hasChunkAt(p.position())
-                || !(player.level().getBlockEntity(p.position()) instanceof ModularTableBlockEntity table)
-                || !canReach(player, table)) return;
+                || !(player.level().getBlockEntity(p.position()) instanceof ModularTableBlockEntity clicked)
+                || !canReach(player, clicked)) return;
         boolean generalPanel = p.column() == -1;
         boolean tableAction = generalPanel || p.action().equals("open_module");
-        var expectedToken = tableAction ? table.interactionToken() : table.moduleToken(p.column(), p.row());
+        // Column/row are in the panel frame; resolve them to the owning table and its own cells.
+        var panel = TablePanel.of(clicked);
+        var placed = generalPanel ? null : panel.at(p.column(), p.row()).orElse(null);
+        if (!generalPanel && placed == null) return;
+        var table = generalPanel ? clicked : placed.owner();
+        int column = generalPanel ? -1 : placed.module().column(), row = generalPanel ? -1 : placed.module().row();
+        var expectedToken = tableAction ? clicked.interactionToken() : table.moduleToken(column, row);
         if (expectedToken == null || !expectedToken.equals(p.interactionToken())) return;
         switch (p.action()) {
             case "save" -> {
@@ -107,34 +118,33 @@ public final class PanelNetwork {
                 if (!validChannel || !(p.source().equals("gpws") || p.source().equals("test"))
                         || p.severity() < 1 || p.severity() > 3 || p.volume() < 0 || p.volume() > 100
                         || p.source().equals("test") && !Double.isFinite(p.testThreshold())) return;
-                table.saveAlertDraft(p.column(), p.row(), p.source(), p.channel(), p.severity(),
+                table.saveAlertDraft(column, row, p.source(), p.channel(), p.severity(),
                         p.testChannel(), p.testThreshold(), p.volume());
             }
             case "basic" -> {
                 if (!generalPanel) return;
-                table.applyBasicSetup();
+                panel.applyBasicSetup();
             }
-            case "test" -> { if (generalPanel) table.testPanel(); }
+            case "test" -> { if (generalPanel) panel.testPanel(); }
             case "test_buzzer" -> {
                 if (generalPanel || p.volume() < 0 || p.volume() > 100
-                        || table.grid().at(p.column(), p.row()).filter(m -> m.type().equals("buzzer")).isEmpty()) return;
-                table.testBuzzer(p.column(), p.row(), p.volume());
+                        || !placed.module().type().equals("buzzer")) return;
+                table.testBuzzer(column, row, p.volume());
             }
-            case "mute" -> { if (generalPanel) table.setMuted(true); }
-            case "unmute" -> { if (generalPanel) table.setMuted(false); }
-            case "refresh" -> { if (generalPanel) open(player, table, null); }
+            case "mute" -> { if (generalPanel) panel.setMuted(true); }
+            case "unmute" -> { if (generalPanel) panel.setMuted(false); }
+            case "refresh" -> { if (generalPanel) open(player, clicked, null); }
             case "open_module" -> {
                 if (generalPanel) return;
-                table.grid().at(p.column(), p.row()).ifPresent(module -> {
-                    if (ModularTableBlockEntity.isLampModule(module) || module.type().equals("buzzer"))
-                        open(player, table, module);
-                    else if (module.type().equals("fms"))
-                        FmsNetwork.open(player, table.getBlockPos(), module.column(), module.row(), table);
-                });
+                var module = placed.module();
+                if (ModularTableBlockEntity.isLampModule(module) || module.type().equals("buzzer"))
+                    open(player, clicked, placed);
+                else if (module.type().equals("fms"))
+                    FmsNetwork.open(player, table.getBlockPos(), column, row, table);
             }
             default -> { }
         }
         if (generalPanel && List.of("basic", "test", "mute", "unmute").contains(p.action()))
-            open(player, table, null);
+            open(player, clicked, null);
     }
 }

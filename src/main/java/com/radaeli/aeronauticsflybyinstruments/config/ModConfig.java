@@ -16,6 +16,9 @@ public final class ModConfig {
     public static final ModConfigSpec.IntValue TERRAIN_SCANNER_MAX_RANGE = BUILDER
             .comment("Maximum Terrain Scanner range in blocks.")
             .defineInRange("terrainScannerMaxRange", 128, 1, 4096);
+    public static final ModConfigSpec.IntValue LAMP_LIGHT_LEVEL = BUILDER
+            .comment("Block light emitted by a modular table with a fully lit lamp; 0 disables it.")
+            .defineInRange("lampLightLevel", 5, 0, 15);
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private ModConfig() {}

@@ -1,20 +1,82 @@
 {
+  "credit": "Made with Blockbench for Aeronautics: Fly by Instruments",
   "parent": "minecraft:block/block",
+  "ambientocclusion": true,
   "textures": {
-    "all": "minecraft:block/iron_block",
-    "particle": "minecraft:block/iron_block"
+    "0": "aeronautics_fly_by_instruments:block/modular_table_top",
+    "4": "aeronautics_fly_by_instruments:block/modular_table_top_wood",
+    "5": "aeronautics_fly_by_instruments:block/modular_table_side",
+    "particle": "aeronautics_fly_by_instruments:block/modular_table_top"
   },
   "elements": [
     {
-      "from": [0, 0, 0],
-      "to": [16, 3, 16],
+      "name": "table",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        3,
+        16
+      ],
       "faces": {
-        "down": { "texture": "#all", "cullface": "down" },
-        "up": { "texture": "#all" },
-        "north": { "texture": "#all" },
-        "south": { "texture": "#all" },
-        "west": { "texture": "#all" },
-        "east": { "texture": "#all" }
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#5"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#5"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#5"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            16,
+            3
+          ],
+          "texture": "#5"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#4",
+          "cullface": "down"
+        }
       }
     }
   ]

@@ -198,7 +198,7 @@ cobre é fluidos e vapor, ferro industrial é a parte pesada do Aeronautics.
 | Radar Altimeter | **Latão + madeira escura** (v2 entregue), lente para baixo | optical sensor, stockpile/threshold switch, content observer, laser pointer |
 | Terrain Scanner | **Andesito + madeira média** (v2 entregue), bocal escalonado frontal | andesite casing, laser sensor, laser pointer |
 | Advanced Terrain Scanner | **Latão + ferro industrial** (v2 entregue), barra com três lentes | content observer, smart observer, optical sensor |
-| Mesa modular e módulos | Ver seção 9.3 (proposta) | navigation table, nixie tube, display link, gauges |
+| Mesa modular e módulos | Ver seção 9.3 (base v2.1 em 2026-10-27) | navigation table, nixie tube, display link, gauges |
 | GPWS Computer (experimental) | Latão + madeira escura | navigation table, stockpile switch |
 | Avionics Cable (experimental) | **Ferro industrial**, latão só na luva do conector (base v2.1 em 2026-10-27) | rope, belts, fluid pipe |
 
@@ -372,6 +372,13 @@ Segue a navigation table do Simulated e os instrumentos de latão:
 | Carcaça dos módulos | Metal escuro com aro de latão de 1 px | Contrasta com o tampo de madeira, sem competir com a peça funcional |
 | Peça funcional | Lente, mostrador de pergaminho, tecla ou grade de buzzer | Cor com função (seção 6) |
 
+**Blocos que formam superfície contínua** (a base da mesa, e qualquer bloco futuro que se
+emende com vizinhos iguais) usam **textura conectada no layout CTM compacto**: cinco tiles de
+16×16 (moldura, horizontal, vertical, canto interno, miolo), escolhidos por quarto de face no
+modelo do cliente, sem estados de bloco extras. O miolo é função só do pixel e a moldura não
+tem arremate nas pontas, para emendar sem costura. Referência de implementação:
+[base da mesa](../blockbench/modular-table-base/README.md).
+
 ### 9.4 Peças funcionais dos módulos
 
 - **Lâmpada:** inspirada no **nixie tube** do Create (`create:block/nixie_tube`) e
@@ -403,7 +410,7 @@ Segue a navigation table do Simulated e os instrumentos de latão:
 | Lâmpada 2×1 | **v2.1 em 2026-10-27** (tubo nixie horizontal, 3 cubos, 10×4×4, texturas da 1×1); faltam refino no Blockbench e validação no jogo: [README](../blockbench/lamp-module-2x1/README.md) |
 | Buzzer 1×1 | ~2,85 de diâmetro, 16 facetas rotacionadas, atlas 64×64, preto piano fora da paleta |
 | FMS 2×3 | 43 cubos, frações, atlas 64×64, prata fria e azul dessaturado fora da paleta |
-| Base da mesa | Placeholder de ferro |
+| Base da mesa | **v2.1 em 2026-10-27** (latão + madeira escura, tampo rente, texturas conectadas); faltam refino no Blockbench e validação no jogo: [README](../blockbench/modular-table-base/README.md) |
 
 Variantes de tamanho de um módulo (como a lâmpada 2×1) são modelos próprios, nunca
 esticamentos: mesma linguagem, mesmas texturas, com regiões novas para as faces longas.

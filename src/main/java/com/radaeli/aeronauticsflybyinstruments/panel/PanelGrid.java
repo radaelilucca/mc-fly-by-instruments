@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/** Occupancy is owned by an anchor; a footprint never spans adjacent tables. */
+/**
+ * Occupancy of one table, owned by each module's top-left cell. {@link #place} keeps a footprint
+ * inside the table; {@link #placeAnchored} lets it run into joined tables (see TablePanel).
+ */
 public final class PanelGrid {
     public static final int SIZE = 3;
     private final List<Module> modules = new ArrayList<>();
@@ -41,6 +44,28 @@ public final class PanelGrid {
                 || !canFit(module.column(), module.row(), module.width(), module.height())) return false;
         modules.add(module);
         return true;
+    }
+
+    /**
+     * Places a module anchored in this table whose footprint may run past its far edges into the
+     * joined tables after it (TablePanel checks those cells). Only this grid's own overlap is checked.
+     */
+    public boolean placeAnchored(Module module) {
+        if (module.type() == null || module.type().isBlank() || module.width() < 1 || module.height() < 1
+                || module.width() > SIZE || module.height() > SIZE || module.column() < 0 || module.row() < 0
+                || module.column() >= SIZE || module.row() >= SIZE) return false;
+        for (int x = module.column(); x < module.column() + module.width(); x++) {
+            for (int y = module.row(); y < module.row() + module.height(); y++) {
+                if (at(x, y).isPresent()) return false;
+            }
+        }
+        modules.add(module);
+        return true;
+    }
+
+    /** Whether the footprint runs past this table into its neighbours. */
+    public static boolean spans(Module module) {
+        return module.column() + module.width() > SIZE || module.row() + module.height() > SIZE;
     }
 
     public Optional<Module> at(int column, int row) {

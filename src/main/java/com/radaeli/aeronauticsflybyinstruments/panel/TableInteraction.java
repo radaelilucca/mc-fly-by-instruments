@@ -28,7 +28,11 @@ public final class TableInteraction {
         }
     }
 
-    public record Target(int column, int row, PanelGrid.Module module, boolean exposed) {
+    /**
+     * Hit cell in the clicked table's frame (0-2), or the anchor of the module hit, which may lie in
+     * a joined table before this one (column/row are then negative in this frame).
+     */
+    public record Target(int column, int row, TablePanel.Placed module, boolean exposed) {
         public boolean interactive() { return exposed || module != null; }
     }
 
@@ -72,19 +76,21 @@ public final class TableInteraction {
         if (!Double.isFinite(p.x) || !Double.isFinite(p.y) || !Double.isFinite(p.z))
             return new Target(-1, -1, null, false);
         // A side face on the elevated selection volume belongs to the entire installed footprint.
-        for (PanelGrid.Module module : table.grid().modules()) {
-            double x0 = module.column() / 3.0 + .06, z0 = module.row() / 3.0 + .06;
-            double x1 = (module.column() + module.width()) / 3.0 - .06;
-            double z1 = (module.row() + module.height()) / 3.0 - .06;
+        // Includes modules running in from the joined tables before this one.
+        for (TablePanel.Placed placed : TablePanel.covering(table)) {
+            var module = placed.module();
+            double x0 = placed.column() / 3.0 + .06, z0 = placed.row() / 3.0 + .06;
+            double x1 = (placed.column() + module.width()) / 3.0 - .06;
+            double z1 = (placed.row() + module.height()) / 3.0 - .06;
             if (p.y > 3.0 / 16 + 1e-7 && p.y <= PanelCoordinates.MODULE_TOP + 1e-7
                     && p.x >= x0 - 1e-7 && p.x <= x1 + 1e-7
                     && p.z >= z0 - 1e-7 && p.z <= z1 + 1e-7)
-                return new Target(module.column(), module.row(), module, hitFace == facing);
+                return new Target(placed.column(), placed.row(), placed, hitFace == facing);
         }
         int column = PanelCoordinates.cell(p.x), row = PanelCoordinates.cell(p.z);
         boolean exposed = hitFace == facing && column >= 0 && row >= 0
                 && p.y >= 3.0 / 16 - 1e-7 && p.y <= PanelCoordinates.MODULE_TOP + 1e-7;
-        return new Target(column, row, exposed ? table.grid().at(column, row).orElse(null) : null, exposed);
+        return new Target(column, row, exposed ? TablePanel.localAt(table, column, row).orElse(null) : null, exposed);
     }
 
     public static boolean canReach(net.minecraft.server.level.ServerPlayer player, ModularTableBlockEntity table) {

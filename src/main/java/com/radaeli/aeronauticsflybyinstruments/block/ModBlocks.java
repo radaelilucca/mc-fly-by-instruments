@@ -39,7 +39,8 @@ public final class ModBlocks {
 
     public static final DeferredBlock<ModularTableBaseBlock> MODULAR_TABLE_BASE =
             BLOCKS.register("modular_table_base", () -> new ModularTableBaseBlock(
-                    BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().dynamicShape()));
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().dynamicShape()
+                            .lightLevel(state -> state.getValue(ModularTableBaseBlock.LIGHT))));
     public static final DeferredItem<BlockItem> MODULAR_TABLE_BASE_ITEM =
             ITEMS.registerSimpleBlockItem(MODULAR_TABLE_BASE);
     public static final DeferredBlock<AvionicsCableBlock> AVIONICS_CABLE =
