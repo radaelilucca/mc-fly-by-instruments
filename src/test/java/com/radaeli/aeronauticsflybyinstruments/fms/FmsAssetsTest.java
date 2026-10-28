@@ -93,14 +93,20 @@ class FmsAssetsTest {
 
     @Test
     void portugueseAndEnglishCoverEveryFmsVisibleString() throws Exception {
-        var required = new String[]{"title", "waypoints", "navigator", "name", "name_hint", "dimension",
-                "coordinate_x", "coordinate_y", "coordinate_z", "current_position", "save_waypoint",
-                "delete", "set_target", "clear_target", "navigator_help", "confirm_rebind",
-                "navigator_missing", "navigator_linked", "navigator_unbound", "navigator_other_link"};
+        // Keys FmsScreen uses, including the ones it builds at runtime (coordinate_*, *_waypoint, message.*).
+        var required = new String[]{"title", "waypoints", "navigator", "name_hint", "new_waypoint",
+                "create_waypoint", "edit_waypoint", "close_form", "coordinate_x", "coordinate_y", "coordinate_z",
+                "current_position", "save_waypoint", "delete", "clear_target", "select_destination",
+                "target_none", "target_current", "target_coordinates", "target_distance", "target_other_dimension",
+                "close_picker", "open_linker", "linker_title", "linker_slot", "close_linker", "confirm_rebind",
+                "linker_missing", "linker_connected", "linker_unbound", "linker_other_link"};
+        var messages = new String[]{"invalid_waypoint", "confirm_rebind"};
         var english = readJson("/assets/aeronautics_fly_by_instruments/lang/en_us.json");
         var portuguese = readJson("/assets/aeronautics_fly_by_instruments/lang/pt_br.json");
-        for (String key : required) {
-            String fullKey = "gui.aeronautics_fly_by_instruments.fms." + key;
+        var keys = new java.util.ArrayList<String>();
+        for (String key : required) keys.add("gui.aeronautics_fly_by_instruments.fms." + key);
+        for (String key : messages) keys.add("message.aeronautics_fly_by_instruments.fms." + key);
+        for (String fullKey : keys) {
             assertTrue(english.has(fullKey), "Missing en_us key " + fullKey);
             assertTrue(portuguese.has(fullKey), "Missing pt_br key " + fullKey);
         }
