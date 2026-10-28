@@ -39,9 +39,9 @@ public record CableConnection(Direction direction, Vec3 socket) {
         for (int i = 0; i < 5; i++) {
             result = Shapes.or(result, bounds(6, 6, 8 + i, 10, 10, 9 + i, false));
         }
-        result = Shapes.or(result, bounds(5.875, 5.875, 13, 10.125, 10.125, 14.5, true));
-        result = Shapes.or(result, bounds(5.75, 5.75, 14.5, 10.25, 10.25, 15.25, true));
-        return Shapes.or(result, bounds(6.25, 6.25, 15.25, 9.75, 9.75, 16, true));
+        // Boot and brass collar share one 6x6 box; the 4x4 tip meets the socket.
+        result = Shapes.or(result, bounds(5, 5, 13, 11, 11, 15, true));
+        return Shapes.or(result, bounds(6, 6, 15, 10, 10, 16, true));
     }
 
     private VoxelShape bounds(double x0, double y0, double z0, double x1, double y1, double z1, boolean terminal) {

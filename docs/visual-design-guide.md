@@ -200,7 +200,7 @@ cobre é fluidos e vapor, ferro industrial é a parte pesada do Aeronautics.
 | Advanced Terrain Scanner | **Latão + ferro industrial** (v2 entregue), barra com três lentes | content observer, smart observer, optical sensor |
 | Mesa modular e módulos | Ver seção 9.3 (proposta) | navigation table, nixie tube, display link, gauges |
 | GPWS Computer (experimental) | Latão + madeira escura | navigation table, stockpile switch |
-| Avionics Cable (experimental) | Decidir no redesign | rope, belts, fluid pipe |
+| Avionics Cable (experimental) | **Ferro industrial**, latão só na luva do conector (base v2.1 em 2026-10-27) | rope, belts, fluid pipe |
 
 ### Diferenciação entre os sensores
 

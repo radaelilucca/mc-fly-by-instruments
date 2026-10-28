@@ -12,20 +12,27 @@ for(const[id,t]of p.textures.entries()){
   const target=new URL(`textures/block/${name}.png`,assets);mkdirSync(new URL('./',target),{recursive:true});
   writeFileSync(target,Buffer.from(t.source.split(',')[1],'base64'));
 }
+const AXES={north:[0,1],south:[0,1],east:[2,1],west:[2,1],up:[0,2],down:[0,2]};
 const cubes=new Map(p.elements.map(c=>[c.uuid,c]));
-function part(groupName){
+function part(groupName,item=false){
   const group=p.groups?.find(g=>g.name===groupName);
   const g=p.outliner.find(g=>g.name===groupName || (group && g.uuid===group.uuid));
   assert.ok(g,`Missing group ${groupName}`);return g.children.map(id=>{
   const c=cubes.get(id);assert.equal(c.type,'cube');assert.ok(!c.rotation?.some(v=>v!==0));
+  for(const v of [...c.from,...c.to])assert.ok(Number.isInteger(v),`${c.name}: integer coordinates`);
+  const size=[0,1,2].map(i=>c.to[i]-c.from[i]);
   const faces={};
   for(const[side,f]of Object.entries(c.faces)){
     if(f.texture===null||f.texture===undefined)continue;
     // These faces mate with other geometry or the device, so do not create coplanar caps.
-    if(c.name==='socket_tip'&&side==='south')continue;
+    if(c.name==='socket_tip'&&(side==='north'||(side==='south'&&!item)))continue;
     if(c.name==='flexible_jacket'&&side==='south')continue;
-    if(c.name==='strain_relief'&&side==='north')continue;
+    if(c.name==='strain_relief'&&side==='south')continue;
+    if(c.name==='metal_ferrule'&&side==='north')continue;
     const t=p.textures[f.texture];
+    const[gu,gv]=AXES[side].map(a=>size[a]);
+    assert.equal(Math.abs(f.uv[2]-f.uv[0])*t.width/t.uv_width,gu,`${c.name}.${side}: 1 texel per unit (u)`);
+    assert.equal(Math.abs(f.uv[3]-f.uv[1])*t.height/t.uv_height,gv,`${c.name}.${side}: 1 texel per unit (v)`);
     faces[side]={uv:f.uv.map((v,i)=>v*16/(i%2?t.uv_height:t.uv_width)),texture:`#${f.texture}`};
     if(f.rotation)faces[side].rotation=f.rotation;
   }
@@ -46,7 +53,7 @@ for(const[direction,axis,angle]of [['south','y',0],['north','y',180],['east','y'
   model(`avionics_cable_${direction}`,arm.map(e=>{const a=rotate(e.from),b=rotate(e.to);return{...e,from:a.map((v,i)=>Math.min(v,b[i])),to:a.map((v,i)=>Math.max(v,b[i])),faces:Object.fromEntries(Object.entries(e.faces).map(([side,f])=>[sideMap[side],f]))};}));
 }
 // The item shows a small lead and its connector rather than an unidentifiable cube.
-model('avionics_cable_item',[...hub,...part('flexible_arm'),...part('connector')],{
+model('avionics_cable_item',[...hub,...part('flexible_arm'),...part('connector',true)],{
   gui:{rotation:[30,225,0],translation:[0,0,0],scale:[1.2,1.2,1.2]},
   ground:{rotation:[0,0,0],translation:[0,2,0],scale:[.7,.7,.7]},
   fixed:{rotation:[0,180,0],translation:[0,0,0],scale:[1,1,1]},

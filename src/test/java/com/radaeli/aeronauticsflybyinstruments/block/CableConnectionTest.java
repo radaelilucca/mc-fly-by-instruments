@@ -158,9 +158,9 @@ class CableConnectionTest {
                 try (var input = getClass().getResourceAsStream(ROOT + "textures/" + path.split(":", 2)[1] + ".png")) {
                     assertNotNull(input, path);
                     var image = ImageIO.read(input);
-                    assertEquals(32, image.getWidth());
-                    assertEquals(32, image.getHeight());
-                    for (int x = 0; x < 32; x++) for (int y = 0; y < 32; y++) assertEquals(255, image.getRGB(x, y) >>> 24);
+                    assertEquals(16, image.getWidth());
+                    assertEquals(16, image.getHeight());
+                    for (int x = 0; x < 16; x++) for (int y = 0; y < 16; y++) assertEquals(255, image.getRGB(x, y) >>> 24);
                 }
             }
             for (var entry : model.getAsJsonArray("elements")) {
@@ -172,9 +172,18 @@ class CableConnectionTest {
                     assertTrue(model.getAsJsonObject("textures").has(f.get("texture").getAsString().substring(1)));
                     for (var uv : f.getAsJsonArray("uv")) assertTrue(uv.getAsDouble() >= 0 && uv.getAsDouble() <= 16);
                 }
-                if (cube.get("name").getAsString().equals("socket_tip")) assertFalse(faces.has("south"));
-                if (cube.get("name").getAsString().equals("flexible_jacket")) assertFalse(faces.has("south"));
-                if (cube.get("name").getAsString().equals("strain_relief")) assertFalse(faces.has("north"));
+                String cubeName = cube.get("name").getAsString();
+                for (int i = 0; i < 3; i++) {
+                    assertEquals(Math.rint(cube.getAsJsonArray("from").get(i).getAsDouble()),
+                            cube.getAsJsonArray("from").get(i).getAsDouble(), EPS, cubeName + " integer from");
+                    assertEquals(Math.rint(cube.getAsJsonArray("to").get(i).getAsDouble()),
+                            cube.getAsJsonArray("to").get(i).getAsDouble(), EPS, cubeName + " integer to");
+                }
+                // Only the item shows the plug face; a placed tip mates the socket.
+                if (cubeName.equals("socket_tip")) assertFalse(faces.has("north") || (!name.equals("item") && faces.has("south")));
+                if (cubeName.equals("flexible_jacket")) assertFalse(faces.has("south"));
+                if (cubeName.equals("strain_relief")) assertFalse(faces.has("south"));
+                if (cubeName.equals("metal_ferrule")) assertFalse(faces.has("north"));
             }
         }
     }
