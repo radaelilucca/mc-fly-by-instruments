@@ -29,6 +29,8 @@ export const PALETTE = {
   r: '#460000', s: '#500101', t: '#580101', R: '#970000', S: '#AE0000', T: '#CD0000', U: '#FD0000',
   // dark lens + blue glint
   L: '#13161D', M: '#171B23', N: '#20232A', O: '#282C37', Q: '#333846', V: '#464C5F', Y: '#5371C6', Z: '#5059AB',
+  // parchment dial, dark -> light, + grey marks
+  G: '#D4C2A4', H: '#E0D2AE', I: '#EEE4CE', J: '#F6EDD8', K: '#F9F2DE', P: '#676562', X: '#949188',
 };
 
 export function canvas(width, height, fill) {
@@ -77,13 +79,15 @@ export function png(img) {
     chunk('IHDR', header), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
 }
 
-export function texture(name, size, { namespace = NS, source = null, relativePath = '', particle = false } = {}) {
+// Animated textures are vertical strips of square frames (source height = size x frames).
+export function texture(name, size, { namespace = NS, source = null, relativePath = '', particle = false,
+                                      frameTime = 1 } = {}) {
   return {
     name: `${name}.png`, path: '', relative_path: relativePath, folder: 'block', namespace,
-    id: '', group: '', scope: 0, width: size, height: size, uv_width: RES, uv_height: RES,
+    id: '', group: '', scope: 0, width: size, height: source ? source.length : size, uv_width: RES, uv_height: RES,
     particle, use_as_default: false, layers_enabled: false, sync_to_project: '', file_format: 'png',
     render_mode: 'default', render_sides: 'auto', wrap_mode: 'limited', pbr_channel: 'color', fps: 7,
-    frame_time: 1, frame_order_type: 'loop', frame_order: '', frame_interpolate: false, visible: true,
+    frame_time: frameTime, frame_order_type: 'loop', frame_order: '', frame_interpolate: false, visible: true,
     internal: source !== null, saved: source !== null, uuid: randomUUID(),
     ...(source ? { source: `data:image/png;base64,${png(source).toString('base64')}` } : {}),
   };
@@ -171,6 +175,11 @@ export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {}, 
     }
     mkdirSync(new URL('./', target), { recursive: true });
     writeFileSync(target, bytes);
+    // A strip of square frames is an animated texture: Minecraft needs the .mcmeta beside it.
+    if (t.height > t.width) {
+      const animation = { animation: { frametime: t.frame_time || 1 } };
+      writeFileSync(new URL(`${base(t)}.png.mcmeta`, target), `${JSON.stringify(animation, null, 2)}\n`);
+    }
   }
   const used = new Set();
   const elements = project.elements.map(c => {
@@ -186,7 +195,8 @@ export function exportBlockModel({ projectUrl, assetsUrl, model, variants = {}, 
       let [gu, gv] = AXES[side].map(a => size[a]);
       if (f.rotation === 90 || f.rotation === 270) [gu, gv] = [gv, gu];
       assert.equal(Math.abs(f.uv[2] - f.uv[0]) * t.width / t.uv_width, gu, `${c.name}.${side}: 1 texel per unit (u)`);
-      assert.equal(Math.abs(f.uv[3] - f.uv[1]) * t.height / t.uv_height, gv, `${c.name}.${side}: 1 texel per unit (v)`);
+      const frameHeight = t.height > t.width ? t.width : t.height; // UVs of an animated strip address one frame
+      assert.equal(Math.abs(f.uv[3] - f.uv[1]) * frameHeight / t.uv_height, gv, `${c.name}.${side}: 1 texel per unit (v)`);
       faces[side] = { uv: f.uv.map((v, i) => v * 16 / (i % 2 ? t.uv_height : t.uv_width)), texture: `#${f.texture}` };
       if (f.rotation) faces[side].rotation = f.rotation;
       used.add(f.texture);

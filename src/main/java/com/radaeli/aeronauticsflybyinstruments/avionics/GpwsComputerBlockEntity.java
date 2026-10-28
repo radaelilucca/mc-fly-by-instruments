@@ -114,6 +114,12 @@ public final class GpwsComputerBlockEntity extends BlockEntity implements Avioni
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, GpwsComputerBlockEntity computer) {
         if (level.isClientSide) return;
+        // The screen's blinking cursor (gpws_computer_armed model) follows the runtime mode.
+        boolean armed = computer.mode == GpwsMode.ARMED;
+        if (state.getValue(com.radaeli.aeronauticsflybyinstruments.block.GpwsComputerBlock.ARMED) != armed) {
+            level.setBlock(pos, state.setValue(com.radaeli.aeronauticsflybyinstruments.block.GpwsComputerBlock.ARMED, armed),
+                    Block.UPDATE_CLIENTS);
+        }
         int interval = ModConfig.SENSOR_SCAN_INTERVAL_TICKS.get();
         long offset = Math.floorMod(pos.asLong(), (long) interval);
         if (Math.floorMod(level.getGameTime(), interval) != offset) return;

@@ -199,7 +199,7 @@ cobre é fluidos e vapor, ferro industrial é a parte pesada do Aeronautics.
 | Terrain Scanner | **Andesito + madeira média** (v2 entregue), bocal escalonado frontal | andesite casing, laser sensor, laser pointer |
 | Advanced Terrain Scanner | **Latão + ferro industrial** (v2 entregue), barra com três lentes | content observer, smart observer, optical sensor |
 | Mesa modular e módulos | Ver seção 9.3 (base v2.1 em 2026-10-27) | navigation table, nixie tube, display link, gauges |
-| GPWS Computer (experimental) | Latão + madeira escura | navigation table, stockpile switch |
+| GPWS Computer (experimental) | **Ferro industrial + latão, sem madeira** (v2.1 em 2026-10-28): ferro dominante, latão no acabamento, painel anunciador frontal | navigation table, stockpile switch, industrial iron (Aeronautics) |
 | Avionics Cable (experimental) | **Ferro industrial**, latão só na luva do conector (base v2.1 em 2026-10-27) | rope, belts, fluid pipe |
 
 ### Diferenciação entre os sensores
@@ -408,6 +408,10 @@ tem arremate nas pontas, para emendar sem costura. Referência de implementaçã
   marcador que importa. Texto só com a fonte do Minecraft. Tamanhos fixos em unidades do
   modelo, proporcionais à lente. Primeiro uso: bússola do FMS
   ([README](../blockbench/fms-module-2x3/README.md)).
+- **Estado em tela de bloco** (decisão de 2026-10-28, GPWS): um indicador simples de estado
+  numa tela de bloco, como o cursor piscante do GPWS armado, é **textura animada vanilla**
+  (faixa de quadros quadrados + `.mcmeta`), dentro da paleta, trocada por uma propriedade de
+  blockstate com a mesma geometria. Sem renderer nem emissão. É a técnica do CC:Tweaked.
 - **Legibilidade de perto:** a 1 bloco, um módulo 1×1 ocupa poucos texels por face.
   Cada pixel precisa de função: contorno, aro, lente, reflexo. Nada de textura de
   material em peça de 4 unidades além do contorno.

@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.phys.BlockHitResult;
@@ -34,19 +35,12 @@ import org.jetbrains.annotations.Nullable;
 public final class GpwsComputerBlock extends BaseEntityBlock implements AvionicsWrenchable {
     public static final MapCodec<GpwsComputerBlock> CODEC = simpleCodec(GpwsComputerBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    // Housing recesses remain real; only front, top and bottom sockets reach the cell edge.
+    /** Screen state only: true swaps in the model with the blinking cursor. */
+    public static final BooleanProperty ARMED = BooleanProperty.create("armed");
+    // Follows models/block/gpws_computer.json: iron base, inset body, brass lid, screen, test button.
     private static final VoxelShape NORTH_SHAPE = Shapes.or(
-            box(1, 1, 1, 15, 15, 15), box(2, .25, 2, 14, 1.25, 14),
-            box(.85, 2, 2, 1, 14, 14), box(15, 2, 2, 15.15, 14, 14),
-            box(2, 15, 2, 14, 15.3, 14), box(2, 2, 15, 14, 14, 15.15),
-            box(2, 2, .75, 14, 14, 1),
-            box(3, 11.5, .35, 4.5, 13.5, .75), box(11.5, 11.5, .35, 13, 13.5, .75),
-            box(3.5, 12, 0, 4.5, 13, .35), box(11.5, 12, 0, 12.5, 13, .35),
-            box(4.5, 12, 0, 11.5, 13.25, .35),
-            box(3, 5, .15, 5, 7, .75), box(10.5, 4.5, .15, 12.5, 6.5, .75),
-            box(11, 7.5, .35, 12.5, 11.2, .75),
-            box(6, 6, 0, 10, 10, .75),
-            box(6, 15.15, 6, 10, 16, 10), box(6, 0, 6, 10, 1, 10)).optimize();
+            box(0, 0, 0, 16, 2, 16), box(1, 2, 1, 15, 14, 15), box(0, 14, 0, 16, 16, 16),
+            box(2, 5, 0, 14, 13, 1), box(7, 2, 0, 9, 4, 1)).optimize();
     private static final Map<Direction, VoxelShape> SHAPES = Map.of(
             Direction.NORTH, NORTH_SHAPE, Direction.EAST, rotateShape(Direction.EAST),
             Direction.SOUTH, rotateShape(Direction.SOUTH), Direction.WEST, rotateShape(Direction.WEST));
@@ -67,14 +61,14 @@ public final class GpwsComputerBlock extends BaseEntityBlock implements Avionics
 
     public GpwsComputerBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, net.minecraft.core.Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, net.minecraft.core.Direction.NORTH).setValue(ARMED, false));
     }
 
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
 
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block,
             BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, ARMED);
     }
 
     @Override public BlockState getStateForPlacement(BlockPlaceContext context) {

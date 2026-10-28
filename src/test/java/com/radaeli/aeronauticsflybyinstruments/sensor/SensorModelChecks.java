@@ -22,7 +22,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Shared checks for the v2 sensor models (docs/visual-design-guide.md). */
-final class SensorModelChecks {
+public final class SensorModelChecks {
     static final String NS = "aeronautics_fly_by_instruments";
     private static final Map<String, int[]> FACE_AXES = Map.of(
             "north", new int[]{0, 1}, "south", new int[]{0, 1}, "east", new int[]{2, 1},
@@ -37,7 +37,7 @@ final class SensorModelChecks {
         }
     }
 
-    static JsonObject model(String name) throws Exception {
+    public static JsonObject model(String name) throws Exception {
         return json(NS, "models/block/" + name + ".json");
     }
 
@@ -55,32 +55,47 @@ final class SensorModelChecks {
         }
     }
 
-    static double[] vector(JsonArray array) {
+    static boolean hasAnimationMeta(String id) throws Exception {
+        String[] parts = id.split(":", 2);
+        try (var input = SensorModelChecks.class.getClassLoader()
+                .getResourceAsStream("assets/" + parts[0] + "/textures/" + parts[1] + ".png.mcmeta")) {
+            return input != null && JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8))
+                    .getAsJsonObject().has("animation");
+        }
+    }
+
+    public static double[] vector(JsonArray array) {
         return new double[]{array.get(0).getAsDouble(), array.get(1).getAsDouble(), array.get(2).getAsDouble()};
     }
 
-    static JsonObject element(JsonObject model, String name) {
+    public static JsonObject element(JsonObject model, String name) {
         for (var entry : model.getAsJsonArray("elements")) {
             if (entry.getAsJsonObject().get("name").getAsString().equals(name)) return entry.getAsJsonObject();
         }
         throw new AssertionError("Missing element " + name);
     }
 
-    static Set<String> textureIds(JsonObject model) {
+    public static Set<String> textureIds(JsonObject model) {
         var ids = new HashSet<String>();
         for (var entry : model.getAsJsonObject("textures").entrySet()) ids.add(entry.getValue().getAsString());
         return ids;
     }
 
     /** Guide v2: unrotated integer cuboids in 0..16, own textures opaque 16/32 px, 1 texel per unit. */
-    static void assertGuideRules(String name) throws Exception {
+    public static void assertGuideRules(String name) throws Exception {
         var model = model(name);
         var textures = model.getAsJsonObject("textures");
         for (var entry : textures.entrySet()) {
             var id = entry.getValue().getAsString();
             var image = texture(id);
             if (!id.startsWith(NS + ":")) continue;
-            assertEquals(image.getWidth(), image.getHeight(), id);
+            if (image.getHeight() > image.getWidth()) {
+                // Animated strip of square frames: Minecraft only animates it with its .mcmeta.
+                assertEquals(0, image.getHeight() % image.getWidth(), id + ": whole square frames");
+                assertTrue(hasAnimationMeta(id), id + ": animated strip needs a .png.mcmeta");
+            } else {
+                assertEquals(image.getWidth(), image.getHeight(), id);
+            }
             assertTrue(image.getWidth() == 16 || image.getWidth() == 32, id + ": 16 or 32 px");
             for (int x = 0; x < image.getWidth(); x++) for (int y = 0; y < image.getHeight(); y++) {
                 assertEquals(255, image.getRGB(x, y) >>> 24, id);
@@ -113,7 +128,8 @@ final class SensorModelChecks {
                 String where = name + " " + cube.get("name").getAsString() + "." + face.getKey();
                 assertEquals(geometryU, Math.abs(uv.get(2).getAsDouble() - uv.get(0).getAsDouble()) * image.getWidth() / 16,
                         1e-9, where + ": 1 texel per unit (u)");
-                assertEquals(geometryV, Math.abs(uv.get(3).getAsDouble() - uv.get(1).getAsDouble()) * image.getHeight() / 16,
+                // UVs of an animated strip address one square frame.
+                assertEquals(geometryV, Math.abs(uv.get(3).getAsDouble() - uv.get(1).getAsDouble()) * image.getWidth() / 16,
                         1e-9, where + ": 1 texel per unit (v)");
             }
         }
