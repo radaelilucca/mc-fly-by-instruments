@@ -124,10 +124,35 @@ class LampModuleAssetsTest {
     }
 
     @Test
+    void amberVariantsOnlySwapTheGlassAndTheLitFilament() throws Exception {
+        for (var lamp : FOOTPRINTS.keySet()) {
+            var red = model(lamp + "_off");
+            for (var lit : new boolean[]{false, true}) {
+                var amber = model(lamp + (lit ? "_amber_on" : "_amber_off"));
+                assertEquals(red.get("elements"), amber.get("elements"), "Amber keeps the geometry");
+                var textures = amber.getAsJsonObject("textures");
+                var redTextures = red.getAsJsonObject("textures");
+                for (var key : redTextures.keySet()) {
+                    String expected = redTextures.get(key).getAsString()
+                            .replace("lamp_glass_red", "lamp_glass_amber")
+                            .replace("lamp_filament_off", lit ? "lamp_filament_on_amber" : "lamp_filament_off");
+                    assertEquals(expected, textures.get(key).getAsString(), lamp + " " + key);
+                }
+            }
+        }
+        // Same alpha map: red and amber read as one object in two colours (plan §6).
+        var red = texture(NS + "lamp_glass_red");
+        var amber = texture(NS + "lamp_glass_amber");
+        for (int y = 0; y < red.getHeight(); y++) for (int x = 0; x < red.getWidth(); x++)
+            assertEquals(red.getRGB(x, y) >>> 24, amber.getRGB(x, y) >>> 24, "alpha at " + x + "," + y);
+    }
+
+    @Test
     void onlyTheGlassIsTranslucent() throws Exception {
-        for (var name : new String[]{"lamp_socket", "lamp_filament_off", "lamp_filament_on", "lamp_glass_red"}) {
+        for (var name : new String[]{"lamp_socket", "lamp_filament_off", "lamp_filament_on", "lamp_filament_on_amber",
+                "lamp_glass_red", "lamp_glass_amber"}) {
             var image = texture(NS + name);
-            boolean glass = name.equals("lamp_glass_red");
+            boolean glass = name.startsWith("lamp_glass_");
             for (int y = 0; y < image.getHeight(); y++) for (int x = 0; x < image.getWidth(); x++) {
                 int alpha = image.getRGB(x, y) >>> 24;
                 if (glass) assertTrue(alpha > 0 && alpha < 255, name + ": tinted glass");

@@ -22,7 +22,7 @@ class AvionicsWrenchableTest {
                 () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(ModularTableBaseBlock.class)),
                 () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(AvionicsCableBlock.class)),
                 () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(NetworkBridgeBlock.class)),
-                () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(GpwsComputerBlock.class)),
+                () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(AvionicsComputerBlock.class)),
                 () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(RadarAltimeterBlock.class)),
                 () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(AbstractTerrainScannerBlock.class)),
                 () -> assertTrue(AvionicsWrenchable.class.isAssignableFrom(TerrainScannerBlock.class)),

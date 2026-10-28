@@ -123,8 +123,21 @@ public final class ModularTableBaseBlock extends Block implements EntityBlock, A
                 hit.getDirection(), hit.getLocation());
         if (!target.interactive()) return net.minecraft.world.InteractionResult.PASS;
         // The module may belong to a joined table: the FMS opens on its owner, the panel on the whole surface.
-        var placed = java.util.Optional.ofNullable(player.isShiftKeyDown() ? null : target.module());
+        // Sneaking opens the general panel, except over a lit lamp, whose own configuration it opens.
+        var hitModule = target.module();
+        boolean litLamp = hitModule != null && ModularTableBlockEntity.isLampModule(hitModule.module())
+                && hitModule.owner().isModuleActive(hitModule.module());
+        var placed = java.util.Optional.ofNullable(player.isShiftKeyDown() && !litLamp ? null : hitModule);
         var module = placed.map(TablePanel.Placed::module);
+        // A lit lamp works like a master warning: pressing it acknowledges (silences the buzzers).
+        if (litLamp && !player.isShiftKeyDown()) {
+            if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
+                TablePanel.of(table).setMuted(true);
+                serverPlayer.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "message.aeronautics_fly_by_instruments.panel.acknowledged"), true);
+            }
+            return net.minecraft.world.InteractionResult.sidedSuccess(level.isClientSide);
+        }
         if (module.isPresent() && module.get().type().equals("fms")
                 && !level.isClientSide && player instanceof ServerPlayer serverPlayer) {
             var owner = placed.get().owner();

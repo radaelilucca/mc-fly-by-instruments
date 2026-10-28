@@ -129,7 +129,8 @@ public final class ModularTableRenderer implements BlockEntityRenderer<ModularTa
             poses.translate(-0.5, 0, -0.5);
         }
         var renderer = module.type().equals("lamp_2x1") ? lamps2x1 : lamps1x1;
-        renderer.render(table.lampRenderIntensity(module), table.getLevel(), poses, buffers, light, overlay);
+        renderer.render(table.lampRenderIntensity(module), table.lampColor(module), table.getLevel(), poses, buffers,
+                light, overlay);
         poses.popPose();
     }
 

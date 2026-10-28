@@ -2,6 +2,7 @@ package com.radaeli.aeronauticsflybyinstruments.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.radaeli.aeronauticsflybyinstruments.AeronauticsFlyByInstruments;
+import com.radaeli.aeronauticsflybyinstruments.panel.LampIndication;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -27,49 +28,51 @@ import java.util.Set;
 /** Reuses the authored models, keeping the opaque housing out of the emissive pass. */
 final class LampModuleRenderer {
     static final RenderType EMISSIVE = RenderType.entityTranslucentEmissive(TextureAtlas.LOCATION_BLOCKS, false);
-    // Shared by the 1x1 and 2x1 models: glass tube (lens) and filament (emitter).
-    private static final Set<ResourceLocation> LENS = Set.of(texture("lamp_glass_red"));
-    private static final Set<ResourceLocation> EMITTER = Set.of(texture("lamp_filament_on"), texture("lamp_filament_off"));
+    // Shared by the 1x1 and 2x1 models, red and amber: glass tube (lens) and filament (emitter).
+    private static final Set<ResourceLocation> LENS = Set.of(texture("lamp_glass_red"), texture("lamp_glass_amber"));
+    private static final Set<ResourceLocation> EMITTER = Set.of(texture("lamp_filament_on"),
+            texture("lamp_filament_off"), texture("lamp_filament_on_amber"));
 
-    private final ItemStack offStack;
-    private final ItemStack onStack;
-    private Layers offLayers;
-    private Layers onLayers;
+    /** Item model variants by custom model data: 0 red off, 1 red on, 2 amber off, 3 amber on. */
+    private final ItemStack[] stacks = new ItemStack[4];
+    private final Layers[] layers = new Layers[4];
 
     LampModuleRenderer(Item item) {
-        offStack = new ItemStack(item);
-        onStack = new ItemStack(item);
-        onStack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(1));
+        for (int index = 0; index < stacks.length; index++) {
+            stacks[index] = new ItemStack(item);
+            if (index > 0) stacks[index].set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(index));
+        }
     }
 
-    void render(int intensity, Level level, PoseStack poses, MultiBufferSource buffers, int light, int overlay) {
+    void render(int intensity, LampIndication.Color color, Level level, PoseStack poses, MultiBufferSource buffers,
+                int light, int overlay) {
         boolean lit = intensity > 0;
+        int variant = (color == LampIndication.Color.AMBER ? 2 : 0) + (lit ? 1 : 0);
         var renderer = Minecraft.getInstance().getItemRenderer();
-        var stack = lit ? onStack : offStack;
+        var stack = stacks[variant];
         var model = renderer.getModel(stack, level, null, 0);
-        var layers = lit ? onLayers : offLayers;
+        var cached = layers[variant];
         // Model identity changes on resource reload: never retain quads from the old atlas.
-        if (layers == null || layers.model() != model) {
-            layers = Layers.from(model);
-            if (lit) onLayers = layers;
-            else offLayers = layers;
+        if (cached == null || cached.model() != model) {
+            cached = Layers.from(model);
+            layers[variant] = cached;
         }
 
         var opaque = buffers.getBuffer(Sheets.cutoutBlockSheet());
-        renderer.renderQuadList(poses, opaque, layers.housing(), stack, light, overlay);
+        renderer.renderQuadList(poses, opaque, cached.housing(), stack, light, overlay);
         if (lit) {
             // The core and tinted lens share a sorted translucent pass. This preserves
             // visibility through the glass while the shader ignores ambient light.
             var emissive = buffers.getBuffer(EMISSIVE);
             float brightness = intensity / 15.0f;
-            for (var quad : layers.luminous()) {
+            for (var quad : cached.luminous()) {
                 emissive.putBulkData(poses.last(), quad, brightness, brightness, brightness, 1.0f,
                         LightTexture.FULL_BRIGHT, overlay);
             }
         } else {
-            renderer.renderQuadList(poses, opaque, layers.emitter(), stack, light, overlay);
+            renderer.renderQuadList(poses, opaque, cached.emitter(), stack, light, overlay);
             renderer.renderQuadList(poses, buffers.getBuffer(Sheets.translucentCullBlockSheet()),
-                    layers.lens(), stack, light, overlay);
+                    cached.lens(), stack, light, overlay);
         }
     }
 

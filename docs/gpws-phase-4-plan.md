@@ -1,5 +1,9 @@
 # Fase 4 — GPWS Computer e motor de alertas
 
+> **Arquivado (2026-10-28).** O GPWS Computer virou o Avionics Computer: sem perfis,
+> modos nem regras editáveis. Veja [avionics-computer.md](avionics-computer.md) e o
+> [plano do refactor](avionics-computer-plan.md). Este texto fica como histórico.
+
 Este documento detalha a Fase 4 do roadmap do Aeronautics: Fly by Instruments.
 Ele define o comportamento funcional do GPWS, mantendo a implementação dentro
 do baseline atual do projeto. A Fase 4 entrega lógica e API; a apresentação

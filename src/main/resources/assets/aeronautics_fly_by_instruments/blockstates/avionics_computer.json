@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,screen=normal": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_normal"},
+    "facing=east,screen=normal": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_normal", "y": 90},
+    "facing=south,screen=normal": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_normal", "y": 180},
+    "facing=west,screen=normal": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_normal", "y": 270},
+    "facing=north,screen=caution": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_caution"},
+    "facing=east,screen=caution": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_caution", "y": 90},
+    "facing=south,screen=caution": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_caution", "y": 180},
+    "facing=west,screen=caution": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_caution", "y": 270},
+    "facing=north,screen=warning": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_warning"},
+    "facing=east,screen=warning": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_warning", "y": 90},
+    "facing=south,screen=warning": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_warning", "y": 180},
+    "facing=west,screen=warning": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_warning", "y": 270},
+    "facing=north,screen=inop": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_inop"},
+    "facing=east,screen=inop": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_inop", "y": 90},
+    "facing=south,screen=inop": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_inop", "y": 180},
+    "facing=west,screen=inop": {"model": "aeronautics_fly_by_instruments:block/avionics_computer_inop", "y": 270}
+  }
+}

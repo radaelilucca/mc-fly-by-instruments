@@ -1,244 +1,208 @@
 package com.radaeli.aeronauticsflybyinstruments.client;
 
-import com.radaeli.aeronauticsflybyinstruments.client.DynamicText.Tone;
+import com.google.gson.JsonParser;
+import com.radaeli.aeronauticsflybyinstruments.avionics.ScannerSide;
+import com.radaeli.aeronauticsflybyinstruments.network.ApplySensorOutputConfigPayload;
 import com.radaeli.aeronauticsflybyinstruments.sensor.SensorOutputConfig;
 import com.radaeli.aeronauticsflybyinstruments.sensor.SensorOutputConfig.Channel;
-import com.radaeli.ruilib.ui.Bounds;
-import com.radaeli.ruilib.ui.Button;
-import com.radaeli.ruilib.ui.InventoryGrid;
-import com.radaeli.ruilib.ui.ItemSlot;
-import com.radaeli.ruilib.ui.Slider;
-import com.radaeli.ruilib.ui.Tabs;
-import com.radaeli.ruilib.ui.UiComponent;
-import com.radaeli.ruilib.ui.UiTheme;
-import net.minecraft.client.gui.Font;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SensorOutputConfigScreenTest {
-    private static final Map<String, String> TRANSLATIONS = translations();
-    /** Smallest GUI an automatic GUI scale produces is 320×240; the screen keeps a 12 px margin. */
-    private static final int SMALL_GUI_WIDTH = 320 - 24;
-    private static final int SMALL_GUI_HEIGHT = 240 - 12;
-    private static final int WIDE_GUI_WIDTH = 426 - 24;
-    // Deterministic text metrics, without loading an atlas or starting the Minecraft client.
-    private final Font font = new Font(ignored -> null, false) {
-        @Override public int width(String text) { return TRANSLATIONS.getOrDefault(text, text).length() * 5; }
-        @Override public int width(FormattedText text) { return width(text.getString()); }
-        @Override public String plainSubstrByWidth(String text, int width) {
-            return text.substring(0, Math.min(text.length(), Math.max(0, width / 5)));
-        }
-        @Override public String plainSubstrByWidth(String text, int width, boolean reverse) {
-            int count = Math.min(text.length(), Math.max(0, width / 5));
-            return reverse ? text.substring(text.length() - count) : text.substring(0, count);
-        }
-    };
+    private static final String GUI = "gui.aeronautics_fly_by_instruments.sensor_output.";
+    private final List<ApplySensorOutputConfigPayload> sent = new ArrayList<>();
+    private List<ItemStack> inventory = List.of();
 
     @Test
-    void smallGuiStacksEverySensorInOneColumnWithUncompressedActions() {
-        for (String kind : List.of("altimeter", "terrain", "advanced")) {
-            var screen = screen(kind, 90);
-            var root = layout(screen, SMALL_GUI_WIDTH, SMALL_GUI_HEIGHT);
-            assertEquals(168, root.bounds().width(), kind);
-            assertTrue(root.bounds().height() <= SMALL_GUI_HEIGHT, kind + " fits a 240 px GUI");
-            assertNotEquals(SensorScreenLayout.Mode.WIDE, screen.layoutMode());
-            assertActionsInside(root, kind);
-            InventoryGrid inventory = components(root, InventoryGrid.class).getFirst();
-            assertEquals(152, inventory.bounds().width());
-            assertEquals(root.bounds().x() + 8, inventory.bounds().x());
-            assertEquals(root.bounds(), screen.jeiGuiBounds());
-        }
-        assertEquals(SensorScreenLayout.Mode.STACKED, screenAt("altimeter", SMALL_GUI_WIDTH, SMALL_GUI_HEIGHT).layoutMode(),
-                "Single-channel sensors keep the header divider and the picker hint");
-        assertEquals(SensorScreenLayout.Mode.COMPACT, screenAt("advanced", SMALL_GUI_WIDTH, SMALL_GUI_HEIGHT).layoutMode(),
-                "The advanced scanner drops only decoration to fit");
-        assertEquals(SensorScreenLayout.Mode.STACKED, screenAt("advanced", SMALL_GUI_WIDTH, 300).layoutMode());
+    void rangeStepsApplyImmediatelyAndNeverCrossOrLeaveTheSensorReach() {
+        var screen = screen("terrain", 90);
+        screen.stepRange(Channel.FRONT, false, 3);
+        assertEquals(1, sent.size(), "Every change is sent at once: no Save button");
+        assertEquals(new SensorOutputConfig.Range(7, 32), sent.getLast().config().range(Channel.FRONT));
+
+        screen.stepRange(Channel.FRONT, false, 100);
+        assertEquals(new SensorOutputConfig.Range(31, 32), screen.config().range(Channel.FRONT));
+        screen.stepRange(Channel.FRONT, true, -100);
+        assertEquals(new SensorOutputConfig.Range(31, 32), screen.config().range(Channel.FRONT),
+                "The far end cannot pass the near end");
+        int before = sent.size();
+        screen.stepRange(Channel.FRONT, true, -1);
+        assertEquals(before, sent.size(), "A step that changes nothing sends nothing");
+        screen.stepRange(Channel.FRONT, true, 1000);
+        assertEquals(128, screen.config().range(Channel.FRONT).max());
     }
 
     @Test
-    void wideGuiPutsThePickerBesideTheSettingsAndTheActionsUnderIt() {
-        for (String kind : List.of("altimeter", "terrain", "advanced")) {
-            var screen = screen(kind, 90);
-            var root = layout(screen, WIDE_GUI_WIDTH, SMALL_GUI_HEIGHT);
-            assertEquals(SensorScreenLayout.Mode.WIDE, screen.layoutMode(), kind);
-            assertEquals(SensorScreenLayout.WIDE_WIDTH + 16, root.bounds().width());
-            assertTrue(root.bounds().height() <= 180, kind + " leaves room on short screens: " + root.bounds());
-            assertActionsInside(root, kind);
-            InventoryGrid inventory = components(root, InventoryGrid.class).getFirst();
-            int pickerX = root.bounds().x() + 8 + SensorScreenLayout.COLUMN_WIDTH + SensorScreenLayout.COLUMN_GAP;
-            assertEquals(pickerX, inventory.bounds().x());
-            for (Button button : components(root, Button.class)) {
-                assertTrue(button.bounds().x() >= pickerX, "Actions sit under the picker column");
-                assertTrue(button.bounds().y() > inventory.bounds().bottom());
-            }
-            for (Slider slider : components(root, Slider.class)) {
-                assertTrue(slider.bounds().right() <= pickerX - SensorScreenLayout.COLUMN_GAP,
-                        "Settings never run into the picker column");
-            }
-        }
+    void apertureStepsOnlyExistOnTheAdvancedScannerAndGateTheSides() {
+        var simple = screen("terrain", 90);
+        simple.stepAngle(5);
+        assertTrue(sent.isEmpty());
+
+        var advanced = screen("advanced", 55);
+        assertTrue(advanced.channelActive(Channel.LEFT));
+        advanced.stepAngle(-5);
+        assertEquals(50, sent.getLast().openingAngle());
+        assertFalse(advanced.channelActive(Channel.LEFT), "Sides need an aperture above 50°");
+        assertTrue(advanced.channelActive(Channel.FRONT));
+        advanced.stepAngle(-1000);
+        assertEquals(30, advanced.angle());
+        advanced.stepAngle(1000);
+        assertEquals(180, advanced.angle());
     }
 
     @Test
-    void advancedTabsKeepIndependentDraftRangesAndGhostTargets() {
+    void pickedItemsFillTheArmedSlotThenItsPairAndShowTheRouting() {
         var screen = screen("advanced", 90);
-        var root = layout(screen, SMALL_GUI_WIDTH, SMALL_GUI_HEIGHT);
-        Tabs tabs = components(root, Tabs.class).getFirst();
-        List<Slider> allSliders = components(root, Slider.class);
-        assertEquals(4, allSliders.size(), "Opening angle plus one range slider per sector");
-        Slider angle = allSliders.getFirst();
-        assertFalse(angle.hasUpperValue(), "Opening angle is a single-value slider");
-        assertEquals(90, angle.value());
-        List<Slider> sliders = allSliders.subList(1, 4);
-        assertTrue(sliders.stream().allMatch(Slider::hasUpperValue), "Sector sliders select a range");
-        sliders.get(0).setValues(5, 25);
-        tabs.select(1);
-        sliders.get(1).setValues(6, 40);
-        tabs.select(2);
-        assertEquals(5, sliders.get(0).value());
-        assertEquals(25, sliders.get(0).upperValue());
-        assertEquals(6, sliders.get(1).value());
-        assertEquals(40, sliders.get(1).upperValue());
-        assertEquals(4, sliders.get(2).value());
-        assertEquals(32, sliders.get(2).upperValue());
-        assertEquals(6, components(root, ItemSlot.class).size());
-        long activeSlots = components(root, ItemSlot.class).stream().filter(slot ->
-                root.hitTest(slot.bounds().centerX(), slot.bounds().centerY()) == slot).count();
-        assertEquals(2, activeSlots, "JEI must only expose the selected sector's slots");
-        Bounds strip = tabs.bounds();
-        assertTrue(sliders.get(2).bounds().y() >= strip.y() + 17 + 5, "Sector controls keep a gap below the tab strip");
-        List<DynamicText> texts = components(root, DynamicText.class);
-        assertTrue(texts.getFirst().line().text().getStyle().isBold(), "The block name is the only bold heading");
-        assertTrue(texts.stream().skip(1).noneMatch(text -> text.line().text().getStyle().isBold()));
-    }
+        assertEquals(GUI + "status.faces", screen.linkStatusKey(Channel.FRONT));
 
-    @Test
-    void sideSectorsAreInertAndExplainWhyWhileTheApertureIsTooNarrow() {
-        var screen = screen("advanced", 40);
-        var root = layout(screen, SMALL_GUI_WIDTH, SMALL_GUI_HEIGHT);
-        List<Slider> sliders = components(root, Slider.class);
-        List<ItemSlot> slots = components(root, ItemSlot.class);
-        assertTrue(sliders.get(1).isEnabled(), "FRONT works at any aperture");
-        assertFalse(sliders.get(2).isEnabled());
-        assertFalse(sliders.get(3).isEnabled());
-        assertTrue(slots.subList(2, 6).stream().noneMatch(UiComponent::isEnabled));
-        assertEquals(Tone.WARNING, screen.draft().caption(Channel.LEFT).tone());
-        assertEquals(Tone.MUTED, screen.draft().caption(Channel.FRONT).tone());
+        screen.selectSlot(Channel.LEFT, true);
+        screen.pick(Channel.LEFT, new ItemStack(Items.REDSTONE, 12));
+        assertEquals(Items.REDSTONE, screen.config().frequencies(Channel.LEFT).first().getItem());
+        assertEquals(1, screen.config().frequencies(Channel.LEFT).first().getCount(), "Items are copied, not taken");
+        assertTrue(screen.selected(Channel.LEFT, false), "The pair's empty slot is armed next");
+        assertEquals(GUI + "status.incomplete", screen.linkStatusKey(Channel.LEFT));
 
-        sliders.getFirst().setValue(51);
-        assertTrue(sliders.get(2).isEnabled());
-        assertTrue(slots.subList(2, 6).stream().allMatch(UiComponent::isEnabled));
-        assertEquals(Tone.MUTED, screen.draft().caption(Channel.LEFT).tone());
-    }
-
-    @Test
-    void captionsFollowTheRangeAndStateEachSensorsPolarity() {
-        var altimeter = screen("altimeter", 90);
-        var altitude = altimeter.draft().caption(Channel.ALTITUDE).text();
-        assertEquals("gui.aeronautics_fly_by_instruments.sensor_output.caption.altitude", key(altitude));
-        assertArrayEquals(new Object[]{0, 32}, args(altitude));
-
-        var terrain = screen("terrain", 90);
-        layout(terrain, SMALL_GUI_WIDTH, SMALL_GUI_HEIGHT);
-        components(terrain.root(), Slider.class).getFirst().setValues(6, 20);
-        var distance = terrain.draft().caption(Channel.FRONT).text();
-        assertEquals("gui.aeronautics_fly_by_instruments.sensor_output.caption.distance", key(distance));
-        assertArrayEquals(new Object[]{6, 20}, args(distance));
-    }
-
-    @Test
-    void linkStatusShowsTheRoutingTheServerWillApply() {
-        var screen = screen("advanced", 90);
-        var root = layout(screen, SMALL_GUI_WIDTH, SMALL_GUI_HEIGHT);
-        var draft = screen.draft();
-        List<ItemSlot> slots = components(root, ItemSlot.class);
-        assertStatus("faces", Tone.MUTED, draft.linkStatus(Channel.FRONT));
-
-        slots.get(0).setItemStack(new ItemStack(Items.REDSTONE));
-        assertStatus("incomplete", Tone.WARNING, draft.linkStatus(Channel.FRONT));
-
-        slots.get(1).setItemStack(new ItemStack(Items.LAPIS_LAZULI));
-        assertStatus("link", Tone.SUCCESS, draft.linkStatus(Channel.FRONT));
-        assertStatus("off", Tone.WARNING, draft.linkStatus(Channel.LEFT),
+        screen.pick(Channel.LEFT, new ItemStack(Items.LAPIS_LAZULI));
+        assertEquals(GUI + "status.link", screen.linkStatusKey(Channel.LEFT));
+        assertEquals(GUI + "status.off", screen.linkStatusKey(Channel.FRONT),
                 "With Link selected for the sensor, an unpaired sector has no output");
+        assertEquals(SensorOutputConfig.Mode.LINK, sent.getLast().config().mode());
+
+        int before = sent.size();
+        screen.pick(Channel.LEFT, new ItemStack(Items.GOLD_INGOT));
+        assertEquals(before, sent.size(), "A full pair without an armed slot ignores the click");
+        screen.pick(Channel.FRONT, new ItemStack(Items.DIAMOND));
+        assertEquals(Items.DIAMOND, screen.config().frequencies(Channel.FRONT).first().getItem(),
+                "Without an armed slot the channel's first empty one is used");
+        assertTrue(screen.config().frequencies(Channel.LEFT).sameIdentity(new SensorOutputConfig.FrequencyPair(
+                new ItemStack(Items.REDSTONE), new ItemStack(Items.LAPIS_LAZULI))), "Other channels are untouched");
+
+        screen.clearSlot(Channel.LEFT, false);
+        assertEquals(GUI + "status.incomplete", screen.linkStatusKey(Channel.LEFT));
+        assertEquals(SensorOutputConfig.Mode.FACES, sent.getLast().config().mode());
     }
 
     @Test
-    void everyKeyTheScreenUsesIsTranslatedInBothLanguages() throws Exception {
+    void clickingTheArmedSlotAgainDisarmsIt() {
+        var screen = screen("terrain", 90);
+        screen.selectSlot(Channel.FRONT, false);
+        assertTrue(screen.selected(Channel.FRONT, false));
+        screen.selectSlot(Channel.FRONT, false);
+        assertFalse(screen.selected(Channel.FRONT, false));
+    }
+
+    @Test
+    void aDraggedItemGoesIntoTheSlotItIsDroppedOn() {
+        var screen = screen("terrain", 90);
+        screen.selectSlot(Channel.FRONT, true);
+        screen.dropFrequency(Channel.FRONT, false, new ItemStack(Items.REDSTONE, 5));
+        var pair = screen.config().frequencies(Channel.FRONT);
+        assertTrue(pair.first().isEmpty(), "The drop target wins over the armed slot");
+        assertEquals(Items.REDSTONE, pair.second().getItem());
+        assertEquals(1, pair.second().getCount());
+        assertTrue(screen.selected(Channel.FRONT, true), "The empty slot of the pair is armed next");
+        screen.dropFrequency(Channel.FRONT, false, new ItemStack(Items.DIAMOND));
+        assertEquals(Items.DIAMOND, screen.config().frequencies(Channel.FRONT).second().getItem(),
+                "Dropping on a filled slot replaces it");
+        assertEquals(2, sent.size());
+    }
+
+    @Test
+    void sideChannelsIgnorePicksWhileTheApertureIsTooNarrow() {
+        var screen = screen("advanced", 40);
+        screen.pick(Channel.LEFT, new ItemStack(Items.REDSTONE));
+        assertTrue(sent.isEmpty());
+        assertTrue(screen.config().frequencies(Channel.LEFT).first().isEmpty());
+    }
+
+    @Test
+    void theSideStepperStartsAtTheFrontAndCyclesBothWays() {
+        var screen = screen("terrain", 90);
+        screen.stepSide(1);
+        assertEquals("front", screen.side());
+        screen.stepSide(1);
+        assertEquals("rear", screen.side());
+        screen.stepSide(-1);
+        screen.stepSide(-1);
+        assertEquals("right", screen.side(), "Going back from the front wraps to the right side");
+        var backwards = screen("terrain", 90);
+        backwards.stepSide(-1);
+        assertEquals("right", backwards.side());
+    }
+
+    @Test
+    void theScannerSideIsChosenInItsOwnScreenAndSentAtOnce() {
+        var screen = screen("terrain", 90);
+        assertEquals("unset", screen.side(), "A new scanner has no side until the player picks one");
+        screen.chooseSide(ScannerSide.REAR);
+        assertEquals("rear", screen.side());
+        assertEquals("rear", sent.getLast().side());
+        screen.chooseSide(ScannerSide.REAR);
+        screen.chooseSide(ScannerSide.UNSET);
+        assertEquals(1, sent.size(), "Re-picking the same side or going back to unset sends nothing");
+
+        assertEquals("left", screen("advanced", 90, "left").side());
+        assertEquals("unset", screen("terrain", 90, "sideways").side());
+        var altimeter = screen("altimeter", 90, "front");
+        assertEquals("", altimeter.side(), "The altimeter has no side");
+        altimeter.chooseSide(ScannerSide.FRONT);
+        assertTrue(sent.size() == 1);
+    }
+
+    @Test
+    void channelsFollowTheSensor() {
+        assertEquals(List.of(Channel.ALTITUDE), screen("altimeter", 90).channels());
+        assertEquals(List.of(Channel.FRONT), screen("terrain", 90).channels());
+        assertEquals(List.of(Channel.FRONT, Channel.LEFT, Channel.RIGHT), screen("advanced", 90).channels());
+    }
+
+    @Test
+    void everyKeyTheScreenUsesIsTranslatedInBothLanguages() {
+        Map<String, String> english = translations("en_us");
         Map<String, String> portuguese = translations("pt_br");
-        for (String key : List.of("aperture", "altitude_range", "detection_range", "caption.altitude",
-                "caption.distance", "side_off", "link", "status.faces", "status.link", "status.incomplete",
-                "status.off", "picker_hint", "apply", "cancel", "sector.front", "sector.left", "sector.right")) {
-            String full = "gui.aeronautics_fly_by_instruments.sensor_output." + key;
-            assertTrue(TRANSLATIONS.containsKey(full), "en_us " + full);
-            assertTrue(portuguese.containsKey(full), "pt_br " + full);
+        for (String key : List.of("title", "scan", "aperture", "angle_tooltip", "channel.altitude_only",
+                "channel.front_only", "channel.front", "channel.left", "channel.right", "output", "side_off",
+                "near", "far", "low", "high", "range_tooltip", "terrain_range_tooltip", "range_output_tooltip",
+                "terrain_output_tooltip", "step_tooltip", "link", "slot_tooltip", "frequency_tooltip",
+                "advanced_frequency_tooltip", "status.faces", "status.link", "status.incomplete", "status.off",
+                "picker", "inventory", "done", "picker_slot_tooltip", "frequency_picker_tooltip", "side",
+                "side_unset", "side.unset", "side.front", "side.rear", "side.left", "side.right", "side_tooltip")) {
+            assertTrue(english.containsKey(GUI + key), "en_us " + key);
+            assertTrue(portuguese.containsKey(GUI + key), "pt_br " + key);
         }
         for (String kind : List.of("altimeter", "terrain", "advanced")) {
             String title = SensorOutputConfigScreen.blockKey(kind);
-            assertTrue(TRANSLATIONS.containsKey(title) && portuguese.containsKey(title),
+            assertTrue(english.containsKey(title) && portuguese.containsKey(title),
                     "The heading reuses the block name: " + title);
         }
-    }
-
-    private static void assertStatus(String expected, Tone tone, DynamicText.Line line) {
-        assertStatus(expected, tone, line, expected);
-    }
-
-    private static void assertStatus(String expected, Tone tone, DynamicText.Line line, String message) {
-        assertEquals("gui.aeronautics_fly_by_instruments.sensor_output.status." + expected, key(line.text()), message);
-        assertEquals(tone, line.tone(), message);
-    }
-
-    private void assertActionsInside(UiComponent root, String kind) {
-        List<Button> buttons = components(root, Button.class);
-        assertEquals(2, buttons.size());
-        for (Button button : buttons) {
-            assertEquals(20, button.bounds().height(), kind + " action must not be compressed");
-            assertTrue(button.bounds().bottom() <= root.bounds().bottom() - 8, kind + " " + button.bounds());
-            assertSame(button, root.hitTest(button.bounds().centerX(), button.bounds().centerY()));
+        String computer = "gui.aeronautics_fly_by_instruments.avionics_computer.";
+        for (String key : List.of("issue.no_side", "no_side_tooltip", "role.terrain_scanner.unset",
+                "role.terrain_scanner_advanced.unset", "role.terrain_scanner.rear",
+                "role.terrain_scanner_advanced.left")) {
+            assertTrue(english.containsKey(computer + key), "en_us " + key);
+            assertTrue(portuguese.containsKey(computer + key), "pt_br " + key);
         }
-    }
-
-    private SensorOutputConfigScreen screenAt(String kind, int width, int height) {
-        var screen = screen(kind, 90);
-        layout(screen, width, height);
-        return screen;
-    }
-
-    private UiComponent layout(SensorOutputConfigScreen screen, int width, int height) {
-        var root = screen.root();
-        var size = root.measure(font, UiTheme.DARK, width, height);
-        root.layout(font, UiTheme.DARK, new Bounds(12, 6, size.width(), size.height()));
-        return root;
-    }
-
-    private static String key(net.minecraft.network.chat.Component component) {
-        return ((net.minecraft.network.chat.contents.TranslatableContents) component.getContents()).getKey();
-    }
-
-    private static Object[] args(net.minecraft.network.chat.Component component) {
-        return ((net.minecraft.network.chat.contents.TranslatableContents) component.getContents()).getArgs();
     }
 
     private SensorOutputConfigScreen screen(String kind, int angle) {
-        return new SensorOutputConfigScreen(BlockPos.ZERO, kind, angle,
-                new SensorOutputConfig(kind.equals("advanced"), kind.equals("altimeter")), 128);
+        return screen(kind, angle, "unset");
     }
 
-    private static Map<String, String> translations() {
-        return translations("en_us");
+    private SensorOutputConfigScreen screen(String kind, int angle, String side) {
+        return new SensorOutputConfigScreen(BlockPos.ZERO, kind, angle, side,
+                new SensorOutputConfig(kind.equals("advanced"), kind.equals("altimeter")), 128, sent::add,
+                () -> inventory);
     }
 
     private static Map<String, String> translations(String language) {
@@ -251,12 +215,6 @@ class SensorOutputConfigScreenTest {
         } catch (java.io.IOException exception) {
             throw new IllegalStateException(exception);
         }
-        return result;
-    }
-
-    private static <T extends UiComponent> List<T> components(UiComponent root, Class<T> type) {
-        List<T> result = new ArrayList<>();
-        root.visitComponents(component -> { if (type.isInstance(component)) result.add(type.cast(component)); });
         return result;
     }
 }

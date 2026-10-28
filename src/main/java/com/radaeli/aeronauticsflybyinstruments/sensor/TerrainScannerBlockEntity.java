@@ -3,6 +3,7 @@ package com.radaeli.aeronauticsflybyinstruments.sensor;
 import com.mojang.logging.LogUtils;
 import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsEndpoint;
 import com.radaeli.aeronauticsflybyinstruments.avionics.ReadingStatus;
+import com.radaeli.aeronauticsflybyinstruments.avionics.ScannerSide;
 import com.radaeli.aeronauticsflybyinstruments.block.ModBlocks;
 import com.radaeli.aeronauticsflybyinstruments.config.ModConfig;
 import net.minecraft.core.BlockPos;
@@ -21,6 +22,8 @@ import org.slf4j.Logger;
 public final class TerrainScannerBlockEntity extends BlockEntity implements AvionicsEndpoint {
     private static final Logger LOGGER = LogUtils.getLogger();
     private int openingAngle = TerrainScanGeometry.DEFAULT_ADVANCED_APERTURE_DEGREES;
+    /** Side of the aircraft this scanner looks at, chosen by the player; the computer reads it. */
+    private ScannerSide side = ScannerSide.UNSET;
     private TerrainScanSnapshot reading = TerrainScanSnapshot.unavailable(0, 0L);
     private boolean loggedScanFailure;
     private final TerrainScannerPeripheral simplePeripheral = new TerrainScannerPeripheral(this, "terrain_scanner");
@@ -35,6 +38,17 @@ public final class TerrainScannerBlockEntity extends BlockEntity implements Avio
 
     public TerrainScanSnapshot reading() { return reading; }
     public int openingAngle() { return openingAngle; }
+    public ScannerSide side() { return side; }
+
+    public boolean setSide(ScannerSide updated) {
+        if (updated == null || updated == side) return false;
+        side = updated;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+        return true;
+    }
     public boolean advanced() { return getBlockState().is(ModBlocks.TERRAIN_SCANNER_ADVANCED.get()); }
     public SensorOutputConfig outputConfig() { return outputs.config(); }
     public int outputPower(net.minecraft.core.Direction face) { return outputs.weakPower(face); }
@@ -125,6 +139,7 @@ public final class TerrainScannerBlockEntity extends BlockEntity implements Avio
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putInt("OpeningAngle", openingAngle);
+        tag.putString("AircraftSide", side.id());
         tag.put("OutputConfig", outputs.config().save(registries));
     }
 
@@ -136,6 +151,7 @@ public final class TerrainScannerBlockEntity extends BlockEntity implements Avio
         openingAngle = loadedAngle >= TerrainScanGeometry.MIN_APERTURE_DEGREES
                 && loadedAngle <= TerrainScanGeometry.MAX_APERTURE_DEGREES
                 ? loadedAngle : TerrainScanGeometry.DEFAULT_ADVANCED_APERTURE_DEGREES;
+        side = ScannerSide.parse(tag.getString("AircraftSide")).orElse(ScannerSide.UNSET);
         SensorOutputConfig config = tag.contains("OutputConfig", Tag.TAG_COMPOUND)
                 ? SensorOutputConfig.load(tag.getCompound("OutputConfig"), registries, advanced(), false,
                     configuredMaximumRange())

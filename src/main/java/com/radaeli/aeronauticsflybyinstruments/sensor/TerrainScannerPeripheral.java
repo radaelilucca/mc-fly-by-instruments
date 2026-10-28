@@ -38,6 +38,16 @@ public class TerrainScannerPeripheral implements IPeripheral {
         return toLua(scanner.reading());
     }
 
+    /** Side of the aircraft the scanner looks at: unset, front, rear, left or right. */
+    @LuaFunction(mainThread = true)
+    public String getAircraftSide() { return scanner.side().id(); }
+
+    @LuaFunction(mainThread = true)
+    public boolean setAircraftSide(String side) {
+        return com.radaeli.aeronauticsflybyinstruments.avionics.ScannerSide.parse(side)
+                .map(scanner::setSide).orElse(false);
+    }
+
     @LuaFunction(mainThread = true)
     public Map<String, Object> getOutputConfiguration() { return SensorOutputLua.configuration(scanner.outputConfig()); }
 

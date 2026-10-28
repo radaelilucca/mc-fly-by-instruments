@@ -96,14 +96,43 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
         if (!isLampModule(module) && !module.type().equals("buzzer")) return false;
         if (testPanelUntil > (level == null ? 0 : level.getGameTime())) return true;
         if (module.outputSource().equals("test")) return testSignal(module.channel()) >= module.threshold();
+        // Reserved until the Redstone Link mode ships (plan §7): stored, never lit.
+        if (module.outputSource().equals(LampIndication.SOURCE_REDSTONE_LINK)) return false;
+        if (module.alertChannel().equals(INOP_CHANNEL)) return inopActive();
         return com.radaeli.aeronauticsflybyinstruments.panel.PanelAlertLogic.active(
                 gpwsSeverities.getOrDefault(module.alertChannel(), 0), module.minimumSeverity());
+    }
+
+    private static final String INOP_CHANNEL = "gpws.sensor_fail";
+
+    /** GPWS INOP: the computer reports INOP, or no computer answers on a complete cable network. */
+    private boolean inopActive() {
+        return gpwsSeverities.getOrDefault(INOP_CHANNEL, 0) >= 1 || !gpwsAvailable
+                || alertNetworkStatus != NetworkStatus.CONNECTED;
+    }
+
+    public String indication(PanelGrid.Module module) { return LampIndication.of(module); }
+
+    /** Lens colour now (plan §6): fixed by the indication, or by severity for single-function lamps. */
+    public LampIndication.Color lampColor(PanelGrid.Module module) {
+        return LampIndication.color(LampIndication.of(module), moduleSeverity(module));
+    }
+
+    /** Applies one indication from the screen, the wrench scroll or Lua; false when not offered. */
+    public boolean setIndication(int column, int row, String indication) {
+        var target = grid.at(column, row);
+        if (target.isEmpty() || !(isLampModule(target.get()) || target.get().type().equals("buzzer"))) return false;
+        String type = isLampModule(target.get()) ? "lamp" : "buzzer";
+        if (!LampIndication.choices(type).contains(indication) || !LampIndication.available(indication)) return false;
+        var fields = LampIndication.fields(indication).orElseThrow();
+        return configureAlertModule(column, row, fields.source(), fields.alertChannel(), fields.minimumSeverity());
     }
 
     public int moduleSeverity(PanelGrid.Module module) {
         if (!isModuleActive(module)) return 0;
         if (testPanelUntil > (level == null ? 0 : level.getGameTime())) return 3;
         if (module.outputSource().equals("test")) return 3;
+        if (module.alertChannel().equals(INOP_CHANNEL)) return 2;
         return gpwsSeverities.getOrDefault(module.alertChannel(), 0);
     }
 
@@ -113,6 +142,13 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
                 ? "no_gpws" : alertNetworkStatus.name().toLowerCase(java.util.Locale.ROOT);
     }
     public boolean gpwsAvailable() { return gpwsAvailable; }
+
+    /** Avionics Computer state for the general panel: ok, inop, no_gpws or the cable network status. */
+    public String panelStatusId() {
+        if (alertNetworkStatus != NetworkStatus.CONNECTED) return alertStatusId();
+        if (!gpwsAvailable) return "no_gpws";
+        return gpwsSeverities.getOrDefault(INOP_CHANNEL, 0) >= 1 ? "inop" : "ok";
+    }
     public boolean muted() { return muted; }
 
     public boolean configureAlertModule(int column, int row, String source, String channel, int severity) {
@@ -465,7 +501,7 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
     private static void sampleGpwsAlerts(ServerLevel serverLevel, TablePanel panel) {
         var members = panel.members();
         if (members.stream().noneMatch(member -> member.grid.modules().stream()
-                .anyMatch(module -> module.outputSource().equals("gpws")))) return;
+                .anyMatch(module -> isLampModule(module) || module.type().equals("buzzer")))) return;
         var leader = panel.leader();
         BlockPos source = leader.worldPosition;
         var topology = AvionicsNetworkManager.snapshot(serverLevel, source);
@@ -710,7 +746,8 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
                 int buzzerVolume = entry.contains("BuzzerVolume", Tag.TAG_INT)
                         ? entry.getInt("BuzzerVolume") : 100;
                 if (!channel.isBlank() && channel.length() <= 64 && Double.isFinite(threshold)
-                        && (outputSource.equals("test") || outputSource.equals("gpws"))
+                        && (outputSource.equals("test") || outputSource.equals("gpws")
+                            || outputSource.equals(LampIndication.SOURCE_REDSTONE_LINK))
                         && !alertChannel.isBlank() && alertChannel.length() <= 64
                         && minimumSeverity >= 1 && minimumSeverity <= 3 && buzzerVolume >= 0 && buzzerVolume <= 100) {
                     int column = entry.getInt("Column");
@@ -757,6 +794,19 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
                 }
             }
         }
+        if (tag.contains("AlertSeverities", Tag.TAG_COMPOUND)) {
+            var alerts = tag.getCompound("AlertSeverities");
+            Map<String, Integer> severities = new HashMap<>();
+            for (String channel : alerts.getAllKeys()) severities.put(channel, alerts.getInt(channel));
+            gpwsSeverities = Map.copyOf(severities);
+            try {
+                alertNetworkStatus = NetworkStatus.valueOf(tag.getString("AlertNetwork"));
+            } catch (IllegalArgumentException ignored) {
+                alertNetworkStatus = NetworkStatus.DISCONNECTED;
+            }
+            gpwsAvailable = tag.getBoolean("AlertAvailable");
+            muted = tag.getBoolean("AlertMuted");
+        }
         if (level != null && level.isClientSide && tag.contains("PanelTestRemaining", Tag.TAG_LONG)) {
             testPanelUntil = level.getGameTime() + Math.max(0, tag.getLong("PanelTestRemaining"));
         }
@@ -776,6 +826,13 @@ public final class ModularTableBlockEntity extends BlockEntity implements Avioni
         tag.put("LampTestIntensities", overrides);
         tag.putLong("PanelTestRemaining", level == null ? 0
                 : Math.max(0, testPanelUntil - level.getGameTime()));
+        // Lamps are rendered on the client from the GPWS state: send it with every update.
+        var alerts = new CompoundTag();
+        gpwsSeverities.forEach(alerts::putInt);
+        tag.put("AlertSeverities", alerts);
+        tag.putString("AlertNetwork", alertNetworkStatus.name());
+        tag.putBoolean("AlertAvailable", gpwsAvailable);
+        tag.putBoolean("AlertMuted", muted);
         return tag;
     }
 

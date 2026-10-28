@@ -17,8 +17,6 @@ import java.util.List;
 public final class PanelNetwork {
     private static final String VERTICAL_KEY = "AeronauticsFlyByInstrumentsLamp2x1Vertical";
     private static boolean clientVertical;
-    private static final List<String> CHANNELS = List.of("gpws.any", "gpws.terrain", "gpws.pull_up",
-            "gpws.sink_rate", "gpws.dont_sink", "gpws.too_low", "gpws.bank_angle", "gpws.sensor_fail");
     private PanelNetwork() { }
 
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
@@ -35,6 +33,10 @@ public final class PanelNetwork {
         registrar.playToServer(PanelActionPayload.TYPE, PanelActionPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
                     if (context.player() instanceof ServerPlayer player) handle(payload, player);
+                }));
+        registrar.playToServer(PanelScrollPayload.TYPE, PanelScrollPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    if (context.player() instanceof ServerPlayer player) scroll(payload, player);
                 }));
         registrar.playToClient(PanelScreenPayload.TYPE, PanelScreenPayload.STREAM_CODEC,
                 (payload, context) -> context.enqueueWork(() -> {
@@ -69,24 +71,42 @@ public final class PanelNetwork {
         if (!canReach(player, table)) return;
         boolean general = placed == null;
         var module = general ? null : placed.module();
-        String channel = general ? "gpws.any" : module.outputSource().equals("test")
-                ? module.channel() : module.alertChannel();
-        String source = general ? "gpws" : module.outputSource();
-        int severity = general ? 2 : module.minimumSeverity();
-        int volume = general ? 100 : module.buzzerVolume();
         var listed = TablePanel.of(table).modules().stream().filter(m -> ModularTableBlockEntity.isLampModule(m.module())
                 || m.module().type().equals("buzzer") || m.module().type().equals("fms")).toList();
+        var lit = listed.stream().filter(m -> ModularTableBlockEntity.isLampModule(m.module())
+                && m.owner().isModuleActive(m.module())).toList();
         int active = (int) listed.stream().filter(m -> m.owner().isModuleActive(m.module())).count();
-        var status = general ? table.alertStatusId() : "";
-        String summary = general ? listed.stream().map(m -> m.module().type() + "," + m.column() + "," + m.row() + ","
-                + m.owner().isModuleActive(m.module())).collect(java.util.stream.Collectors.joining(";")) : "";
+        String summary = general ? lit.stream().map(m -> m.module().type() + "," + m.column() + "," + m.row() + ","
+                + m.owner().indication(m.module()) + ","
+                + m.owner().lampColor(m.module()).name().toLowerCase(java.util.Locale.ROOT)).collect(java.util.stream.Collectors.joining(";")) : "";
         PacketDistributor.sendToPlayer(player, new PanelScreenPayload(table.getBlockPos(),
                 general ? -1 : placed.column(), general ? -1 : placed.row(),
-                general ? "" : module.type(), source, channel, severity, volume,
-                general ? "test" : module.channel(), general ? 0.5 : module.threshold(), status,
-                table.muted(), general ? listed.size() : 1,
+                general ? "" : module.type(), general ? "" : placed.owner().indication(module),
+                general ? 100 : module.buzzerVolume(), table.panelStatusId(), table.muted(),
+                general ? listed.size() : 1,
                 general ? active : placed.owner().isModuleActive(module) ? 1 : 0, summary,
                 general ? table.interactionToken() : placed.owner().moduleToken(module.column(), module.row())));
+    }
+
+    /** Wrench scroll: lamps cycle the main indications, buzzers step the volume by 10%. */
+    private static void scroll(PanelScrollPayload p, ServerPlayer player) {
+        if (p.direction() == 0 || !player.level().hasChunkAt(p.position())
+                || !com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock.isCreateWrench(
+                        player.getMainHandItem())
+                || !(player.level().getBlockEntity(p.position()) instanceof ModularTableBlockEntity table)
+                || !canReach(player, table)) return;
+        var placed = com.radaeli.aeronauticsflybyinstruments.panel.TableInteraction
+                .target(table, p.face(), p.hit()).module();
+        if (placed == null) return;
+        var module = placed.module();
+        var owner = placed.owner();
+        if (ModularTableBlockEntity.isLampModule(module)) {
+            owner.setIndication(module.column(), module.row(), com.radaeli.aeronauticsflybyinstruments.panel
+                    .LampIndication.next("lamp", owner.indication(module), p.direction()));
+        } else if (module.type().equals("buzzer")) {
+            owner.setBuzzerVolume(module.column(), module.row(),
+                    Math.clamp(module.buzzerVolume() + (p.direction() > 0 ? 10 : -10), 0, 100));
+        }
     }
 
     private static boolean canReach(ServerPlayer player, ModularTableBlockEntity table) {
@@ -111,19 +131,14 @@ public final class PanelNetwork {
         var expectedToken = tableAction ? clicked.interactionToken() : table.moduleToken(column, row);
         if (expectedToken == null || !expectedToken.equals(p.interactionToken())) return;
         switch (p.action()) {
-            case "save" -> {
+            case "indication" -> {
                 if (generalPanel) return;
-                boolean validChannel = p.source().equals("gpws") ? CHANNELS.contains(p.channel())
-                        : p.testChannel() != null && !p.testChannel().isBlank() && p.testChannel().length() <= 64;
-                if (!validChannel || !(p.source().equals("gpws") || p.source().equals("test"))
-                        || p.severity() < 1 || p.severity() > 3 || p.volume() < 0 || p.volume() > 100
-                        || p.source().equals("test") && !Double.isFinite(p.testThreshold())) return;
-                table.saveAlertDraft(column, row, p.source(), p.channel(), p.severity(),
-                        p.testChannel(), p.testThreshold(), p.volume());
+                table.setIndication(column, row, p.channel());
+                open(player, clicked, panel.at(p.column(), p.row()).orElse(null));
             }
-            case "basic" -> {
-                if (!generalPanel) return;
-                panel.applyBasicSetup();
+            case "volume" -> {
+                if (generalPanel || p.volume() < 0 || p.volume() > 100) return;
+                table.setBuzzerVolume(column, row, p.volume());
             }
             case "test" -> { if (generalPanel) panel.testPanel(); }
             case "test_buzzer" -> {
@@ -144,7 +159,7 @@ public final class PanelNetwork {
             }
             default -> { }
         }
-        if (generalPanel && List.of("basic", "test", "mute", "unmute").contains(p.action()))
+        if (generalPanel && List.of("test", "mute", "unmute").contains(p.action()))
             open(player, clicked, null);
     }
 }

@@ -15,6 +15,18 @@
         "custom_model_data": 1
       },
       "model": "aeronautics_fly_by_instruments:block/lamp_module_2x1_on"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "aeronautics_fly_by_instruments:block/lamp_module_2x1_amber_off"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "aeronautics_fly_by_instruments:block/lamp_module_2x1_amber_on"
     }
   ]
 }

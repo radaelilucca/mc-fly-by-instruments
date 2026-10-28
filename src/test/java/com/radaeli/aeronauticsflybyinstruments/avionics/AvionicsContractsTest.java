@@ -19,10 +19,10 @@ class AvionicsContractsTest {
     }
 
     @Test
-    void stableAlertChannelIdsAndGpwsModesArePresent() {
+    void stableAlertChannelIdsAndInternalPhasesArePresent() {
         assertEquals("dont_sink", AlertChannel.DONT_SINK.id());
         assertEquals(7, AlertChannel.values().length);
-        assertEquals(GpwsMode.ARMED, GpwsMode.valueOf("ARMED"));
+        assertEquals(AlertState.INHIBITED, AlertState.valueOf("INHIBITED"));
         assertEquals(7, FlightPhase.values().length);
         assertEquals(FlightPhase.GROUND, FlightPhase.valueOf("GROUND"));
         assertEquals(FlightPhase.UNKNOWN, FlightPhase.valueOf("UNKNOWN"));

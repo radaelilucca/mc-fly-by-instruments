@@ -11,6 +11,8 @@ const textures = [
   texture('lamp_glass_red', 16, { source: glass() }),                 // 1
   texture('lamp_filament_off', 16, { source: filament(false) }),      // 2
   texture('lamp_filament_on', 16, { source: filament(true) }),        // 3 (variant only)
+  texture('lamp_glass_amber', 16, { source: glass('amber') }),        // 4 (amber variants only)
+  texture('lamp_filament_on_amber', 16, { source: filament(true, 'amber') }), // 5 (amber variant only)
 ];
 const uv = region => px(16, region);
 const sides = (region, tex) => Object.fromEntries(['north', 'south', 'east', 'west'].map(s => [s, face(uv(region), tex)]));

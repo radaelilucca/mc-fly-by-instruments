@@ -1,0 +1,324 @@
+{
+  "credit": "Made with Blockbench for Aeronautics: Fly by Instruments",
+  "parent": "minecraft:block/block",
+  "ambientocclusion": true,
+  "textures": {
+    "0": "aeronautics_fly_by_instruments:block/avionics_computer",
+    "1": "create:block/industrial_iron_block",
+    "2": "create:block/brass_casing",
+    "3": "aeronautics_fly_by_instruments:block/avionics_computer_top",
+    "4": "aeronautics_fly_by_instruments:block/avionics_computer_screen_caution",
+    "particle": "create:block/industrial_iron_block"
+  },
+  "elements": [
+    {
+      "name": "base",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        2,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            15,
+            8,
+            16
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            15,
+            8,
+            16
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            15,
+            8,
+            16
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            15,
+            8,
+            16
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#1"
+        }
+      }
+    },
+    {
+      "name": "body",
+      "from": [
+        1,
+        2,
+        1
+      ],
+      "to": [
+        15,
+        14,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7,
+            8,
+            14,
+            14
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            8,
+            0,
+            15,
+            6
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            8,
+            7,
+            14
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8,
+            0,
+            15,
+            6
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "lid",
+      "from": [
+        0,
+        14,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            14,
+            8,
+            15
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            14,
+            8,
+            15
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            14,
+            8,
+            15
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            0,
+            14,
+            8,
+            15
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#3"
+        },
+        "down": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#2"
+        }
+      }
+    },
+    {
+      "name": "screen",
+      "from": [
+        2,
+        5,
+        0
+      ],
+      "to": [
+        14,
+        13,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            12,
+            8
+          ],
+          "texture": "#4"
+        },
+        "east": {
+          "uv": [
+            6,
+            0,
+            6.5,
+            4
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6,
+            0,
+            6.5,
+            4
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            3,
+            6,
+            3.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            0,
+            3.5,
+            6,
+            4
+          ],
+          "texture": "#0"
+        }
+      }
+    },
+    {
+      "name": "test_button",
+      "from": [
+        7,
+        2,
+        0
+      ],
+      "to": [
+        9,
+        4,
+        1
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            4,
+            1,
+            5
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2,
+            4,
+            2.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2,
+            4,
+            2.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            1,
+            4,
+            2,
+            4.5
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1,
+            4.5,
+            2,
+            5
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

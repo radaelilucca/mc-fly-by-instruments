@@ -15,7 +15,9 @@ linhas.
 A 1×1 em versão longa, como um tubo deitado: soquete de metal escuro com aro de latão,
 vidro vermelho sem face inferior e um filamento comprido. Como o eixo do tubo é X, o reflexo
 do vidro corre ao longo da linha de cima das faces longas, e não numa coluna como na 1×1. As
-pontas (leste e oeste) usam as mesmas regiões das faces da 1×1.
+pontas (leste e oeste) usam as mesmas regiões das faces da 1×1. A variante âmbar
+(`_amber_off`/`_amber_on`) usa as mesmas texturas âmbar da 1×1; veja
+[Âmbar](../lamp-module-1x1/README.md#âmbar-2026-10-28).
 
 ## Peças
 

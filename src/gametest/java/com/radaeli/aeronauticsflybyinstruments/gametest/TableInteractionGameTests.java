@@ -150,7 +150,7 @@ public final class TableInteractionGameTests {
     }
 
     private static PanelActionPayload action(Fixture f, String action, int col, int row, int volume, UUID token) {
-        return new PanelActionPayload(f.pos, col, row, action, "gpws", "gpws.any", 2, volume, "test", .5, token);
+        return new PanelActionPayload(f.pos, col, row, action, "gpws", "caution", 2, volume, "test", .5, token);
     }
 
     @GameTest(template = "empty")
@@ -166,7 +166,14 @@ public final class TableInteractionGameTests {
         f.player.setShiftKeyDown(true);
         f.click(InteractionHand.MAIN_HAND, 0, 0);
         h.assertTrue(messages.getLast() instanceof PanelScreenPayload p && p.column() == -1, "shift opens general over module");
+        f.table.placeLamp(2, 2);
+        f.table.testPanel();
+        f.click(InteractionHand.MAIN_HAND, 2, 2);
+        h.assertTrue(messages.getLast() instanceof PanelScreenPayload p && p.moduleType().equals("lamp"), "shift opens lit lamp");
         f.player.setShiftKeyDown(false);
+        int before = messages.size();
+        f.click(InteractionHand.MAIN_HAND, 2, 2);
+        h.assertTrue(messages.size() == before, "lit lamp click acknowledges without a screen");
         panelAction(f, action(f, "open_module", 0, 0, 100, f.table.interactionToken()));
         h.assertTrue(messages.getLast() instanceof PanelScreenPayload p && p.moduleType().equals("buzzer"), "panel list opens module");
         h.succeed();
@@ -224,10 +231,10 @@ public final class TableInteractionGameTests {
         h.assertTrue(f.table.grid().at(0,0).orElseThrow().buzzerVolume() == 100, "test sound does not save draft");
         f.table.removeModuleStack(0,0);
         f.table.placeBuzzer(0,0);
-        panelAction(f, action(f, "save", 0,0,20,old));
+        panelAction(f, action(f, "volume", 0,0,20,old));
         h.assertTrue(f.table.grid().at(0,0).orElseThrow().buzzerVolume() == 100, "removed installation token rejected");
-        panelAction(f, action(f, "save", 0,0,20,f.table.moduleToken(0,0)));
-        h.assertTrue(f.table.grid().at(0,0).orElseThrow().buzzerVolume() == 20, "current draft saves");
+        panelAction(f, action(f, "volume", 0,0,20,f.table.moduleToken(0,0)));
+        h.assertTrue(f.table.grid().at(0,0).orElseThrow().buzzerVolume() == 20, "current volume saves");
         UUID oldTable = f.table.interactionToken();
         h.getLevel().destroyBlock(f.pos, false);
         h.getLevel().setBlockAndUpdate(f.pos, ModBlocks.MODULAR_TABLE_BASE.get().defaultBlockState());

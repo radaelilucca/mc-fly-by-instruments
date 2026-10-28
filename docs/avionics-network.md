@@ -3,8 +3,8 @@
 Avionics Cable carries data only. Place segments next to each other to create
 lines and branches; any compatible avionics endpoint touching one of the six
 faces joins the same network. There are no ports, frequencies, junction blocks,
-or wireless links. The Modular Table Base and Network Bridge are endpoints;
-flight sensors and the GPWS join the network as they are implemented.
+or wireless links. The Modular Table Base, Network Bridge, flight sensors and the
+[Avionics Computer](avionics-computer.md) are endpoints.
 
 The cable uses a compact center hub and arms toward adjacent cable or endpoint
 blocks. It has its own graphite/brass Blockbench model and textures, with
@@ -35,8 +35,9 @@ bridge in its current level/sublevel and are not internal graph identifiers.
 The `avionics_network_changed` event is queued on computers attached to the
 bridge after the server confirms a changed snapshot. Its arguments are the
 attachment name and the same status table returned by `getNetworkStatus()`.
-The bridge exposes topology only; each component's measurements and local
-events are accessed through that component's own peripheral.
+The bridge exposes topology only. For every sensor reading at once, with roles
+and the GPWS alerts, use the [Avionics Computer](avionics-computer.md)
+(`avionics_computer`); each sensor also keeps its own peripheral.
 
 ```lua
 local bridge = assert(peripheral.find("avionics_network_bridge"), "Bridge não encontrada")

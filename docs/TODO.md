@@ -50,7 +50,7 @@ continuar funcionando no estado atual enquanto não forem tratados.
   livre. Exercitar em voo cobertura completa/parcial, scanner ausente ou
   indisponível e orientação relativa; ajustar comportamento somente se os
   testes revelarem problemas. A lógica implementada está descrita em
-  [GPWS Computer](gpws.md) e [Terrain Scanner](terrain-scanner.md).
+  [Avionics Computer](avionics-computer.md) e [Terrain Scanner](terrain-scanner.md).
 - [ ] **LÂMPADA-02 — Avaliar variantes de cor das lâmpadas.**
   Usar as mesmas proporções e materiais da variante vermelha; validar cada
   combinação acesa/apagada no jogo antes de fixar uma paleta adicional.

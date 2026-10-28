@@ -12,6 +12,7 @@ public final class PanelClient {
     public static void register(IEventBus bus) {
         bus.addListener(PanelClient::registerRenderers);
         bus.addListener(PanelClient::registerRenderBuffers);
+        bus.addListener(ModuleConfigLabel::register);
     }
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlocks.MODULAR_TABLE_ENTITY.get(), ModularTableRenderer::new);

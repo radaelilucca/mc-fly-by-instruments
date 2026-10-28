@@ -50,7 +50,7 @@ public abstract class AbstractTerrainScannerBlock extends BaseEntityBlock implem
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof TerrainScannerBlockEntity scanner) {
             SensorOutputNetwork.open(serverPlayer, pos, scanner.advanced() ? "advanced" : "terrain",
-                    scanner.openingAngle(), scanner.outputConfig());
+                    scanner.openingAngle(), scanner.side().id(), scanner.outputConfig());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

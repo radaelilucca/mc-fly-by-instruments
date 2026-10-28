@@ -9,6 +9,16 @@ Severidades: **Crítico** quebra um caso de uso principal; **Alto** produz leitu
 comportamento enganoso; **Médio** é limitação de robustez ou usabilidade; **Baixo** é
 polimento ou manutenção.
 
+## Atualização de 2026-10-28
+
+A tela de saída dos sensores foi refeita no padrão HUD (guia visual, seção 12), com
+mudanças aplicadas na hora. Isso fecha **SEN-02** (o servidor mede o alcance no mundo,
+com a pose do Sable, também para o Avionics Computer) e **UX-04** (o cabeçalho mostra
+`Faces do bloco` / `Via Link`), e resolve **UX-06** de outro jeito (com abertura ≤ 50°
+as laterais só mostram o aviso). **UX-02** perde o objeto (não há mais Salvar que
+feche a tela); recusas do servidor continuam silenciosas. **UX-01** continua aberto e
+agora deve mostrar a leitura como linha do painel, não sobre um slider.
+
 ## Resumo
 
 | ID | Sev. | Achado | Fase |

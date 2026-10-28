@@ -40,18 +40,37 @@ O mod oferece duas variantes físicas de scanner. Ambas apontam horizontalmente 
 - `terrain_scanner`: nove raios fixos em cone de abertura total de 90°.
 - `terrain_scanner_advanced`: distribuição aproximadamente uniforme de 9–81 raios. A abertura total é configurável de 30° a 180°, padrão 90°; a densidade é calculada automaticamente pela área angular.
 
-Os dois scanners abrem a configuração de saída ao interagir. A tela tem a
-largura do inventário, um slider de dois marcadores para delimitar a faixa em
-blocos, frequências fantasma lado a lado e inventário/hotbar com seleção sem
-consumir itens. O JEI, quando instalado, permite arrastar itens para os slots.
-Tooltips explicam que a saída cresce com a proximidade: 15 no limite inferior
-ou abaixo e 0 no limite superior ou acima; sem contato utilizável, é 0.
+Os dois scanners abrem a configuração de saída ao interagir. A tela segue a
+linguagem das telas do mod (guia visual, seção 12), a mesma do Avionics Computer,
+e **cada mudança aplica na hora**, sem Salvar/Cancelar:
 
-No Advanced, um slider ajusta a abertura total de 30° a 180°. Abas **Frente / Esq. /
-Dir.** mantêm faixas e frequências independentes; as laterais só atuam acima de
-50°. Alterações ficam em rascunho e são validadas no servidor ao aplicar.
-**Salvar** envia e fecha, **Cancelar** descarta, e **ESC** aplica o rascunho
-válido e fecha sem reabrir a tela.
+- **Cabeçalho:** nome do bloco e o modo de saída atual (`Faces do bloco` ou `Via Link`).
+  Um scanner sem lado mostra em âmbar `» Lado da aeronave não definido`.
+- **Varredura · Olha para:** um controle `‹ lado ›` que cicla frente da aeronave,
+  traseira, lado esquerdo e lado direito (no Advanced, a `Abertura` vem logo abaixo). É assim
+  que o [Avionics Computer](avionics-computer.md) sabe o papel do scanner e onde fica o
+  nariz; nada é deduzido da direção do bloco. Scanner novo começa sem lado. Também por
+  CC: `getAircraftSide()` / `setAircraftSide(side)`.
+- **Faixa:** dois controles `‹ valor ›` por canal, `Perto · sinal 15` e
+  `Longe · sinal 0`, em blocos. As pontas nunca se cruzam nem passam do alcance
+  máximo; Shift + clique anda de 10 em 10. A saída cresce com a proximidade: 15 no
+  limite próximo ou abaixo e 0 no limite distante ou acima; sem contato utilizável, é 0.
+- **Link:** dois slots de frequência (vermelho e azul) por canal, com o estado do
+  roteamento ao lado (`Faces do bloco`, `Par incompleto`, `Via Link`, `Desligado (Link)`).
+  Clicar num slot abre a tela **Frequência do Link** daquele canal: os dois slots no
+  topo (o clicado já marcado) e o inventário com a hotbar embaixo. Clicar num item o
+  copia, sem consumir, para o slot marcado, ou o primeiro vazio, e marca o outro slot
+  do par; também dá para arrastar o item direto para um dos slots. `Concluir` ou ESC
+  volta para a tela do scanner. Clique direito num slot o limpa.
+- Todo controle `‹ valor ›` também responde à roda do mouse. As dicas aparecem só sobre
+  o rótulo, para não cobrir o valor e as setas.
+- Dicas ficam em tooltips.
+
+`Abertura` ajusta a abertura total de 30° a 180° em passos de 5°.
+**Frente / Esquerda / Direita** têm faixas e frequências independentes; com
+abertura de 50° ou menos as laterais mostram só `Exige abertura acima de 50°`.
+O servidor valida cada mudança (alcance de 8 blocos medido no mundo, também com o
+scanner numa aeronave do Sable, e configuração válida).
 
 O modo de saída é automático, tanto pela tela quanto por CC:Tweaked: sem par
 completo, a saída usa as faces; qualquer par completo seleciona Redstone Link.

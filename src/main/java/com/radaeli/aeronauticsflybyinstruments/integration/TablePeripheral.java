@@ -107,6 +107,12 @@ public final class TablePeripheral implements IPeripheral {
             output.put("minimumSeverity", module.minimumSeverity());
             output.put("severity", table.moduleSeverity(module));
             output.put("buzzerVolume", module.buzzerVolume());
+            if (ModularTableBlockEntity.isLampModule(module) || module.type().equals("buzzer")) {
+                output.put("indication", table.indication(module));
+                if (ModularTableBlockEntity.isLampModule(module)) {
+                    output.put("color", table.lampColor(module).name().toLowerCase(java.util.Locale.ROOT));
+                }
+            }
             return Map.copyOf(output);
         }).toList();
     }
@@ -125,6 +131,7 @@ public final class TablePeripheral implements IPeripheral {
                 (ModularTableBlockEntity.isLampModule(module) || module.type().equals("buzzer"))
                         && table.isModuleActive(module)).count();
         return Map.of("networkStatus", table.alertNetworkStatus().name().toLowerCase(java.util.Locale.ROOT),
+                "status", table.panelStatusId(),
                 "gpwsAvailable", table.gpwsAvailable(), "muted", table.muted(),
                 "installedModules", installed, "activeModules", active);
     }
@@ -141,6 +148,20 @@ public final class TablePeripheral implements IPeripheral {
             throw new LuaException("Channel must contain 1 to 64 characters");
         if (!(source.equals("gpws") || source.equals("test"))) throw new LuaException("Source must be gpws or test");
         return table.configureAlertModule(column - 1, row - 1, source, channel, rank);
+    }
+
+    /** What a lamp or buzzer indicates (plan §5.3): warning, caution, inop or function:&lt;id&gt;. */
+    @LuaFunction(mainThread = true)
+    public boolean setIndication(int column, int row, String indication) throws LuaException {
+        validateCell(column, row);
+        return table.setIndication(column - 1, row - 1, indication);
+    }
+
+    @LuaFunction(mainThread = true)
+    public List<String> getIndications(String moduleType) {
+        String type = moduleType == null ? "lamp" : moduleType;
+        return com.radaeli.aeronauticsflybyinstruments.panel.LampIndication.choices(type.equals("buzzer") ? "buzzer" : "lamp")
+                .stream().filter(com.radaeli.aeronauticsflybyinstruments.panel.LampIndication::available).toList();
     }
 
     @LuaFunction(mainThread = true)

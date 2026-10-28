@@ -4,65 +4,52 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class GpwsConfigurationTest {
     @Test
-    void advancedSettingsAndRulesPersistButRuntimeModeDoesNotBelongToConfiguration() {
+    void sensitivityAndInhibitsPersist() {
         GpwsConfiguration configuration = new GpwsConfiguration();
-        configuration.setProfile(GpwsProfile.ADVANCED);
-        configuration.setSensitivity(GpwsSensitivity.HIGH);
-        configuration.setPhaseOverride(FlightPhase.APPROACH);
-        GpwsRule rule = new GpwsRule(4, 1.5, 0, 12, 3, true);
-        assertTrue(configuration.setRule(AlertChannel.TOO_LOW, FlightPhase.APPROACH, rule));
+        assertTrue(configuration.setSensitivity(GpwsSensitivity.HIGH));
+        assertTrue(configuration.setInhibited(AlertChannel.TOO_LOW, true));
+        assertFalse(configuration.setInhibited(AlertChannel.TOO_LOW, true));
 
         CompoundTag saved = new CompoundTag();
         configuration.save(saved);
         GpwsConfiguration loaded = GpwsConfiguration.load(saved);
 
-        assertEquals(GpwsProfile.ADVANCED, loaded.profile());
         assertEquals(GpwsSensitivity.HIGH, loaded.sensitivity());
-        assertEquals(FlightPhase.APPROACH, loaded.phaseOverride().orElseThrow());
-        assertEquals(rule, loaded.rule(AlertChannel.TOO_LOW, FlightPhase.APPROACH));
+        assertEquals(Set.of(AlertChannel.TOO_LOW), loaded.inhibitedChannels());
         assertFalse(saved.contains("Mode"));
     }
 
     @Test
-    void basicProfileAlwaysUsesSimpleDefaultsAndAutomaticPhase() {
+    void gpwsInopCanNeverBeInhibited() {
         GpwsConfiguration configuration = new GpwsConfiguration();
-        configuration.setProfile(GpwsProfile.ADVANCED);
-        configuration.setPhaseOverride(FlightPhase.CRUISE);
-        configuration.setRule(AlertChannel.TOO_LOW, FlightPhase.APPROACH,
-                new GpwsRule(20, 10, 0, 0, 1, true));
-        configuration.setProfile(GpwsProfile.BASIC);
-
-        assertTrue(configuration.phaseOverride().isEmpty());
-        assertEquals(3, configuration.rule(AlertChannel.TOO_LOW, FlightPhase.APPROACH).cautionThreshold(), 0.0);
-        assertFalse(configuration.setRule(AlertChannel.TOO_LOW, FlightPhase.APPROACH,
-                new GpwsRule(20, 10, 0, 0, 1, true)));
+        assertFalse(configuration.setInhibited(AlertChannel.SENSOR_FAIL, true));
+        assertFalse(configuration.inhibited(AlertChannel.SENSOR_FAIL));
     }
 
     @Test
-    void invalidPersistedRulesAreDiscardedInFavorOfDefaults() {
+    void oldGpwsComputerSettingsAreDroppedExceptSensitivity() {
         CompoundTag saved = new CompoundTag();
         saved.putString("Profile", "ADVANCED");
-        saved.putString("Sensitivity", "NORMAL");
-        CompoundTag invalid = new CompoundTag();
-        invalid.putString("Channel", "TOO_LOW");
-        invalid.putString("Phase", "APPROACH");
-        invalid.putDouble("Caution", Double.NaN);
-        invalid.putDouble("Warning", 1);
-        invalid.putDouble("SecondaryWarning", 0);
-        invalid.putDouble("HysteresisPercent", 10);
-        invalid.putInt("ConfirmationSamples", 2);
+        saved.putString("Sensitivity", "LOW");
+        saved.putString("PhaseOverride", "APPROACH");
+        CompoundTag override = new CompoundTag();
+        override.putString("Channel", "TOO_LOW");
+        override.putString("Phase", "CRUISE");
+        override.putDouble("Caution", 20);
         ListTag rules = new ListTag();
-        rules.add(invalid);
+        rules.add(override);
         saved.put("RuleOverrides", rules);
 
         GpwsConfiguration loaded = GpwsConfiguration.load(saved);
-        assertEquals(3, loaded.rule(AlertChannel.TOO_LOW, FlightPhase.APPROACH).cautionThreshold(), 0.0);
+        assertEquals(GpwsSensitivity.LOW, loaded.sensitivity());
+        assertTrue(loaded.inhibitedChannels().isEmpty());
+        assertEquals(8, loaded.rule(AlertChannel.TOO_LOW, FlightPhase.CRUISE).cautionThreshold(), 0.0);
     }
 
     @Test
@@ -72,7 +59,7 @@ class GpwsConfigurationTest {
                 AlertSeverity.CAUTION, 10);
         AlertReading changedSeverity = new AlertReading(AlertChannel.TERRAIN, AlertState.ACTIVE,
                 AlertSeverity.WARNING, 10);
-        assertFalse(GpwsComputerPeripheral.alertStateChanged(first, sameStateLater));
-        assertTrue(GpwsComputerPeripheral.alertStateChanged(first, changedSeverity));
+        assertFalse(AvionicsComputerPeripheral.alertStateChanged(first, sameStateLater));
+        assertTrue(AvionicsComputerPeripheral.alertStateChanged(first, changedSeverity));
     }
 }

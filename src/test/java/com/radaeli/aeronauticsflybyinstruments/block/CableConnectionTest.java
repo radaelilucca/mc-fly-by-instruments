@@ -94,7 +94,7 @@ class CableConnectionTest {
         assertFalse(CableSocketProvider.class.isInstance(ModBlocks.MODULAR_TABLE_BASE.get()));
         assertTrue(CableSocketProvider.class.isInstance(ModBlocks.TERRAIN_SCANNER_ADVANCED.get()));
         assertFalse(CableSocketProvider.class.isInstance(ModBlocks.NETWORK_BRIDGE.get()));
-        assertFalse(CableSocketProvider.class.isInstance(ModBlocks.GPWS_COMPUTER.get()));
+        assertFalse(CableSocketProvider.class.isInstance(ModBlocks.AVIONICS_COMPUTER.get()));
     }
 
     @Test

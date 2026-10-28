@@ -199,7 +199,7 @@ cobre é fluidos e vapor, ferro industrial é a parte pesada do Aeronautics.
 | Terrain Scanner | **Andesito + madeira média** (v2 entregue), bocal escalonado frontal | andesite casing, laser sensor, laser pointer |
 | Advanced Terrain Scanner | **Latão + ferro industrial** (v2 entregue), barra com três lentes | content observer, smart observer, optical sensor |
 | Mesa modular e módulos | Ver seção 9.3 (base v2.1 em 2026-10-27) | navigation table, nixie tube, display link, gauges |
-| GPWS Computer (experimental) | **Ferro industrial + latão, sem madeira** (v2.1 em 2026-10-28): ferro dominante, latão no acabamento, painel anunciador frontal | navigation table, stockpile switch, industrial iron (Aeronautics) |
+| Avionics Computer (experimental, ex-GPWS Computer) | **Ferro industrial + latão, sem madeira** (v2.1 em 2026-10-28): ferro dominante, latão no acabamento, tela frontal com um estado por textura | navigation table, stockpile switch, industrial iron (Aeronautics) |
 | Avionics Cable (experimental) | **Ferro industrial**, latão só na luva do conector (base v2.1 em 2026-10-27) | rope, belts, fluid pipe |
 
 ### Diferenciação entre os sensores
@@ -395,7 +395,10 @@ tem arremate nas pontas, para emendar sem costura. Referência de implementaçã
   (`docs/lamp-emission.md`). O vidro é a **única** peça que pode ser translúcida.
 - **Cores de alerta:** Warning = rampa de redstone. Caution = âmbar feito com os
   tons claros do latão (`#E4B763`–`#FFEB8C`), porque o amarelo de sinalização saiu
-  da paleta.
+  da paleta. Na lâmpada (entregue em 2026-10-28), o âmbar é o mesmo mapa do vermelho
+  com a troca de chaves R→5, S→6, T→7, U→8 (o `5`, `#CEA05A`, mantém a borda escura do
+  vidro). O vidro mantém a cor apagado, e o filamento aceso também fica âmbar, para o
+  vermelho não virar laranja atrás do vidro âmbar.
 - **Buzzer:** grade de furos pintada (pixels escuros alternados) numa tampa de metal
   escuro. As 16 facetas a 22,5° do v1 saem: uma carcaça quadrada de 4×4 com tampa
   em degrau lê como "alto-falante do Create" sem rotação.
@@ -408,8 +411,9 @@ tem arremate nas pontas, para emendar sem costura. Referência de implementaçã
   marcador que importa. Texto só com a fonte do Minecraft. Tamanhos fixos em unidades do
   modelo, proporcionais à lente. Primeiro uso: bússola do FMS
   ([README](../blockbench/fms-module-2x3/README.md)).
-- **Estado em tela de bloco** (decisão de 2026-10-28, GPWS): um indicador simples de estado
-  numa tela de bloco, como o cursor piscante do GPWS armado, é **textura animada vanilla**
+- **Estado em tela de bloco** (decisão de 2026-10-28, Avionics Computer): um indicador simples
+  de estado numa tela de bloco (cursor em operação normal, `!` âmbar ou vermelho, `x` de INOP) é
+  **textura animada vanilla**
   (faixa de quadros quadrados + `.mcmeta`), dentro da paleta, trocada por uma propriedade de
   blockstate com a mesma geometria. Sem renderer nem emissão. É a técnica do CC:Tweaked.
 - **Legibilidade de perto:** a 1 bloco, um módulo 1×1 ocupa poucos texels por face.
@@ -424,6 +428,7 @@ tem arremate nas pontas, para emendar sem costura. Referência de implementaçã
 | Lâmpada 2×1 | **v2.1 em 2026-10-27** (tubo nixie horizontal, 3 cubos, 10×4×4, texturas da 1×1); faltam refino no Blockbench e validação no jogo: [README](../blockbench/lamp-module-2x1/README.md) |
 | Buzzer 1×1 | ~2,85 de diâmetro, 16 facetas rotacionadas, atlas 64×64, preto piano fora da paleta |
 | FMS 2×3 | **v2.1 em 2026-10-28** (carcaça de ferro industrial, tela em moldura de latão, 2 knobs de latão e 2 teclas, relevo de 1 unidade; 6 cubos, 10×3×14); faltam refino no Blockbench e validação no jogo: [README](../blockbench/fms-module-2x3/README.md) |
+| FMS Compass (item) | **v2.1 em 2026-10-28** (bússola de bolso redonda em degraus: aro de ferro, bezel de latão, lente com índice e ponteiro, alça de latão; 6 cubos; variante `_linked` acende a ponta do ponteiro e o reflexo da lente); faltam refino no Blockbench e validação no jogo: [README](../blockbench/fms-navigator/README.md) |
 | Base da mesa | **v2.1 em 2026-10-27** (latão + madeira escura, tampo rente, texturas conectadas); faltam refino no Blockbench e validação no jogo: [README](../blockbench/modular-table-base/README.md) |
 
 Variantes de tamanho de um módulo (como a lâmpada 2×1) são modelos próprios, nunca
@@ -477,7 +482,37 @@ Valem independentemente da estética:
 - O `.bbmodel` é a fonte. O JSON/PNG em `src/main/resources` é o asset de
   runtime e precisa ficar coerente com ele.
 
-## 12. Fontes
+## 12. Telas e HUD (decisão de 2026-10-28)
+
+As telas do mod (Avionics Computer, mesa, módulos) seguem a HUD fixa do inspector do
+Exotic Pets (`../pets/.../client/inspector/PetInspectorHud.java`): **limpas, sem ruído**.
+
+- Painel escuro da paleta `UiTheme.DARK` da R-UI Lib, quase opaco, contorno de 1 px e
+  **faixa de acento de 2 px** à esquerda. A faixa toma a cor do estado quando há um
+  (âmbar em atenção/INOP, vermelho em alerta).
+- Cabeçalho: título à esquerda, metadado discreto à direita. Logo abaixo, uma linha de
+  destaque (`»`) com o estado que importa agora.
+- Seções com título curto em maiúsculas, cor apagada, separadas por divisor fino.
+- Linhas: rótulo apagado à esquerda, valor alinhado à direita, cortado com reticências.
+- Valor que acabou de mudar acende na cor de aviso e esmaece.
+- Cores só com função: sucesso, aviso, erro. Nada de ícones, caixas decorativas ou texto
+  de ajuda permanente; dica só em tooltip.
+- Ações são poucas, no rodapé, e aplicam na hora: sem Salvar/Cancelar.
+- Escolhas de lista usam o radio da R-UI Lib (`UiPaint.radio`, `Radio.INDICATOR` = 8 px),
+  nunca os glifos `●`/`○`, que têm larguras diferentes e fazem o texto pular. A marca tem o
+  mesmo tamanho nos dois estados; a opção marcada só preenche o anel de branco. Opção reservada
+  para o futuro aparece apagada com "em breve" e não faz nada.
+- Rótulos flutuantes no mundo (configuração com a wrench) usam o mesmo painel, menor.
+- Itens (frequências do Redstone Link) usam slots de 18 px, ícone de 16 px com moldura de
+  1 px; o slot marcado ganha contorno claro. Clicar num slot abre uma tela própria com os
+  slots e o inventário + hotbar (9 colunas). Arrastar um item até o slot ou clicar nele
+  preenche; clique direito limpa. Valores numéricos e escolhas de uma linha (como o lado do scanner) usam o stepper
+  `‹ valor ›` da R-UI Lib (`Stepper`; em telas imediatas, `Stepper.paint`/`Stepper.layout`),
+  nunca slider, e respondem à roda do mouse; radio fica para listas que mostram
+  as opções lado a lado. A tooltip de uma linha com valor só aparece sobre o rótulo, nunca
+  sobre o valor ou as setas.
+
+## 13. Fontes
 
 - Jars locais: `create-1.21.1-6.0.10.jar` e
   `create-aeronautics-bundled-1.21.1-1.3.2.jar` (aeronautics, simulated,

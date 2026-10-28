@@ -7,13 +7,38 @@ contínuo: a moldura contorna o conjunto (texturas conectadas, veja a
 Sua face exposta é dividida em 3 colunas × 3 linhas: cada célula tem
 16/3 pixels de largura e profundidade. Ela pode ser montada em qualquer face
 sólida, inclusive no teto do cockpit. As lâmpadas 1×1 e 2×1 têm modelos próprios
-com carcaça opaca, vidro vermelho translúcido e emissão visual por módulo. A
-mesa emite luz de bloco conforme a lâmpada mais forte acesa. Veja
-[emissão e teste dos módulos](lamp-emission.md). Módulos novos são associados
-ao `gpws.any`, com severidade mínima Caution. Ao clicar com a mão vazia em uma
-lâmpada ou buzzer, abre a configuração individual; ao clicar numa célula vazia,
-abre o painel geral. O setup básico aplica esse canal e severidade a todos os
-annunciators.
+com carcaça opaca, vidro translúcido **vermelho ou âmbar** e emissão visual por
+módulo. A mesa emite luz de bloco conforme a lâmpada mais forte acesa. Veja
+[emissão e teste dos módulos](lamp-emission.md).
+
+## Indicações
+
+Cada lâmpada ou buzzer escolhe **o que indica**, numa lista curta, como os
+anunciadores de um cockpit real. A cor da lente vem da indicação, e a lente
+mantém a cor mesmo apagada.
+
+| Indicação | Acende quando | Cor |
+| --- | --- | --- |
+| Alerta GPWS | Qualquer função do [Avionics Computer](avionics-computer.md) em `WARNING` | Vermelho |
+| Atenção GPWS (padrão) | Qualquer função em `CAUTION` ou acima | Âmbar |
+| GPWS INOP | O computador reporta INOP, ou nenhum computador responde num cabo completo | Âmbar |
+| Função específica | Uma função (Terrain ahead, Pull up, Sink rate, Don't sink, Too low, Bank angle) | Âmbar apagada e em atenção; vermelho em alerta |
+| Redstone Link (em breve) | Reservada: aparece na tela, ainda não acende | Escolhida pelo jogador |
+
+O buzzer escolhe entre **Atenção GPWS** (padrão, toca em todo alerta) e **Alerta
+GPWS** (só alertas vermelhos), mais o volume. O bip é rápido em alerta e lento em
+atenção.
+
+- **Mão vazia numa lâmpada apagada** ou num buzzer: abre a configuração do módulo.
+  As escolhas aplicam na hora, sem Salvar.
+- **Mão vazia numa lâmpada acesa:** reconhece o alerta, como uma Master Warning:
+  silencia os buzzers do painel. Alerta novo ou escalada reativa o som.
+- **Wrench + scroll sobre o módulo:** troca a indicação no mundo (Alerta GPWS ↔
+  Atenção GPWS) ou, no buzzer, o volume em passos de 10%. Um rótulo ao lado da
+  mira mostra a indicação atual e a próxima. Função específica e GPWS INOP ficam
+  só na tela.
+- **Célula vazia:** painel geral com o estado do computador, módulos acesos, a
+  lista das lâmpadas acesas e os botões Testar painel e Silenciar.
 
 O módulo de buzzer `buzzer` ocupa uma célula 1×1 e tem modelo cilíndrico preto,
 ligeiramente menor que a lâmpada: lateral com acabamento preto piano e topo
@@ -31,9 +56,12 @@ A secundária não instala nem remove módulos, mesmo quando a principal está v
 | Mão principal / ação | Alvo | Resultado |
 | --- | --- | --- |
 | Vazia, clique direito | Célula vazia na face exposta | Painel geral |
-| Vazia, clique direito | Lâmpada ou buzzer | Configuração individual |
+| Vazia, clique direito | Lâmpada apagada ou buzzer | Configuração individual |
+| Vazia, clique direito | Lâmpada acesa | Reconhecer o alerta (silenciar buzzers) |
+| Wrench, scroll | Lâmpada ou buzzer | Trocar a indicação / o volume |
 | Vazia, clique direito | Qualquer célula coberta pelo FMS | Interface do mesmo FMS |
-| Vazia, Shift + clique direito | Face exposta ou módulo | Painel geral, inclusive com grid cheio |
+| Vazia, Shift + clique direito | Lâmpada acesa | Configuração individual |
+| Vazia, Shift + clique direito | Outra face exposta ou módulo | Painel geral, inclusive com grid cheio |
 | Módulo, clique direito, com ou sem Shift | Footprint livre na face exposta | Instalar uma unidade |
 | Módulo, clique direito | Sobreposição ou fora do grid | Rejeitar sem consumir nem abrir tela |
 | Wrench, clique direito | Módulo instalado | Remover o módulo inteiro |
@@ -153,12 +181,14 @@ consistente com o grid e a orientação da base.
 | `canFit(column, row, width, height)` | Se o footprint cabe e está livre |
 | `configureModule(column, row, channel, threshold)` | Configura uma lâmpada para sinais de teste locais (compatibilidade Lua) |
 | `getAvailableChannels()` | Lista `gpws.any` e os sete canais do GPWS |
-| `configureAlertModule(column, row, source, channel, minimumSeverity)` | Configura lâmpada ou buzzer; source é `gpws` ou `test`, severidade `advisory`, `caution` ou `warning` |
+| `setIndication(column, row, indication)` | Escolhe a indicação: `warning`, `caution`, `inop` ou `function:<canal>` (buzzer: `caution` ou `warning`) |
+| `getIndications(moduleType)` | Indicações oferecidas para `lamp` ou `buzzer` |
+| `configureAlertModule(column, row, source, channel, minimumSeverity)` | Forma antiga: lâmpada ou buzzer por canal e severidade; source é `gpws` ou `test`, severidade `advisory`, `caution` ou `warning` |
 | `setBuzzerVolume(column, row, percent)` | Define volume e alcance do buzzer, de 0 a 100 |
-| `applyBasicSetup()` | Associa todas as lâmpadas e buzzers ao alerta geral Caution; retorna quantos módulos configurou |
+| `applyBasicSetup()` | Volta todas as lâmpadas e buzzers para a indicação padrão (Atenção GPWS); retorna quantos módulos configurou |
 | `testPanel()` | Acende lâmpadas e exercita buzzers por 3 segundos |
 | `setMuted(muted)` | Silencia/reativa os buzzers da mesa sem desligar lâmpadas |
-| `getPanelStatus()` | Retorna estado da rede GPWS, mute e contagem de módulos ativos |
+| `getPanelStatus()` | Retorna `status` do computador (`ok`, `inop`, `no_gpws` ou o estado do cabo), rede, mute e contagem de módulos ativos |
 | `setTestSignal(channel, value)` | Define o valor simulado do canal |
 | `getOutputs()` | Lista módulos, sinal recebido e estado ativo |
 | `setLampTestIntensity(column, row, level)` | Sobreposição visual temporária 0–15 para uma lâmpada 1×1 ou 2×1 |
@@ -171,7 +201,7 @@ consistente com o grid e a orientação da base.
 | `getFmsSignals(column, row)` | Lê os canais do módulo indicado |
 | `getNetworkSignals()` | Lê canais tipados de endpoints na rede de cabo conectada |
 
-Módulos também incluem `source`, `alertChannel`, `minimumSeverity` e `buzzerVolume` na descrição e em `getOutputs()`. `signal` continua representando o sinal numérico local anterior; `severity` informa a severidade GPWS ativa. Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1, channel = "test", threshold = 0.5, source = "gpws", alertChannel = "gpws.any", minimumSeverity = 2, buzzerVolume = 100}`.
+Módulos também incluem `source`, `alertChannel`, `minimumSeverity` e `buzzerVolume` na descrição e em `getOutputs()`; `getOutputs()` traz ainda `indication` e, nas lâmpadas, `color` (`red` ou `amber`). `signal` continua representando o sinal numérico local anterior; `severity` informa a severidade GPWS ativa. Módulo: `{occupied = true, type = "lamp", column = 1, row = 1, width = 1, height = 1, channel = "test", threshold = 0.5, source = "gpws", alertChannel = "gpws.any", minimumSeverity = 2, buzzerVolume = 100}`.
 Uma célula livre retorna `{occupied = false, column = ..., row = ...}`.
 Coordenadas ou dimensões fora de 1–3 geram erro Lua; um footprint válido que
 ultrapasse a borda retorna `false`. `canFit` só consulta: não instala módulos.
@@ -213,17 +243,20 @@ print(textutils.serialize(signals))
 print(textutils.serialize(connected))
 ```
 
-O `gpws.any` combina os alertas ativos; se mais de um GPWS estiver conectado,
-prevalece a maior severidade por canal. `Advisory`, `Caution` e `Warning`
-correspondem a 1, 2 e 3. Sem leitura utilizável ou sem GPWS conectado, os
-módulos não ativam e a tela informa o estado da rede. Thresholds de voo ficam
-no GPWS; o painel seleciona canal e severidade mínima.
+As indicações são gravadas nos mesmos campos de antes (`source`,
+`alertChannel`, `minimumSeverity`), então saves e scripts antigos continuam
+valendo: Alerta GPWS = `gpws.any` ≥ 3, Atenção GPWS = `gpws.any` ≥ 2, GPWS INOP =
+`gpws.sensor_fail`, função específica = `gpws.<canal>` ≥ 2. O `gpws.any` combina
+os alertas ativos; se mais de um computador estiver conectado, prevalece a maior
+severidade por canal. `Advisory`, `Caution` e `Warning` correspondem a 1, 2 e 3.
+Envelopes de voo ficam no computador; o painel só escolhe a indicação.
 
-Sinais de teste locais continuam disponíveis para scripts. Chamar
-`configureModule` em uma lâmpada seleciona essa fonte, preservando os scripts
-antigos que usam `setTestSignal`. Para buzzer, `configureAlertModule` seleciona
-`source = "test"`; o canal e o limiar numérico podem ser configurados na tela.
-Defaults novos e Basic setup usam `gpws.any` a partir de Caution.
+O estado dos alertas é enviado ao cliente junto com a mesa (antes não era, e as
+lâmpadas ligadas ao GPWS não acendiam para o jogador). Ele não é salvo em disco.
+
+Sinais de teste locais continuam disponíveis só para scripts: `configureModule` em
+uma lâmpada ou `configureAlertModule(..., "test", ...)` selecionam essa fonte, e a
+tela mostra "Sinal de teste (Lua)".
 
 Cada buzzer toca a partir da posição espacial do módulo. A posição da mesa é
 transformada pela pose lógica do Sable; distância e ouvintes são calculados no

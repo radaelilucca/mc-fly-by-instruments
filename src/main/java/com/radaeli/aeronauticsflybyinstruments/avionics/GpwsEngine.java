@@ -4,7 +4,11 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.OptionalDouble;
 
-/** Pure, tick-driven GPWS rules. It consumes sensor snapshots and never performs world queries. */
+/**
+ * Pure, tick-driven GPWS function of the Avionics Computer. It consumes sensor snapshots and never
+ * performs world queries. Always active: there is no arming; envelopes are fixed and only the
+ * sensitivity and per-function inhibits come from the player.
+ */
 public final class GpwsEngine {
     private static final long TAKEOFF_PEAK_WINDOW_TICKS = 20L * 5L;
     private static final double GROUND_CLEARANCE = 1.5;
@@ -25,61 +29,49 @@ public final class GpwsEngine {
     private Double takeoffPeak;
     private long takeoffPeakTime = -1;
     private GpwsSensitivity sensitivityForCurrentEvaluation = GpwsSensitivity.NORMAL;
+    /** Tests only: pins the internal phase, which players can no longer select. */
+    FlightPhase phaseOverride;
 
     public GpwsEngine() {
         for (AlertChannel channel : AlertChannel.values()) latches.put(channel, new AlertLatch());
     }
 
-    public static boolean shouldAutoArm(GpwsProfile profile, GpwsMode mode, GpwsSample sample) {
-        return profile == GpwsProfile.BASIC && mode == GpwsMode.STANDBY
-                && sample.networkStatus() == NetworkStatus.CONNECTED && sample.altimeterCount() > 0
-                && !sample.altimeterFault() && sample.clearance().isPresent();
-    }
-
-    public Evaluation evaluate(GpwsSample sample, GpwsConfiguration configuration, GpwsMode mode,
+    public Evaluation evaluate(GpwsSample sample, GpwsConfiguration configuration, boolean testing,
                                int sampleIntervalTicks) {
         if (sampleIntervalTicks < 1) throw new IllegalArgumentException("sampleIntervalTicks must be positive");
         sensitivityForCurrentEvaluation = configuration.sensitivity();
         updateVerticalSpeed(sample, sampleIntervalTicks);
         updateAutomaticPhase(sample);
-        FlightPhase phase = configuration.effectivePhase(automaticPhase);
+        FlightPhase phase = phaseOverride == null ? automaticPhase : phaseOverride;
         updateTakeoffPeak(sample, phase);
 
         EnumMap<AlertChannel, AlertReading> alerts = new EnumMap<>(AlertChannel.class);
-        if (mode == GpwsMode.TEST) {
+        EnumMap<AlertChannel, String> reasons = new EnumMap<>(AlertChannel.class);
+        if (testing) {
             for (AlertChannel channel : AlertChannel.values()) {
                 alerts.put(channel, new AlertReading(channel, AlertState.ACTIVE, AlertSeverity.WARNING,
                         sample.gameTime()));
             }
-        } else if (mode == GpwsMode.OFF || mode == GpwsMode.STANDBY) {
-            for (AlertChannel channel : AlertChannel.values()) {
-                if (mode == GpwsMode.STANDBY && channel == AlertChannel.SENSOR_FAIL) {
-                    GpwsRule diagnosticRule = configuration.rule(channel, phase);
-                    if (diagnosticRule.inhibited()) {
-                        latches.get(channel).forceInactive();
-                        alerts.put(channel, inactive(channel, sample.gameTime()));
-                    } else {
-                        alerts.put(channel, updateLatch(channel, sensorFail(sample), diagnosticRule,
-                                sample.gameTime()));
-                    }
-                } else {
-                    latches.get(channel).forceInactive();
-                    alerts.put(channel, inactive(channel, sample.gameTime()));
-                }
-            }
         } else {
-            EnumMap<AlertChannel, Candidate> candidates = evaluateCandidates(sample, configuration, phase);
+            EnumMap<AlertChannel, Candidate> candidates = evaluateCandidates(sample, phase);
             for (AlertChannel channel : AlertChannel.values()) {
-                GpwsRule rule = configuration.rule(channel, phase);
-                if (rule.inhibited()) {
+                if (configuration.inhibited(channel)) {
                     latches.get(channel).forceInactive();
-                    alerts.put(channel, inactive(channel, sample.gameTime()));
-                } else {
-                    alerts.put(channel, updateLatch(channel, candidates.get(channel), rule, sample.gameTime()));
+                    alerts.put(channel, new AlertReading(channel, AlertState.INHIBITED, AlertSeverity.ADVISORY,
+                            sample.gameTime()));
+                    continue;
                 }
+                Candidate candidate = candidates.get(channel);
+                AlertReading reading = updateLatch(channel, candidate, configuration.rule(channel, phase),
+                        sample.gameTime());
+                if (reading.state() == AlertState.UNAVAILABLE && candidate.reason() != null) {
+                    reasons.put(channel, candidate.reason());
+                }
+                alerts.put(channel, reading);
             }
         }
-        return new Evaluation(phase, automaticPhase, optional(verticalSpeed), Map.copyOf(alerts));
+        return new Evaluation(phase, automaticPhase, optional(verticalSpeed), Map.copyOf(alerts),
+                Map.copyOf(reasons));
     }
 
     private void updateVerticalSpeed(GpwsSample sample, int sampleIntervalTicks) {
@@ -187,39 +179,38 @@ public final class GpwsEngine {
         }
     }
 
-    private EnumMap<AlertChannel, Candidate> evaluateCandidates(GpwsSample sample,
-                                                                 GpwsConfiguration configuration,
-                                                                 FlightPhase phase) {
+    private EnumMap<AlertChannel, Candidate> evaluateCandidates(GpwsSample sample, FlightPhase phase) {
         EnumMap<AlertChannel, Candidate> result = new EnumMap<>(AlertChannel.class);
         result.put(AlertChannel.SENSOR_FAIL, sensorFail(sample));
 
-        boolean ground = phase == FlightPhase.GROUND
-                || (configuration.phaseOverride().isEmpty() && groundQualificationActive);
+        boolean ground = phase == FlightPhase.GROUND || (phaseOverride == null && groundQualificationActive);
         result.put(AlertChannel.TERRAIN, ground ? Candidate.inactive()
-                : terrain(sample, configuration.rule(AlertChannel.TERRAIN, phase)));
+                : terrain(sample, GpwsConfiguration.envelope(AlertChannel.TERRAIN, phase)));
         result.put(AlertChannel.PULL_UP, ground ? Candidate.inactive()
-                : pullUp(sample, configuration.rule(AlertChannel.PULL_UP, phase)));
+                : pullUp(sample, GpwsConfiguration.envelope(AlertChannel.PULL_UP, phase)));
         result.put(AlertChannel.SINK_RATE, ground ? Candidate.inactive()
-                : sinkRate(configuration.rule(AlertChannel.SINK_RATE, phase)));
+                : sinkRate(sample, GpwsConfiguration.envelope(AlertChannel.SINK_RATE, phase)));
         result.put(AlertChannel.DONT_SINK, ground ? Candidate.inactive()
-                : dontSink(sample, phase, configuration.rule(AlertChannel.DONT_SINK, phase)));
+                : dontSink(sample, phase, GpwsConfiguration.envelope(AlertChannel.DONT_SINK, phase)));
         result.put(AlertChannel.TOO_LOW, ground ? Candidate.inactive()
-                : tooLow(sample, configuration.rule(AlertChannel.TOO_LOW, phase)));
+                : tooLow(sample, GpwsConfiguration.envelope(AlertChannel.TOO_LOW, phase)));
         result.put(AlertChannel.BANK_ANGLE, ground ? Candidate.inactive()
-                : bankAngle(sample, configuration.rule(AlertChannel.BANK_ANGLE, phase)));
+                : bankAngle(sample, GpwsConfiguration.envelope(AlertChannel.BANK_ANGLE, phase)));
         return result;
     }
 
     private Candidate terrain(GpwsSample sample, GpwsRule rule) {
-        if (sample.terrainScannerCount() == 0) return Candidate.unavailable();
+        if (sample.terrainScannerCount() == 0) return Candidate.unavailable(REASON_NO_SCANNER);
         if (sample.terrainContacts().isEmpty()) {
-            return sample.terrainCoverageComplete() ? Candidate.inactive() : Candidate.unavailable();
+            return sample.terrainCoverageComplete() ? Candidate.inactive()
+                    : Candidate.unavailable(REASON_PARTIAL_COVERAGE);
         }
         double nearest = sample.terrainContacts().stream().mapToDouble(GpwsSample.TerrainContact::distance)
                 .min().orElse(Double.POSITIVE_INFINITY);
         AlertSeverity severity = lowerThresholdSeverity(AlertChannel.TERRAIN, nearest, rule);
         if (severity != null) return Candidate.active(severity);
-        return sample.terrainCoverageComplete() ? Candidate.inactive() : Candidate.unavailable();
+        return sample.terrainCoverageComplete() ? Candidate.inactive()
+                : Candidate.unavailable(REASON_PARTIAL_COVERAGE);
     }
 
     private Candidate pullUp(GpwsSample sample, GpwsRule rule) {
@@ -239,32 +230,36 @@ public final class GpwsEngine {
         if (knownTerrainDanger || timeToGroundDanger) return Candidate.active(AlertSeverity.WARNING);
         if (altitudeTrendAvailable && (terrainOptional || terrainCoverageAvailable)) return Candidate.inactive();
         if (terrainCoverageAvailable) return Candidate.inactive();
-        return Candidate.unavailable();
+        if (sample.clearance().isEmpty()) return Candidate.unavailable(REASON_NO_ALTIMETER);
+        if (!altitudeTrendAvailable) return Candidate.unavailable(REASON_SETTLING);
+        return Candidate.unavailable(REASON_NO_FRONT_SCANNER);
     }
 
-    private Candidate sinkRate(GpwsRule rule) {
-        if (verticalSpeed == null) return Candidate.unavailable();
+    private Candidate sinkRate(GpwsSample sample, GpwsRule rule) {
+        if (verticalSpeed == null) {
+            return Candidate.unavailable(sample.clearance().isEmpty() ? REASON_NO_ALTIMETER : REASON_SETTLING);
+        }
         return Candidate.fromSeverity(highThresholdSeverity(AlertChannel.SINK_RATE, Math.max(0, -verticalSpeed), rule));
     }
 
     private Candidate dontSink(GpwsSample sample, FlightPhase phase, GpwsRule rule) {
-        if (sample.clearance().isEmpty()) return Candidate.unavailable();
+        if (sample.clearance().isEmpty()) return Candidate.unavailable(REASON_NO_ALTIMETER);
         boolean takeoffOrClimb = phase == FlightPhase.TAKEOFF || phase == FlightPhase.CLIMB;
         if (!takeoffOrClimb && (takeoffPeak == null || takeoffPeakTime < 0
                 || sample.gameTime() - takeoffPeakTime > TAKEOFF_PEAK_WINDOW_TICKS)) return Candidate.inactive();
-        if (takeoffPeak == null) return Candidate.unavailable();
+        if (takeoffPeak == null) return Candidate.unavailable(REASON_SETTLING);
         double lostClearance = Math.max(0, takeoffPeak - sample.clearance().getAsDouble());
         return Candidate.fromSeverity(highThresholdSeverity(AlertChannel.DONT_SINK, lostClearance, rule));
     }
 
     private Candidate tooLow(GpwsSample sample, GpwsRule rule) {
-        if (sample.clearance().isEmpty()) return Candidate.unavailable();
+        if (sample.clearance().isEmpty()) return Candidate.unavailable(REASON_NO_ALTIMETER);
         return Candidate.fromSeverity(lowerThresholdSeverity(AlertChannel.TOO_LOW,
                 sample.clearance().getAsDouble(), rule));
     }
 
     private Candidate bankAngle(GpwsSample sample, GpwsRule rule) {
-        if (sample.bankAngleDegrees().isEmpty()) return Candidate.unavailable();
+        if (sample.bankAngleDegrees().isEmpty()) return Candidate.unavailable(REASON_NO_ATTITUDE);
         return Candidate.fromSeverity(highThresholdSeverity(AlertChannel.BANK_ANGLE,
                 Math.abs(sample.bankAngleDegrees().getAsDouble()), rule));
     }
@@ -335,13 +330,22 @@ public final class GpwsEngine {
         return value == null ? OptionalDouble.empty() : OptionalDouble.of(value);
     }
 
+    /** {@code reasons} explains each UNAVAILABLE (INOP) function with one of the REASON_* ids. */
     public record Evaluation(FlightPhase phase, FlightPhase automaticPhase, OptionalDouble verticalSpeed,
-                             Map<AlertChannel, AlertReading> alerts) {}
+                             Map<AlertChannel, AlertReading> alerts, Map<AlertChannel, String> reasons) {}
 
-    private record Candidate(boolean available, AlertSeverity severity) {
-        static Candidate unavailable() { return new Candidate(false, null); }
-        static Candidate inactive() { return new Candidate(true, null); }
-        static Candidate active(AlertSeverity severity) { return new Candidate(true, severity); }
+    public static final String REASON_NO_ALTIMETER = "no_altimeter";
+    public static final String REASON_NO_SCANNER = "no_scanner";
+    public static final String REASON_NO_FRONT_SCANNER = "no_front_scanner";
+    public static final String REASON_PARTIAL_COVERAGE = "partial_coverage";
+    public static final String REASON_NO_ATTITUDE = "no_attitude";
+    /** Waiting for a second altimeter sample to estimate the vertical speed. */
+    public static final String REASON_SETTLING = "settling";
+
+    private record Candidate(boolean available, AlertSeverity severity, String reason) {
+        static Candidate unavailable(String reason) { return new Candidate(false, null, reason); }
+        static Candidate inactive() { return new Candidate(true, null, null); }
+        static Candidate active(AlertSeverity severity) { return new Candidate(true, severity, null); }
         static Candidate fromSeverity(AlertSeverity severity) {
             return severity == null ? inactive() : active(severity);
         }

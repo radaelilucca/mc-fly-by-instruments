@@ -140,11 +140,11 @@ Longer ranges and shorter intervals cost more server time on big fleets.
 - **Create Aeronautics** 1.3+ (bundled)
 - **Sable** 2.0.5
 - **CC:Tweaked** 1.120.0+
-- **R-UI Lib** 0.7.0+
+- **R-UI Lib** 0.8.0+
 
 ---
 
-The **Modular Table**, lamp and buzzer modules, **FMS**, **Avionics Cable Network**, **Network Bridge** and **GPWS Computer** are available as **Experimental** content without recipes. Their behavior may change between versions. See the [technical guides](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) before using these blocks in a world you rely on.
+The **Modular Table**, lamp and buzzer modules, **FMS**, **Avionics Cable Network**, **Network Bridge** and **Avionics Computer** are available as **Experimental** content without recipes. Their behavior may change between versions. See the [technical guides](https://mods.radaeli.dev/en/mods/flight-safety-instruments/) before using these blocks in a world you rely on.
 
 ---
 

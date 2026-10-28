@@ -19,8 +19,8 @@ import com.radaeli.aeronauticsflybyinstruments.sensor.RadarAltimeterBlock;
 import com.radaeli.aeronauticsflybyinstruments.sensor.TerrainScannerBlock;
 import com.radaeli.aeronauticsflybyinstruments.sensor.AdvancedTerrainScannerBlock;
 import com.radaeli.aeronauticsflybyinstruments.sensor.TerrainScannerBlockEntity;
-import com.radaeli.aeronauticsflybyinstruments.avionics.GpwsComputerBlockEntity;
-import com.radaeli.aeronauticsflybyinstruments.block.GpwsComputerBlock;
+import com.radaeli.aeronauticsflybyinstruments.avionics.AvionicsComputerBlockEntity;
+import com.radaeli.aeronauticsflybyinstruments.block.AvionicsComputerBlock;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -54,10 +54,10 @@ public final class ModBlocks {
                     BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(2.0f)));
     public static final DeferredItem<BlockItem> NETWORK_BRIDGE_ITEM =
             ITEMS.registerSimpleBlockItem(NETWORK_BRIDGE);
-    public static final DeferredBlock<GpwsComputerBlock> GPWS_COMPUTER =
-            BLOCKS.register("gpws_computer", () -> new GpwsComputerBlock(
+    public static final DeferredBlock<AvionicsComputerBlock> AVIONICS_COMPUTER =
+            BLOCKS.register("avionics_computer", () -> new AvionicsComputerBlock(
                     BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(2.0f)));
-    public static final DeferredItem<BlockItem> GPWS_COMPUTER_ITEM = ITEMS.registerSimpleBlockItem(GPWS_COMPUTER);
+    public static final DeferredItem<BlockItem> AVIONICS_COMPUTER_ITEM = ITEMS.registerSimpleBlockItem(AVIONICS_COMPUTER);
     public static final DeferredBlock<RadarAltimeterBlock> RADAR_ALTIMETER =
             BLOCKS.register("radar_altimeter", () -> new RadarAltimeterBlock(
                     BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(2.0f).noOcclusion()));
@@ -89,9 +89,18 @@ public final class ModBlocks {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<NetworkBridgeBlockEntity>> NETWORK_BRIDGE_ENTITY =
             BLOCK_ENTITIES.register("network_bridge", () -> BlockEntityType.Builder.of(
                     NetworkBridgeBlockEntity::new, NETWORK_BRIDGE.get()).build(null));
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GpwsComputerBlockEntity>> GPWS_COMPUTER_ENTITY =
-            BLOCK_ENTITIES.register("gpws_computer", () -> BlockEntityType.Builder.of(
-                    GpwsComputerBlockEntity::new, GPWS_COMPUTER.get()).build(null));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AvionicsComputerBlockEntity>> AVIONICS_COMPUTER_ENTITY =
+            BLOCK_ENTITIES.register("avionics_computer", () -> BlockEntityType.Builder.of(
+                    AvionicsComputerBlockEntity::new, AVIONICS_COMPUTER.get()).build(null));
+    /** Worlds saved with the old GPWS Computer (renamed 2026-10-28) load it as the Avionics Computer. */
+    public static void registerAliases() {
+        var old = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(AeronauticsFlyByInstruments.MOD_ID,
+                "gpws_computer");
+        var current = AVIONICS_COMPUTER.getId();
+        BLOCKS.addAlias(old, current);
+        ITEMS.addAlias(old, current);
+        BLOCK_ENTITIES.addAlias(old, current);
+    }
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RadarAltimeterBlockEntity>> RADAR_ALTIMETER_ENTITY =
             BLOCK_ENTITIES.register("radar_altimeter", () -> BlockEntityType.Builder.of(
                     RadarAltimeterBlockEntity::new, RADAR_ALTIMETER.get()).build(null));

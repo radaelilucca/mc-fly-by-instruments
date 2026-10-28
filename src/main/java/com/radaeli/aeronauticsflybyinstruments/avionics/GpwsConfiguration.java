@@ -2,34 +2,25 @@ package com.radaeli.aeronauticsflybyinstruments.avionics;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 
-import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
-/** Persistable player settings. Runtime arming state intentionally lives elsewhere. */
+/**
+ * The only player settings of the GPWS function: one global sensitivity and per-function
+ * inhibits. Envelopes are fixed, as on a certified GPWS (docs/avionics-computer-plan.md).
+ */
 public final class GpwsConfiguration {
-    private GpwsProfile profile = GpwsProfile.BASIC;
     private GpwsSensitivity sensitivity = GpwsSensitivity.NORMAL;
-    private FlightPhase phaseOverride;
-    private final EnumMap<AlertChannel, EnumMap<FlightPhase, GpwsRule>> overrides =
-            new EnumMap<>(AlertChannel.class);
+    private final EnumSet<AlertChannel> inhibited = EnumSet.noneOf(AlertChannel.class);
 
-    public GpwsProfile profile() { return profile; }
     public GpwsSensitivity sensitivity() { return sensitivity; }
-    public Optional<FlightPhase> phaseOverride() { return Optional.ofNullable(phaseOverride); }
-
-    public boolean setProfile(GpwsProfile updated) {
-        if (updated == null || profile == updated) return false;
-        profile = updated;
-        if (updated == GpwsProfile.BASIC) {
-            phaseOverride = null;
-            overrides.clear();
-        }
-        return true;
-    }
+    public boolean inhibited(AlertChannel channel) { return inhibited.contains(channel); }
+    public Set<AlertChannel> inhibitedChannels() { return Set.copyOf(inhibited); }
 
     public boolean setSensitivity(GpwsSensitivity updated) {
         if (updated == null || sensitivity == updated) return false;
@@ -37,79 +28,34 @@ public final class GpwsConfiguration {
         return true;
     }
 
-    public boolean setPhaseOverride(FlightPhase updated) {
-        if (phaseOverride == updated) return false;
-        phaseOverride = updated;
-        return true;
+    /** GPWS INOP reports the system's own health and can never be inhibited. */
+    public static boolean inhibitable(AlertChannel channel) {
+        return channel != null && channel != AlertChannel.SENSOR_FAIL;
     }
 
-    public FlightPhase effectivePhase(FlightPhase automatic) {
-        return phaseOverride == null ? automatic : phaseOverride;
+    public boolean setInhibited(AlertChannel channel, boolean value) {
+        if (!inhibitable(channel)) return false;
+        return value ? inhibited.add(channel) : inhibited.remove(channel);
     }
 
     public GpwsRule rule(AlertChannel channel, FlightPhase phase) {
-        if (profile == GpwsProfile.BASIC) return defaultRule(channel, phase);
-        EnumMap<FlightPhase, GpwsRule> phaseRules = overrides.get(channel);
-        return phaseRules == null ? defaultRule(channel, phase) : phaseRules.getOrDefault(phase,
-                defaultRule(channel, phase));
-    }
-
-    public boolean setRule(AlertChannel channel, FlightPhase phase, GpwsRule rule) {
-        if (profile != GpwsProfile.ADVANCED || channel == null || phase == null || rule == null
-                || rule.equals(rule(channel, phase))) return false;
-        overrides.computeIfAbsent(channel, ignored -> new EnumMap<>(FlightPhase.class)).put(phase, rule);
-        return true;
-    }
-
-    public Map<AlertChannel, Map<FlightPhase, GpwsRule>> overrides() {
-        EnumMap<AlertChannel, Map<FlightPhase, GpwsRule>> copy = new EnumMap<>(AlertChannel.class);
-        overrides.forEach((channel, rules) -> copy.put(channel, Map.copyOf(rules)));
-        return Map.copyOf(copy);
+        return envelope(channel, phase);
     }
 
     public void save(CompoundTag tag) {
-        tag.putString("Profile", profile.name());
         tag.putString("Sensitivity", sensitivity.name());
-        tag.putString("PhaseOverride", phaseOverride == null ? "AUTO" : phaseOverride.name());
-        ListTag rules = new ListTag();
-        overrides.forEach((channel, phaseRules) -> phaseRules.forEach((phase, rule) -> {
-            CompoundTag entry = new CompoundTag();
-            entry.putString("Channel", channel.name());
-            entry.putString("Phase", phase.name());
-            entry.putDouble("Caution", rule.cautionThreshold());
-            entry.putDouble("Warning", rule.warningThreshold());
-            entry.putDouble("SecondaryWarning", rule.secondaryWarningThreshold());
-            entry.putDouble("HysteresisPercent", rule.hysteresisPercent());
-            entry.putInt("ConfirmationSamples", rule.confirmationSamples());
-            entry.putBoolean("Inhibited", rule.inhibited());
-            rules.add(entry);
-        }));
-        tag.put("RuleOverrides", rules);
+        ListTag list = new ListTag();
+        inhibited.forEach(channel -> list.add(StringTag.valueOf(channel.name())));
+        tag.put("Inhibited", list);
     }
 
+    /** Settings of the old GPWS Computer (profiles, modes, rule overrides) are dropped on purpose. */
     public static GpwsConfiguration load(CompoundTag tag) {
         GpwsConfiguration configuration = new GpwsConfiguration();
-        parse(GpwsProfile.class, tag.getString("Profile")).ifPresent(configuration::setProfile);
         parse(GpwsSensitivity.class, tag.getString("Sensitivity")).ifPresent(configuration::setSensitivity);
-        String phase = tag.getString("PhaseOverride");
-        if (configuration.profile == GpwsProfile.ADVANCED && !phase.equals("AUTO")) {
-            parse(FlightPhase.class, phase).ifPresent(configuration::setPhaseOverride);
-        }
-        if (configuration.profile != GpwsProfile.ADVANCED) return configuration;
-        ListTag rules = tag.getList("RuleOverrides", Tag.TAG_COMPOUND);
-        for (int index = 0; index < rules.size(); index++) {
-            CompoundTag entry = rules.getCompound(index);
-            var channel = parse(AlertChannel.class, entry.getString("Channel"));
-            var rulePhase = parse(FlightPhase.class, entry.getString("Phase"));
-            if (channel.isEmpty() || rulePhase.isEmpty()) continue;
-            try {
-                GpwsRule rule = new GpwsRule(entry.getDouble("Caution"), entry.getDouble("Warning"),
-                        entry.getDouble("SecondaryWarning"), entry.getDouble("HysteresisPercent"),
-                        entry.getInt("ConfirmationSamples"), entry.getBoolean("Inhibited"));
-                configuration.setRule(channel.get(), rulePhase.get(), rule);
-            } catch (IllegalArgumentException ignored) {
-                // A malformed or out-of-range saved override is discarded; safe defaults remain active.
-            }
+        ListTag list = tag.getList("Inhibited", Tag.TAG_STRING);
+        for (int index = 0; index < list.size(); index++) {
+            parse(AlertChannel.class, list.getString(index)).ifPresent(channel -> configuration.setInhibited(channel, true));
         }
         return configuration;
     }
@@ -122,7 +68,8 @@ public final class GpwsConfiguration {
         }
     }
 
-    public static GpwsRule defaultRule(AlertChannel channel, FlightPhase phase) {
+    /** Fixed envelope per function and internal flight phase, in blocks, blocks/s, seconds and degrees. */
+    public static GpwsRule envelope(AlertChannel channel, FlightPhase phase) {
         double caution = 0;
         double warning = 0;
         double secondary = 0;
@@ -141,6 +88,6 @@ public final class GpwsConfiguration {
             case BANK_ANGLE -> { caution = 30; warning = 45; }
             case SENSOR_FAIL -> { }
         }
-        return new GpwsRule(caution, warning, secondary, 10, 2, false);
+        return new GpwsRule(caution, warning, secondary, 10, 2);
     }
 }

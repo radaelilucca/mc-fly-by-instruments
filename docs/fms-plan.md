@@ -25,18 +25,29 @@ O FMS fornece canais de dados; não cria alertas nem altera o GPWS.
 
 ## Navigator e Navigation Table
 
-- `fms_navigator` usa o modelo/ícone vanilla de bússola e é stack size 1.
+- `fms_navigator` (FMS Compass) é uma bússola redonda em 3D, na linguagem do módulo FMS
+  ([fonte visual](../blockbench/fms-navigator/README.md)) e é stack size 1. Ligado a um
+  módulo, troca para o modelo `fms_navigator_linked` (propriedade de item `linked`): ponta do
+  ponteiro e reflexo da lente acesos.
 - Selecionar o item no inventário dentro da aba Navigator o associa ao UUID exato
   do módulo aberto; o item permanece no inventário.
 - Reassociar um Navigator já ligado a outro FMS requer ativar explicitamente a
   confirmação no painel antes de selecioná-lo.
 - O item é registrado como `NavigationTarget` do Aeronautics e pode ser inserido
-  na Navigation Table nativa.
-- A resolução procura somente FMS carregados no mesmo `Level` e no mesmo
-  sublevel Sable da Navigation Table. Não força carga de chunks.
-- Waypoint não selecionado, UUID indisponível, dimensão diferente ou sublevel
-  diferente resultam em ausência de target; Y não influencia a direção horizontal
+  na Navigation Table nativa. A mesa aponta para o waypoint ativo do FMS ligado e
+  reavalia o alvo a cada tick do servidor: trocar ou limpar o waypoint chega à mesa
+  no tick seguinte.
+- A resolução procura FMS carregados no mesmo `Level`, no mundo ou em qualquer
+  sublevel Sable. Não força carga de chunks.
+- Alcance (`FmsNavigatorRange`): sem limite quando mesa e módulo estão no mesmo
+  sublevel (mesma contraption); 256 blocos entre contraptions diferentes ou quando
+  um dos dois está no mundo.
+- Waypoint não selecionado, UUID indisponível, dimensão diferente ou fora do
+  alcance resultam em ausência de target; Y não influencia a direção horizontal
   do compasso.
+- Na mesa, o FMS Compass é desenhado deitado sobre o tampo de latão
+  (`FmsNavigatorTableRenderer`, via `RenderableNavigationTarget`) e gira com a seta
+  da mesa, com o ponteiro pintado apontando para o waypoint.
 
 ## Canais de dados
 

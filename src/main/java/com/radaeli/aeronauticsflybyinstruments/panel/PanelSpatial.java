@@ -4,7 +4,9 @@ import com.radaeli.aeronauticsflybyinstruments.block.ModularTableBaseBlock;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import com.radaeli.aeronauticsflybyinstruments.fms.FmsLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 
 /** Converts a mounted module's local panel position into the shared world coordinate frame. */
@@ -27,8 +29,19 @@ public final class PanelSpatial {
         return FmsLocation.forEntity(entity);
     }
 
-    private static Vec3 toWorld(ModularTableBlockEntity table, Vec3 local) {
-        SubLevel subLevel = Sable.HELPER.getContaining(table);
+    /** Centre of any block, projected out of its sublevel like the table. */
+    public static Vec3 blockWorldPosition(BlockEntity entity) {
+        return toWorld(entity, Vec3.atCenterOf(entity.getBlockPos()));
+    }
+
+    /** Screen actions reach eight blocks, measured in the world frame so blocks on an aircraft count. */
+    public static boolean canReach(ServerPlayer player, BlockEntity entity) {
+        return player.level() == entity.getLevel()
+                && entityWorldPosition(player).distanceToSqr(blockWorldPosition(entity)) <= 64;
+    }
+
+    private static Vec3 toWorld(BlockEntity entity, Vec3 local) {
+        SubLevel subLevel = Sable.HELPER.getContaining(entity);
         return subLevel == null ? local : subLevel.logicalPose().transformPosition(local);
     }
 }

@@ -1,6 +1,7 @@
 package com.radaeli.aeronauticsflybyinstruments.fms;
 
 import com.google.gson.JsonParser;
+import com.radaeli.aeronauticsflybyinstruments.sensor.SensorModelChecks;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStreamReader;
@@ -10,9 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FmsAssetsTest {
     @Test
-    void moduleUsesCenteredModelAndNavigatorKeepsCompassPlaceholder() throws Exception {
+    void moduleUsesCenteredModel() throws Exception {
         var module = readJson("/assets/aeronautics_fly_by_instruments/models/item/fms_module.json");
-        var navigator = readJson("/assets/aeronautics_fly_by_instruments/models/item/fms_navigator.json");
         assertEquals("aeronautics_fly_by_instruments:block/fms_module_2x3", module.get("parent").getAsString());
         var model = readJson("/assets/aeronautics_fly_by_instruments/models/block/fms_module_2x3.json");
         double[] low = {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY};
@@ -29,9 +29,36 @@ class FmsAssetsTest {
         assertEquals(0, low[1]);
         assertTrue(high[0] - low[0] < 16 * 2.0 / 3);
         assertTrue(high[2] - low[2] < 16);
-        assertEquals("minecraft:item/generated", navigator.get("parent").getAsString());
-        assertEquals("minecraft:item/compass_00", navigator.getAsJsonObject("textures")
-                .get("layer0").getAsString());
+    }
+
+    /** FMS Compass v2.1: a round pocket compass (stepped disc) with the FMS face: iron rim, brass bezel, lens. */
+    @Test
+    void navigatorIsARoundCompassInTheFmsLanguage() throws Exception {
+        var item = readJson("/assets/aeronautics_fly_by_instruments/models/item/fms_navigator.json");
+        assertEquals("aeronautics_fly_by_instruments:block/fms_navigator", item.get("parent").getAsString());
+        for (String context : new String[]{"gui", "ground", "fixed", "thirdperson_righthand", "thirdperson_lefthand",
+                "firstperson_righthand", "firstperson_lefthand"}) {
+            assertTrue(item.getAsJsonObject("display").has(context), context);
+        }
+        SensorModelChecks.assertGuideRules("fms_navigator");
+        var model = SensorModelChecks.model("fms_navigator");
+        assertEquals(java.util.Set.of("aeronautics_fly_by_instruments:block/fms_navigator",
+                "create:block/industrial_iron_block"), SensorModelChecks.textureIds(model));
+        assertEquals("create:block/industrial_iron_block", model.getAsJsonObject("textures").get("particle").getAsString());
+        assertTrue(model.getAsJsonArray("elements").size() <= 8, "Small item: a handful of cubes");
+        // The disc is centred on (8, 8) and as wide as it is deep: it reads round.
+        double[] low = {16, 16}, high = {0, 0};
+        for (var element : model.getAsJsonArray("elements")) {
+            var cube = element.getAsJsonObject();
+            var from = SensorModelChecks.vector(cube.getAsJsonArray("from"));
+            var to = SensorModelChecks.vector(cube.getAsJsonArray("to"));
+            assertEquals(8, (from[0] + to[0]) / 2, cube.get("name") + " is centred on X");
+            if (!cube.get("name").getAsString().startsWith("disc")) continue;
+            low[0] = Math.min(low[0], from[0]); high[0] = Math.max(high[0], to[0]);
+            low[1] = Math.min(low[1], from[2]); high[1] = Math.max(high[1], to[2]);
+        }
+        assertEquals(8, (low[1] + high[1]) / 2, "The disc is centred on Z");
+        assertEquals(high[0] - low[0], high[1] - low[1], "The disc is as wide as it is deep");
     }
 
     /** v2.1 (guide §9): 10 x 14 carcass, integer grid, 1 texel per unit, industrial iron housing. */
@@ -80,6 +107,47 @@ class FmsAssetsTest {
         assertArrayEquals(new double[]{13, 3, 15}, high);
         assertTrue(names.containsAll(java.util.List.of("housing", "screen", "knob_left", "knob_right")), names.toString());
         assertEquals(32, readImage("aeronautics_fly_by_instruments:block/fms_module").getWidth());
+    }
+
+    /** Linked state (guide §8.5 pattern): same geometry, a second atlas differing only in a few face pixels. */
+    @Test
+    void linkedNavigatorOnlySwapsTheAtlas() throws Exception {
+        var item = readJson("/assets/aeronautics_fly_by_instruments/models/item/fms_navigator.json");
+        var override = item.getAsJsonArray("overrides").get(0).getAsJsonObject();
+        assertEquals(1, override.getAsJsonObject("predicate").get("aeronautics_fly_by_instruments:linked").getAsInt());
+        assertEquals("aeronautics_fly_by_instruments:item/fms_navigator_linked", override.get("model").getAsString());
+        var linkedItem = readJson("/assets/aeronautics_fly_by_instruments/models/item/fms_navigator_linked.json");
+        assertEquals("aeronautics_fly_by_instruments:block/fms_navigator_linked", linkedItem.get("parent").getAsString());
+        assertEquals(item.get("display"), linkedItem.get("display"), "Linked state keeps the display transforms");
+
+        SensorModelChecks.assertGuideRules("fms_navigator_linked");
+        var base = SensorModelChecks.model("fms_navigator");
+        var linked = SensorModelChecks.model("fms_navigator_linked");
+        assertEquals(base.get("elements"), linked.get("elements"), "Linked state must not change the geometry");
+        var baseTextures = base.getAsJsonObject("textures");
+        var linkedTextures = linked.getAsJsonObject("textures");
+        assertEquals(baseTextures.keySet(), linkedTextures.keySet());
+        for (var key : baseTextures.keySet()) {
+            var from = baseTextures.get(key).getAsString();
+            var to = linkedTextures.get(key).getAsString();
+            assertEquals(from.equals("aeronautics_fly_by_instruments:block/fms_navigator")
+                    ? "aeronautics_fly_by_instruments:block/fms_navigator_linked" : from, to, key);
+        }
+
+        // Subtle: a handful of pixels, all inside the 12 x 12 face, never on the iron rim outline.
+        var off = readImage("aeronautics_fly_by_instruments:block/fms_navigator");
+        var on = readImage("aeronautics_fly_by_instruments:block/fms_navigator_linked");
+        assertEquals(off.getWidth(), on.getWidth());
+        assertEquals(off.getHeight(), on.getHeight());
+        int changed = 0;
+        for (int y = 0; y < off.getHeight(); y++) {
+            for (int x = 0; x < off.getWidth(); x++) {
+                if (off.getRGB(x, y) == on.getRGB(x, y)) continue;
+                changed++;
+                assertTrue(x >= 2 && x < 10 && y >= 2 && y < 10, "Changed pixel (" + x + ", " + y + ") outside the lens");
+            }
+        }
+        assertTrue(changed > 0 && changed <= 6, "Linked state changes " + changed + " pixels");
     }
 
     private static java.awt.image.BufferedImage readImage(String id) throws Exception {

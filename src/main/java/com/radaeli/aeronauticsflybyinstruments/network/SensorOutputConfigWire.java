@@ -45,10 +45,12 @@ final class SensorOutputConfigWire {
         return config;
     }
 
-    static void encodePayload(ByteBuf buf, BlockPos position, String kind, int angle, SensorOutputConfig config) {
+    static void encodePayload(ByteBuf buf, BlockPos position, String kind, int angle, String side,
+                              SensorOutputConfig config) {
         BlockPos.STREAM_CODEC.encode(buf, position);
         ByteBufCodecs.STRING_UTF8.encode(buf, kind);
         ByteBufCodecs.VAR_INT.encode(buf, angle);
+        ByteBufCodecs.STRING_UTF8.encode(buf, side);
         encode(buf, config);
     }
 
@@ -56,10 +58,12 @@ final class SensorOutputConfigWire {
         BlockPos position = BlockPos.STREAM_CODEC.decode(buf);
         String kind = ByteBufCodecs.STRING_UTF8.decode(buf);
         int angle = ByteBufCodecs.VAR_INT.decode(buf);
-        return new PayloadFields(position, kind, angle, decode(buf, kind));
+        String side = ByteBufCodecs.STRING_UTF8.decode(buf);
+        return new PayloadFields(position, kind, angle, side, decode(buf, kind));
     }
 
-    record PayloadFields(BlockPos position, String kind, int angle, SensorOutputConfig config) {}
+    /** {@code side} is the scanner's aircraft side (see ScannerSide), empty for the altimeter. */
+    record PayloadFields(BlockPos position, String kind, int angle, String side, SensorOutputConfig config) {}
 
     private static void writeStackIdentity(ByteBuf buf, ItemStack stack) {
         String item = stack.isEmpty() ? "" : BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();

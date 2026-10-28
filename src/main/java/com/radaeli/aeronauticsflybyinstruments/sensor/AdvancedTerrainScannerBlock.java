@@ -55,7 +55,7 @@ public final class AdvancedTerrainScannerBlock extends AbstractTerrainScannerBlo
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
                 && level.getBlockEntity(pos) instanceof TerrainScannerBlockEntity scanner) {
             com.radaeli.aeronauticsflybyinstruments.network.SensorOutputNetwork.open(serverPlayer, pos, "advanced",
-                    scanner.openingAngle(), scanner.outputConfig());
+                    scanner.openingAngle(), scanner.side().id(), scanner.outputConfig());
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }

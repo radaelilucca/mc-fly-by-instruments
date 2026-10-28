@@ -2,6 +2,7 @@
 
 Guia obrigatório: [guia visual v2.1](../../docs/visual-design-guide.md), seção 9.
 Referências: navigation table do Simulated, nixie tube e display link do Create.
+O item FMS Compass segue esta mesma linguagem: [fms-navigator](../fms-navigator/README.md).
 
 Abra `fms_module_2x3.bbmodel` no Blockbench (Java Block/Item, 1.21.1, *Box UV* desligado,
 resolução 32×32). Modelado com a mesa voltada para cima: apoio em Y = 0, centro em X/Z = 8.

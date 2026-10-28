@@ -1,11 +1,11 @@
 package com.radaeli.aeronauticsflybyinstruments.avionics;
 
 /**
- * Per-channel/per-phase limits. Threshold meanings are channel-specific and
- * are exposed with stable field names by the GPWS peripheral.
+ * Fixed envelope of one GPWS function in one internal flight phase. Threshold meanings are
+ * channel-specific (see {@link GpwsConfiguration#envelope}); players cannot edit them.
  */
 public record GpwsRule(double cautionThreshold, double warningThreshold, double secondaryWarningThreshold,
-                       double hysteresisPercent, int confirmationSamples, boolean inhibited) {
+                       double hysteresisPercent, int confirmationSamples) {
     public GpwsRule {
         if (!validThreshold(cautionThreshold) || !validThreshold(warningThreshold)
                 || !validThreshold(secondaryWarningThreshold)

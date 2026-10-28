@@ -2,7 +2,6 @@ package com.radaeli.aeronauticsflybyinstruments.fms;
 
 import com.radaeli.aeronauticsflybyinstruments.panel.ModularTableBlockEntity;
 import net.minecraft.world.level.Level;
-import dev.ryanhcode.sable.sublevel.SubLevel;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -51,12 +50,12 @@ public final class FmsModuleIndex {
         }
     }
 
-    public static ModularTableBlockEntity find(Level level, UUID id, SubLevel expectedSubLevel) {
+    /** The loaded table holding the module, wherever it is (world or any sublevel). */
+    public static ModularTableBlockEntity find(Level level, UUID id) {
         if (level == null || level.isClientSide || id == null) return null;
         synchronized (LOADED) {
             for (var table : LOADED.getOrDefault(level, Set.of())) {
                 if (table.isRemoved() || table.getLevel() != level) continue;
-                if (FmsLocation.subLevel(table) != expectedSubLevel) continue;
                 if (table.findFmsById(id).isPresent()) return table;
             }
         }

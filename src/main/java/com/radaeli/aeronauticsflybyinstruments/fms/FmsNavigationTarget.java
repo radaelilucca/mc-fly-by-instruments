@@ -6,7 +6,11 @@ import dev.simulated_team.simulated.content.blocks.nav_table.navigation_target.N
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
-/** Aeronautics Navigation Table target resolving the bound module only in the table's own sublevel. */
+/**
+ * Aeronautics Navigation Table target: the active waypoint of the bound FMS module. The table
+ * re-resolves it every server tick, so a waypoint change reaches the table on the next tick.
+ * Range rule: {@link FmsNavigatorRange}.
+ */
 public final class FmsNavigationTarget implements NavigationTarget {
     @Override
     public boolean equals(Object other) {
@@ -32,8 +36,12 @@ public final class FmsNavigationTarget implements NavigationTarget {
         if (level == null || level.isClientSide) return null;
         var moduleId = FmsNavigatorItem.boundFmsId(navigator);
         if (moduleId == null) return null;
-        var table = FmsModuleIndex.find(level, moduleId, navigationTable.subLevel);
+        var table = FmsModuleIndex.find(level, moduleId);
         if (table == null) return null;
+        var moduleSubLevel = FmsLocation.subLevel(table);
+        boolean sameContraption = moduleSubLevel != null && moduleSubLevel == navigationTable.subLevel;
+        double distanceSquared = FmsLocation.forBlockEntity(table).distanceToSqr(navigationTable.getProjectedSelfPos());
+        if (!FmsNavigatorRange.reachable(sameContraption, distanceSquared)) return null;
         var data = table.findFmsById(moduleId).map(found -> found.data()).orElse(null);
         if (data == null) return null;
         var waypoint = data.selectedWaypoint().orElse(null);

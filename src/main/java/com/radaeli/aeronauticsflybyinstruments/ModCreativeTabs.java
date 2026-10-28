@@ -25,7 +25,7 @@ public final class ModCreativeTabs {
                         output.accept(ModBlocks.MODULAR_TABLE_BASE_ITEM);
                         output.accept(ModBlocks.AVIONICS_CABLE_ITEM);
                         output.accept(ModBlocks.NETWORK_BRIDGE_ITEM);
-                        output.accept(ModBlocks.GPWS_COMPUTER_ITEM);
+                        output.accept(ModBlocks.AVIONICS_COMPUTER_ITEM);
                         output.accept(ModBlocks.LAMP_MODULE);
                         output.accept(ModBlocks.LAMP_MODULE_2X1);
                         output.accept(ModBlocks.BUZZER_MODULE);

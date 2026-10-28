@@ -93,7 +93,12 @@ entre cores e canais do GPWS.
 
 ## 4. Escopo funcional inicial
 
-### 4.1 GPWS Computer
+### 4.1 GPWS Computer (hoje Avionics Computer)
+
+> Atualização de 2026-10-28: o bloco virou o **Avionics Computer**, hub de sensores,
+> função GPWS e gateway CC:Tweaked, sem perfis nem modos. Veja
+> [docs/avionics-computer.md](docs/avionics-computer.md) e
+> [docs/avionics-computer-plan.md](docs/avionics-computer-plan.md).
 
 O GPWS Computer será o componente lógico central. Ele interpretará dados da rede de avionics e publicará os estados de alerta.
 

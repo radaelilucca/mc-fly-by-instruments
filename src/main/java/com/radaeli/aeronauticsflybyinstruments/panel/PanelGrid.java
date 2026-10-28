@@ -98,9 +98,10 @@ public final class PanelGrid {
     public boolean configureAlertAt(int column, int row, String source, String alertChannel, int minimumSeverity,
                                     String localChannel, double localThreshold) {
         var existing = at(column, row);
-        boolean validLocalSignal = source.equals("gpws") || localChannel != null && !localChannel.isBlank()
+        boolean validLocalSignal = !source.equals("test") || localChannel != null && !localChannel.isBlank()
                 && localChannel.length() <= 64 && Double.isFinite(localThreshold);
-        if (existing.isEmpty() || !(source.equals("gpws") || source.equals("test"))
+        if (existing.isEmpty() || !(source.equals("gpws") || source.equals("test")
+                || source.equals(LampIndication.SOURCE_REDSTONE_LINK))
                 || alertChannel == null || alertChannel.isBlank() || alertChannel.length() > 64
                 || minimumSeverity < 1 || minimumSeverity > 3 || !validLocalSignal) return false;
         var module = existing.get();

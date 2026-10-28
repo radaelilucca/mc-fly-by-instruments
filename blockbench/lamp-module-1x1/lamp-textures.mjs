@@ -53,11 +53,19 @@ export const FILAMENT_UV = { side: [0, 0, 2, 2], top: [2, 0, 4, 2], longSide: [0
 
 const paint = (img, maps, uv) => { for (const [key, map] of Object.entries(maps)) blit(img, map, uv[key][0], uv[key][1]); return img; };
 
+// --- Amber (Caution, GPWS INOP; plan §6): the same maps with the redstone keys swapped for the light
+// brass tones (guide §9.4). Same shape and alpha, so red and amber read as one object in two colours.
+const AMBER = { R: '5', S: '6', T: '7', U: '8' };
+const tint = (maps, color) => color === 'amber'
+  ? Object.fromEntries(Object.entries(maps).map(([key, map]) => [key, map.map(row => [...row].map(k => AMBER[k] ?? k).join(''))]))
+  : maps;
+
 export const socket = () => paint(canvas(16, 16, 'w'), SOCKET, SOCKET_UV);
-export const filament = lit => paint(canvas(16, 16, lit ? 'T' : 'x'), FILAMENT[lit ? 'on' : 'off'], FILAMENT_UV);
-export function glass() {
-  const colors = { side: GLASS.side, top: GLASS.top, longSide: GLASS.longSide, longTop: GLASS.longTop };
-  const img = paint(canvas(16, 16, 'R'), colors, GLASS_UV);
+export const filament = (lit, color = 'red') => paint(canvas(16, 16, lit ? (color === 'amber' ? '7' : 'T') : 'x'),
+  lit ? tint(FILAMENT.on, color) : FILAMENT.off, FILAMENT_UV);
+export function glass(color = 'red') {
+  const colors = tint({ side: GLASS.side, top: GLASS.top, longSide: GLASS.longSide, longTop: GLASS.longTop }, color);
+  const img = paint(canvas(16, 16, color === 'amber' ? '5' : 'R'), colors, GLASS_UV);
   const alpha = Array.from({ length: 16 }, () => Array(16).fill(ALPHA.m));
   for (const key of Object.keys(colors)) {
     const [x0, y0] = GLASS_UV[key];

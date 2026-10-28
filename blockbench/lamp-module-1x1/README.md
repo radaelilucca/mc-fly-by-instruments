@@ -41,7 +41,25 @@ a dona dos PNGs: a 2×1 só confere se a cópia dela é igual.
 
 Os nomes das texturas são contrato com `LampModuleRenderer`, que separa as faces pelo
 sprite: soquete no passe opaco; vidro e filamento no passe emissivo quando a lâmpada está
-acesa. Uma cor nova (âmbar de Caution, com os tons claros do latão) troca só o vidro.
+acesa.
+
+## Âmbar (2026-10-28)
+
+A lâmpada tem duas cores, escolhidas pela indicação na mesa (`LampIndication`): vermelho
+para Alerta GPWS e âmbar para Atenção GPWS e GPWS INOP. O âmbar é o **mesmo mapa** do
+vermelho em [`lamp-textures.mjs`](lamp-textures.mjs), com as chaves de redstone trocadas
+pelos tons de latão (R→5, S→6, T→7, U→8) e o mesmo alpha:
+
+- `lamp_glass_amber.png`: vidro âmbar, que mantém a cor apagado;
+- `lamp_filament_on_amber.png`: filamento aceso em âmbar, senão o vermelho atrás do vidro
+  âmbar ficaria laranja. O filamento apagado é o mesmo.
+
+As duas texturas estão incorporadas nas fontes 1×1 e 2×1 (`add-amber.mjs`, migração única
+já aplicada). O exportador grava `_amber_off` e `_amber_on`; o item escolhe o modelo por
+`custom_model_data` (0 vermelho apagado, 1 vermelho aceso, 2 âmbar apagado, 3 âmbar aceso),
+e `LampModuleRenderer` reconhece os dois vidros e os dois filamentos acesos.
+`LampModuleAssetsTest` confere que o âmbar só troca vidro e filamento e mantém o alpha.
+Pendente: ver as duas cores no jogo, com e sem shader.
 
 ## Exportação
 
@@ -49,7 +67,8 @@ acesa. Uma cor nova (âmbar de Caution, com os tons claros do latão) troca só 
 node blockbench/lamp-module-1x1/export-assets.mjs
 ```
 
-Gera `lamp_module_1x1_off.json`, `lamp_module_1x1_on.json` (só troca o filamento) e os PNGs,
+Gera `lamp_module_1x1_off.json`, `lamp_module_1x1_on.json` (só troca o filamento), as
+variantes `_amber_off`/`_amber_on` e os PNGs,
 com `render_type` translúcido. Falha com rotação, coordenada fracionária ou face fora de
 1:1. `create-base-model.mjs` é só o bootstrap: não o rode sobre uma fonte já refinada no
 Blockbench.
