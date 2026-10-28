@@ -140,7 +140,7 @@ Longer ranges and shorter intervals cost more server time on big fleets.
 - **Create Aeronautics** 1.3+ (bundled)
 - **Sable** 2.0.5
 - **CC:Tweaked** 1.120.0+
-- **R-UI Lib** 0.5.0+
+- **R-UI Lib** 0.7.0+
 
 ---
 
